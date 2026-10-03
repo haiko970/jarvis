@@ -65,6 +65,15 @@ Dans la conversation :
 - **Linux** : `sudo apt install portaudio19-dev python3-pyaudio espeak-ng` puis réinstalle.
 - La reconnaissance vocale utilise le service gratuit de Google et a donc besoin d'internet.
 
+## 🛠️ Dépannage
+
+- **« CUDA error » ou « llama-server process has terminated »** : le pilote de ta carte graphique NVIDIA
+  est trop ancien pour Ollama. Jarvis passe alors tout seul sur le processeur (plus lent).
+  Pour retrouver la vitesse, mets à jour ton pilote sur https://www.nvidia.com/fr-fr/drivers/
+  puis redémarre ton PC. Pour forcer le processeur, ajoute `JARVIS_CPU=1` dans un fichier `.env`.
+- **« Je n'arrive pas à joindre Ollama »** : lance l'application Ollama depuis le menu Démarrer.
+- **Jarvis est trop lent** : mets `JARVIS_MODEL=qwen3:4b` dans un fichier `.env` (cerveau plus petit).
+
 ## 4. Personnaliser ton Jarvis
 
 - **Sa personnalité** : modifie `SYSTEM_PROMPT` dans `jarvis/brain.py`.

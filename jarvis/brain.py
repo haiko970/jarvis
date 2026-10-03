@@ -9,6 +9,14 @@ from .tools import TOOLS, run_tool
 
 # qwen3:8b : bon en français, sait utiliser des outils, tourne bien avec 16 Go de RAM.
 MODEL = os.environ.get("JARVIS_MODEL", "qwen3:8b")
+# JARVIS_CPU=1 : ne pas utiliser la carte graphique (utile si son pilote est trop ancien)
+FORCE_CPU = os.environ.get("JARVIS_CPU", "").strip() in ("1", "oui", "true")
+
+GPU_CRASH_HINT = """
+⚠️  La carte graphique a planté (pilote probablement trop ancien) : Jarvis passe sur le processeur.
+    Il marche, mais plus lentement. Pour retrouver la vitesse, mets à jour le pilote de ta carte
+    graphique (https://www.nvidia.com/fr-fr/drivers/), puis redémarre ton PC.
+"""
 
 SYSTEM_PROMPT = """Tu es Jarvis, l'assistant personnel de l'utilisateur, inspiré du majordome IA d'Iron Man.
 Tu parles toujours français, avec un ton poli, efficace et une pointe d'humour britannique.
@@ -37,6 +45,7 @@ class Brain:
     def __init__(self) -> None:
         self.client = ollama.Client()
         self.think = False  # pas de « réflexion » à voix basse : réponses plus rapides
+        self.options = {"num_gpu": 0} if FORCE_CPU else None
         self.reset()
 
     def reset(self) -> None:
@@ -57,12 +66,22 @@ class Brain:
     def _chat(self):
         try:
             return self.client.chat(
-                model=MODEL, messages=self.messages, tools=OLLAMA_TOOLS, think=self.think
+                model=MODEL,
+                messages=self.messages,
+                tools=OLLAMA_TOOLS,
+                think=self.think,
+                options=self.options,
             )
         except ollama.ResponseError as e:
+            error = str(e).lower()
             # Certains modèles ne connaissent pas l'option « think » : on réessaie sans.
-            if self.think is not None and "think" in str(e).lower():
+            if self.think is not None and "think" in error:
                 self.think = None
+                return self._chat()
+            # La carte graphique plante (souvent un pilote trop ancien) : on passe sur le processeur.
+            if self.options is None and ("cuda" in error or "llama-server process has terminated" in error):
+                print(GPU_CRASH_HINT)
+                self.options = {"num_gpu": 0}
                 return self._chat()
             raise
 
