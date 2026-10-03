@@ -191,5 +191,5 @@ def run_tool(name: str, args: dict) -> tuple[str, bool]:
         return f"Outil inconnu : {name}", True
     try:
         return handler(**args), False
-    except Exception as e:  # on renvoie l'erreur à Claude plutôt que de planter
+    except Exception as e:  # on renvoie l'erreur à l'IA plutôt que de planter
         return f"Erreur : {e}", True
