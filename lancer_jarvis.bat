@@ -5,7 +5,7 @@ cd /d "%~dp0"
 title Jarvis
 
 set "PY="
-where py >nul 2>nul && set "PY=py -3"
+where py >nul 2>nul && set "PY=py"
 if defined PY goto python_ok
 where python >nul 2>nul && set "PY=python"
 if defined PY goto python_ok
