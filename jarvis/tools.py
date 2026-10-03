@@ -11,6 +11,8 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
+from . import powers
+
 NOTES_FILE = Path.home() / ".jarvis_notes.json"
 
 
@@ -182,6 +184,9 @@ HANDLERS = {
     "recherche_web": recherche_web,
     "effacer_notes": effacer_notes,
 }
+
+TOOLS += powers.TOOLS
+HANDLERS.update(powers.HANDLERS)
 
 
 def run_tool(name: str, args: dict) -> tuple[str, bool]:

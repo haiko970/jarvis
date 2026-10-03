@@ -5,6 +5,7 @@ import os
 
 import ollama
 
+from . import config
 from .tools import TOOLS, run_tool
 
 # qwen3:8b : bon en français, sait utiliser des outils, tourne bien avec 16 Go de RAM.
@@ -18,14 +19,25 @@ GPU_CRASH_HINT = """
     graphique (https://www.nvidia.com/fr-fr/drivers/), puis redémarre ton PC.
 """
 
-SYSTEM_PROMPT = """Tu es Jarvis, l'assistant personnel de l'utilisateur, inspiré du majordome IA d'Iron Man.
-Tu parles toujours français, avec un ton poli, efficace et une pointe d'humour britannique.
+SYSTEM_PROMPT = """Tu es Jarvis, l'assistant personnel de l'utilisateur, inspiré de l'IA d'Iron Man.
+Tu parles toujours français.
 Tu tournes sur l'ordinateur de l'utilisateur et tu peux agir dessus grâce à tes outils
 (ouvrir des sites et des applications, gérer des notes, consulter l'heure, la météo et le système,
-chercher sur internet). Utilise un outil dès qu'il est utile plutôt que d'inventer une réponse,
+chercher sur internet, régler le volume, contrôler la musique et Spotify, programmer des minuteurs
+et des rappels). Utilise un outil dès qu'il est utile plutôt que d'inventer une réponse,
 en particulier pour l'heure, la date, la météo et l'actualité.
 Tes réponses peuvent être lues à voix haute : sois concis (2 à 4 phrases en général),
 évite le Markdown, les listes à puces et les émojis sauf si on te demande un texte détaillé."""
+
+
+def build_system_prompt() -> str:
+    settings = config.load()
+    style = config.PERSONNALITES.get(settings["personnalite"], config.PERSONNALITES["majordome"])[1]
+    parts = [SYSTEM_PROMPT, f"Ta personnalité : {style}"]
+    if settings["prenom"]:
+        parts.append(f"L'utilisateur s'appelle {settings['prenom']} : utilise son prénom de temps en temps.")
+    parts.append(f"Nous sommes le {datetime.date.today().strftime('%d/%m/%Y')}.")
+    return "\n\n".join(parts)
 
 # Format attendu par Ollama pour décrire les outils
 OLLAMA_TOOLS = [
@@ -49,10 +61,7 @@ class Brain:
         self.reset()
 
     def reset(self) -> None:
-        today = datetime.date.today().strftime("%d/%m/%Y")
-        self.messages: list = [
-            {"role": "system", "content": f"{SYSTEM_PROMPT}\nNous sommes le {today}."}
-        ]
+        self.messages: list = [{"role": "system", "content": build_system_prompt()}]
 
     def ensure_model(self, on_progress=None) -> None:
         """Vérifie qu'Ollama tourne et télécharge le modèle s'il n'est pas encore là."""

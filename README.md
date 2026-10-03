@@ -15,6 +15,10 @@ Il peut agir sur ton PC :
 - 💻 te donner des infos sur ton ordinateur (espace disque, système)
 - 🌦️ donner la météo d'une ville
 - 🔎 chercher sur internet (actualités, questions diverses)
+- 🔊 régler le volume (« monte le son », « mets le volume à 30 », « coupe le son »)
+- 🎵 contrôler la musique et les vidéos (pause, suivant, précédent) et chercher sur Spotify
+- ⏰ programmer des minuteurs et des rappels (« rappelle-moi dans 10 minutes de sortir les pâtes »)
+- 👂 se réveiller quand tu dis « Jarvis » (à activer en bas de la fenêtre)
 - 💬 discuter, expliquer, rédiger, traduire…
 
 Il fonctionne sous Windows, macOS et Linux.
@@ -31,6 +35,8 @@ Il fonctionne sous Windows, macOS et Linux.
 5. La première fois, Jarvis s'installe et télécharge son « cerveau » (~5 Go, une seule fois).
 6. La fenêtre de Jarvis s'ouvre. Écris ta demande, ou clique sur 🎙️ (ou sur le réacteur) pour lui parler.
    Pour quitter, ferme simplement la fenêtre de Jarvis.
+7. Pour avoir Jarvis sur ton Bureau, double-clique sur `creer_raccourci_bureau.bat`
+   (déplace d'abord le dossier de Jarvis là où tu veux le garder, par exemple dans Documents).
 
 > 💡 Le micro et la voix utilisent ceux de Microsoft Edge, qui est installé sur tous les Windows :
 > Jarvis s'ouvre donc dans une fenêtre Edge, même si ton navigateur habituel est Firefox ou Chrome.
@@ -76,7 +82,8 @@ Dans la conversation :
 
 ## 4. Personnaliser ton Jarvis
 
-- **Sa personnalité** : modifie `SYSTEM_PROMPT` dans `jarvis/brain.py`.
+- **Sa voix, son caractère, ton prénom** : clique sur ⚙️ en haut à droite de la fenêtre de Jarvis.
+- **Ses instructions de base** : modifie `SYSTEM_PROMPT` dans `jarvis/brain.py`.
 - **De nouveaux pouvoirs** : dans `jarvis/tools.py`, écris une fonction Python, décris-la dans
   la liste `TOOLS` et ajoute-la à `HANDLERS`. Jarvis saura l'utiliser tout seul.
 - **Changer de cerveau** : crée un fichier `.env` (copie de `.env.example`) et mets par exemple
@@ -92,5 +99,7 @@ jarvis/
 ├── static/index.html  # le design de l'interface
 ├── brain.py      # le dialogue avec l'IA (Ollama) et l'utilisation des outils
 ├── tools.py      # les actions que Jarvis peut faire sur ton PC
+├── powers.py     # volume, musique, Spotify, minuteurs
+├── config.py     # les réglages (voix, personnalité, prénom)
 └── voice.py      # micro → texte et texte → voix
 ```

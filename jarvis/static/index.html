@@ -141,10 +141,59 @@
     background: none; border: none; color: var(--muted); font: inherit; cursor: pointer; padding: 0;
   }
   .bar button:hover { color: var(--cyan); }
+
+  header { position: relative; }
+  .gear {
+    position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; border-radius: 12px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--cyan);
+    font-size: 19px; cursor: pointer; display: grid; place-items: center;
+  }
+  .gear:hover { border-color: var(--cyan); }
+  .msg.reminder { border-color: #ffc861; box-shadow: 0 0 14px rgba(255, 200, 97, 0.25); }
+  .bar .on { color: var(--cyan); }
+
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); display: none; z-index: 10;
+  }
+  .overlay.open { display: block; }
+  .panel {
+    position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100%); z-index: 11;
+    background: #07121f; border-left: 1px solid var(--line); padding: 18px 16px 24px;
+    overflow-y: auto; transform: translateX(100%); transition: transform 0.22s ease-out;
+  }
+  .panel.open { transform: none; }
+  .panel h2 {
+    margin: 0 0 4px; font-size: 16px; letter-spacing: 0.2em; color: var(--cyan); font-weight: 600;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .panel h2 button { background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; }
+  .panel section { border-top: 1px solid var(--line); padding: 14px 0; }
+  .panel h3 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field label { font-size: 13px; }
+  .field .row { display: flex; gap: 8px; }
+  .panel input[type=text], .panel select {
+    width: 100%; min-width: 0; background: var(--panel); color: var(--text); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 12px; font: inherit; outline: none;
+  }
+  .panel select option { background: #07121f; }
+  .panel input:focus, .panel select:focus { border-color: var(--cyan); }
+  .panel input[type=range] { width: 100%; accent-color: var(--cyan); }
+  .btn {
+    background: var(--cyan-soft); color: var(--cyan); border: 1px solid var(--line); border-radius: 10px;
+    padding: 9px 14px; font: inherit; cursor: pointer; white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--cyan); }
+  .hint { font-size: 12px; color: var(--muted); margin: 0; }
+  .toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+  .toggle input { width: 42px; height: 24px; accent-color: var(--cyan); flex-shrink: 0; }
+  .saved { color: var(--cyan); font-size: 12px; letter-spacing: normal; opacity: 0; transition: opacity 0.2s; }
+  .saved.show { opacity: 1; }
 </style>
 </head>
 <body>
 <header>
+  <button class="gear" id="openSettings" title="Réglages" aria-label="Réglages">⚙️</button>
   <div class="reactor" id="reactor" title="Clique pour parler">
     <div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div><div class="core"></div>
   </div>
@@ -170,31 +219,74 @@
   </form>
   <div class="bar">
     <button id="voiceToggle" type="button">🔊 Voix : activée</button>
+    <button id="wakeToggle" type="button">👂 Réveil « Jarvis » : non</button>
     <button id="reset" type="button">↺ Nouvelle conversation</button>
   </div>
 </footer>
 
+<div class="overlay" id="overlay"></div>
+<aside class="panel" id="panel" aria-label="Réglages">
+  <h2>RÉGLAGES <span class="saved" id="saved">✓ Enregistré</span><button id="closeSettings" aria-label="Fermer">✕</button></h2>
+
+  <section>
+    <h3>🎙️ Sa voix</h3>
+    <div class="field">
+      <label for="voiceSelect">Voix</label>
+      <div class="row">
+        <select id="voiceSelect"></select>
+        <button class="btn" id="testVoice" type="button">▶ Tester</button>
+      </div>
+      <p class="hint" id="voiceHint">Les voix marquées ⭐ sont les plus naturelles.</p>
+    </div>
+    <div class="field">
+      <label for="rate">Vitesse : <span id="rateVal"></span></label>
+      <input type="range" id="rate" min="0.7" max="1.5" step="0.05">
+    </div>
+    <div class="field">
+      <label for="pitch">Grave ↔ aigu : <span id="pitchVal"></span></label>
+      <input type="range" id="pitch" min="0.5" max="1.5" step="0.05">
+      <p class="hint">Certaines voix naturelles ignorent ce réglage.</p>
+    </div>
+  </section>
+
+  <section>
+    <h3>🎭 Sa personnalité</h3>
+    <div class="field">
+      <label for="prenom">Ton prénom (pour qu'il t'appelle par ton nom)</label>
+      <input type="text" id="prenom" maxlength="40" placeholder="ex. Alex">
+    </div>
+    <div class="field">
+      <label for="personnalite">Caractère</label>
+      <select id="personnalite"></select>
+      <p class="hint">Changer de caractère efface la conversation en cours.</p>
+    </div>
+  </section>
+
+  <section>
+    <h3>👂 Réveil à la voix</h3>
+    <label class="toggle">
+      <span>Jarvis écoute en permanence et répond quand tu dis « Jarvis »<br>
+      <span class="hint">ex. « Jarvis, quelle heure est-il ? »</span></span>
+      <input type="checkbox" id="wakeSetting">
+    </label>
+  </section>
+</aside>
+
 <script>
-const chat = document.getElementById("chat");
-const input = document.getElementById("input");
-const statusEl = document.getElementById("status");
-const micBtn = document.getElementById("mic");
-const sendBtn = document.getElementById("send");
-const voiceToggle = document.getElementById("voiceToggle");
+const $ = (id) => document.getElementById(id);
+const chat = $("chat"), input = $("input"), statusEl = $("status");
+const micBtn = $("mic"), sendBtn = $("send");
 
 const TOOL_LABELS = {
-  obtenir_date_heure: "🕒 Heure",
-  ouvrir_site_web: "🌐 Site web",
-  ouvrir_application: "🚀 Application",
-  infos_systeme: "💻 Système",
-  ajouter_note: "📝 Note ajoutée",
-  lire_notes: "📒 Notes",
-  effacer_notes: "🗑️ Notes effacées",
-  meteo: "🌦️ Météo",
-  recherche_web: "🔎 Recherche web",
+  obtenir_date_heure: "🕒 Heure", ouvrir_site_web: "🌐 Site web", ouvrir_application: "🚀 Application",
+  infos_systeme: "💻 Système", ajouter_note: "📝 Note ajoutée", lire_notes: "📒 Notes",
+  effacer_notes: "🗑️ Notes effacées", meteo: "🌦️ Météo", recherche_web: "🔎 Recherche web",
+  volume: "🔊 Volume", controle_musique: "🎵 Musique", spotify_rechercher: "🟢 Spotify",
+  minuteur: "⏰ Minuteur", lister_minuteurs: "⏰ Minuteurs", annuler_minuteurs: "⏰ Annulés",
 };
 
-let busy = false;
+let settings = { voix: "", vitesse: 1, hauteur: 1, prenom: "", personnalite: "majordome", ecoute_permanente: false };
+let busy = false, speaking = false, manualListening = false;
 let speakEnabled = true;
 try { speakEnabled = localStorage.getItem("jarvis-voice") !== "off"; } catch (e) {}
 
@@ -203,9 +295,7 @@ function setStatus(text, mode) {
   document.body.classList.toggle("thinking", mode === "thinking");
   document.body.classList.toggle("listening", mode === "listening");
 }
-
 function scrollDown() { chat.scrollTop = chat.scrollHeight; }
-
 function addMessage(text, who, extraClass) {
   const div = document.createElement("div");
   div.className = `msg ${who}` + (extraClass ? ` ${extraClass}` : "");
@@ -214,7 +304,6 @@ function addMessage(text, who, extraClass) {
   scrollDown();
   return div;
 }
-
 function addTools(tools) {
   if (!tools.length) return;
   const wrap = document.createElement("div");
@@ -230,36 +319,130 @@ function addTools(tools) {
   chat.appendChild(wrap);
 }
 
-// ---------- Voix de Jarvis (synthèse vocale du navigateur) ----------
-let frVoice = null;
-function pickVoice() {
-  const voices = speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith("fr"));
-  // Les voix « Natural » / « Online » d'Edge sont les plus réalistes.
-  frVoice = voices.find(v => /natural|online/i.test(v.name) && /henri|remy|rémy|thomas|paul|claude/i.test(v.name))
-         || voices.find(v => /natural|online/i.test(v.name))
-         || voices[0] || null;
-}
-if ("speechSynthesis" in window) {
-  pickVoice();
-  speechSynthesis.onvoiceschanged = pickVoice;
+// ---------- Réglages ----------
+let savedTimer = null;
+async function saveSettings(changes) {
+  Object.assign(settings, changes);
+  try {
+    await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(changes) });
+    $("saved").classList.add("show");
+    clearTimeout(savedTimer);
+    savedTimer = setTimeout(() => $("saved").classList.remove("show"), 1200);
+  } catch (e) {}
 }
 
-function speak(text) {
-  if (!speakEnabled || !("speechSynthesis" in window) || !text) return;
+function openSettings(open) {
+  $("panel").classList.toggle("open", open);
+  $("overlay").classList.toggle("open", open);
+}
+$("openSettings").onclick = () => openSettings(true);
+$("closeSettings").onclick = () => openSettings(false);
+$("overlay").onclick = () => openSettings(false);
+
+async function loadSettings() {
+  try {
+    const data = await (await fetch("/api/settings")).json();
+    settings = data.settings;
+    const sel = $("personnalite");
+    sel.innerHTML = "";
+    for (const [key, label] of Object.entries(data.personnalites)) sel.add(new Option(label, key));
+  } catch (e) {}
+  $("personnalite").value = settings.personnalite;
+  $("prenom").value = settings.prenom || "";
+  $("rate").value = settings.vitesse; $("pitch").value = settings.hauteur;
+  showSliderValues();
+  fillVoices();
+  applyWake(!!settings.ecoute_permanente, false);
+}
+
+$("prenom").onchange = () => {
+  saveSettings({ prenom: $("prenom").value.trim() });
+  chat.innerHTML = ""; addMessage("C'est noté. Je vous écoute.", "jarvis");
+};
+$("personnalite").onchange = () => {
+  saveSettings({ personnalite: $("personnalite").value });
+  chat.innerHTML = ""; addMessage("Nouvelle personnalité activée. Que puis-je faire pour vous ?", "jarvis");
+};
+
+function showSliderValues() {
+  $("rateVal").textContent = "×" + Number($("rate").value).toFixed(2);
+  $("pitchVal").textContent = Number($("pitch").value).toFixed(2);
+}
+$("rate").oninput = $("pitch").oninput = showSliderValues;
+$("rate").onchange = () => saveSettings({ vitesse: Number($("rate").value) });
+$("pitch").onchange = () => saveSettings({ hauteur: Number($("pitch").value) });
+
+// ---------- Voix de Jarvis (synthèse vocale du navigateur) ----------
+const hasTTS = "speechSynthesis" in window;
+const isNatural = (v) => /natural|online|neural/i.test(v.name);
+
+function candidateVoices() {
+  if (!hasTTS) return [];
+  return speechSynthesis.getVoices()
+    .filter(v => (v.lang || "").toLowerCase().startsWith("fr") || /multilingual/i.test(v.name))
+    .sort((a, b) => (isNatural(b) - isNatural(a))
+      || ((b.lang || "").startsWith("fr") - (a.lang || "").startsWith("fr"))
+      || a.name.localeCompare(b.name));
+}
+
+function prettyName(v) {
+  const name = v.name.replace(/^Microsoft\s+/, "").replace(/\s+-\s+.*$/, "").replace(/\s*\((Natural)\)/i, "");
+  const country = { "fr-FR": "France", "fr-CA": "Québec", "fr-BE": "Belgique", "fr-CH": "Suisse" }[v.lang] || v.lang;
+  return `${isNatural(v) ? "⭐ " : ""}${name} — ${country}`;
+}
+
+function currentVoice() {
+  const voices = candidateVoices();
+  return voices.find(v => v.name === settings.voix)
+    || voices.find(v => isNatural(v) && /henri|remy|rémy/i.test(v.name))
+    || voices[0] || null;
+}
+
+function fillVoices() {
+  const sel = $("voiceSelect");
+  const voices = candidateVoices();
+  sel.innerHTML = "";
+  if (!voices.length) {
+    sel.add(new Option("Aucune voix française trouvée", ""));
+    sel.disabled = true;
+    $("voiceHint").textContent = "💡 Ouvre Jarvis dans Microsoft Edge pour avoir des voix françaises naturelles.";
+    return;
+  }
+  sel.disabled = false;
+  for (const v of voices) sel.add(new Option(prettyName(v), v.name));
+  const cur = currentVoice();
+  if (cur) sel.value = cur.name;
+  $("voiceHint").textContent = voices.some(isNatural)
+    ? "Les voix marquées ⭐ sont les plus naturelles. Clique sur « Tester » pour écouter."
+    : "💡 Pour des voix bien plus naturelles, Jarvis doit s'ouvrir dans Microsoft Edge.";
+}
+if (hasTTS) speechSynthesis.onvoiceschanged = fillVoices;
+
+$("voiceSelect").onchange = () => {
+  saveSettings({ voix: $("voiceSelect").value });
+  speak("Bonjour, voici ma nouvelle voix. Elle vous plaît ?", true);
+};
+$("testVoice").onclick = () => speak("Bonjour, je suis Jarvis, votre assistant personnel. Que puis-je faire pour vous ?", true);
+
+function speak(text, force) {
+  if ((!speakEnabled && !force) || !hasTTS || !text) return;
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = "fr-FR";
-  if (frVoice) u.voice = frVoice;
-  u.rate = 1.05;
+  const u = new SpeechSynthesisUtterance(text.replace(/[⏰🔊🎵]/gu, ""));
+  const v = currentVoice();
+  if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "fr-FR"; }
+  u.rate = Number($("rate").value) || 1;
+  u.pitch = Number($("pitch").value) || 1;
+  u.onstart = () => { speaking = true; stopWake(); };
+  u.onend = u.onerror = () => { speaking = false; resumeWake(); };
   speechSynthesis.speak(u);
 }
 
 function renderVoiceToggle() {
-  voiceToggle.textContent = speakEnabled ? "🔊 Voix : activée" : "🔇 Voix : coupée";
+  $("voiceToggle").textContent = speakEnabled ? "🔊 Voix : activée" : "🔇 Voix : coupée";
 }
-voiceToggle.onclick = () => {
+$("voiceToggle").onclick = () => {
   speakEnabled = !speakEnabled;
-  if (!speakEnabled && "speechSynthesis" in window) speechSynthesis.cancel();
+  if (!speakEnabled && hasTTS) speechSynthesis.cancel();
   try { localStorage.setItem("jarvis-voice", speakEnabled ? "on" : "off"); } catch (e) {}
   renderVoiceToggle();
 };
@@ -270,8 +453,9 @@ async function send(text) {
   text = text.trim();
   if (!text || busy) return;
   busy = true;
+  stopWake();
   sendBtn.disabled = true;
-  document.getElementById("suggestions")?.remove();
+  $("suggestions")?.remove();
   addMessage(text, "user");
   input.value = "";
 
@@ -284,16 +468,14 @@ async function send(text) {
 
   try {
     const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
     });
     const data = await res.json();
     typing.remove();
     addTools(data.tools || []);
     addMessage(data.reply || "(pas de réponse)", "jarvis");
     speak(data.reply);
-    setStatus("En ligne");
+    setStatus(wakeMode ? "Dites « Jarvis »…" : "En ligne");
   } catch (e) {
     typing.remove();
     addMessage("Je ne suis plus connecté. La fenêtre noire de Jarvis est-elle toujours ouverte ?", "jarvis", "error");
@@ -302,49 +484,64 @@ async function send(text) {
     busy = false;
     sendBtn.disabled = false;
     input.focus();
+    resumeWake();
   }
 }
 
-document.getElementById("form").onsubmit = (e) => { e.preventDefault(); send(input.value); };
-document.getElementById("suggestions").onclick = (e) => {
-  if (e.target.tagName === "BUTTON") send(e.target.textContent);
-};
-
-document.getElementById("reset").onclick = async () => {
+$("form").onsubmit = (e) => { e.preventDefault(); send(input.value); };
+$("suggestions").onclick = (e) => { if (e.target.tagName === "BUTTON") send(e.target.textContent); };
+$("reset").onclick = async () => {
   await fetch("/api/reset", { method: "POST" }).catch(() => {});
   chat.innerHTML = "";
   addMessage("Conversation effacée. Je vous écoute.", "jarvis");
 };
 
+// ---------- Rappels et minuteurs ----------
+let audioCtx = null;
+function beep() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.25, 0.5].forEach((t) => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.frequency.value = 880; o.connect(g); g.connect(audioCtx.destination);
+      g.gain.setValueAtTime(0.18, audioCtx.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + t + 0.2);
+      o.start(audioCtx.currentTime + t); o.stop(audioCtx.currentTime + t + 0.2);
+    });
+  } catch (e) {}
+}
+setInterval(async () => {
+  try {
+    const { events } = await (await fetch("/api/events")).json();
+    for (const ev of events) {
+      addMessage(ev, "jarvis", "reminder");
+      beep();
+      setTimeout(() => speak(ev, true), 900);
+    }
+  } catch (e) {}
+}, 2000);
+
 // ---------- Micro (reconnaissance vocale du navigateur) ----------
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition = null;
-let listening = false;
+let manualRec = null;
 
 if (Recognition) {
-  recognition = new Recognition();
-  recognition.lang = "fr-FR";
-  recognition.interimResults = true;
-  recognition.maxAlternatives = 1;
-
-  recognition.onresult = (e) => {
+  manualRec = new Recognition();
+  manualRec.lang = "fr-FR";
+  manualRec.interimResults = true;
+  manualRec.onresult = (e) => {
     let transcript = "";
     for (const r of e.results) transcript += r[0].transcript;
     input.value = transcript;
-    if (e.results[e.results.length - 1].isFinal) {
-      recognition.stop();
-      send(transcript);
-    }
+    if (e.results[e.results.length - 1].isFinal) { manualRec.stop(); send(transcript); }
   };
-  recognition.onerror = (e) => {
-    if (e.error === "not-allowed") {
-      addMessage("Je n'ai pas accès au micro. Autorise-le quand la fenêtre te le demande.", "jarvis", "error");
-    }
+  manualRec.onerror = (e) => {
+    if (e.error === "not-allowed") addMessage("Je n'ai pas accès au micro. Autorise-le quand la fenêtre te le demande.", "jarvis", "error");
   };
-  recognition.onend = () => {
-    listening = false;
+  manualRec.onend = () => {
+    manualListening = false;
     micBtn.classList.remove("rec");
-    if (!busy) setStatus("En ligne");
+    if (!busy) { setStatus(wakeMode ? "Dites « Jarvis »…" : "En ligne"); resumeWake(); }
   };
 } else {
   micBtn.disabled = true;
@@ -352,16 +549,78 @@ if (Recognition) {
 }
 
 function toggleMic() {
-  if (!recognition || busy) return;
-  if (listening) { recognition.stop(); return; }
-  if ("speechSynthesis" in window) speechSynthesis.cancel();
-  listening = true;
+  if (!manualRec || busy) return;
+  if (manualListening) { manualRec.stop(); return; }
+  if (hasTTS) speechSynthesis.cancel();
+  stopWake();
+  manualListening = true;
   micBtn.classList.add("rec");
   setStatus("Je vous écoute…", "listening");
-  recognition.start();
+  setTimeout(() => { try { manualRec.start(); } catch (e) {} }, 150);
 }
 micBtn.onclick = toggleMic;
-document.getElementById("reactor").onclick = toggleMic;
+$("reactor").onclick = toggleMic;
+
+// ---------- Réveil à la voix : « Jarvis, … » ----------
+const WAKE = /\b(d?jarvis|jarvi|jar vis|jarvice)\b[\s,.!?:]*/i;
+let wakeMode = false, wakeRec = null, wakeRunning = false, awaitingCommand = false, awaitTimer = null;
+
+if (Recognition) {
+  wakeRec = new Recognition();
+  wakeRec.lang = "fr-FR";
+  wakeRec.continuous = true;
+  wakeRec.interimResults = false;
+  wakeRec.onresult = (e) => {
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (!e.results[i].isFinal) continue;
+      const heard = e.results[i][0].transcript.trim();
+      if (awaitingCommand) {
+        awaitingCommand = false; clearTimeout(awaitTimer);
+        if (heard) send(heard);
+        return;
+      }
+      const m = heard.match(WAKE);
+      if (!m) continue;
+      const command = heard.slice(m.index + m[0].length).trim();
+      if (command.length > 2) { send(command); return; }
+      // Juste « Jarvis » : on attend la suite.
+      awaitingCommand = true;
+      beep();
+      setStatus("Je vous écoute…", "listening");
+      clearTimeout(awaitTimer);
+      awaitTimer = setTimeout(() => { awaitingCommand = false; if (!busy) setStatus("Dites « Jarvis »…"); }, 8000);
+    }
+  };
+  wakeRec.onerror = (e) => {
+    if (e.error === "not-allowed") { applyWake(false, true); addMessage("Je n'ai pas accès au micro pour le réveil à la voix.", "jarvis", "error"); }
+  };
+  wakeRec.onend = () => { wakeRunning = false; setTimeout(resumeWake, 300); };
+}
+
+function stopWake() {
+  if (wakeRec && wakeRunning) { try { wakeRec.abort(); } catch (e) {} }
+}
+function resumeWake() {
+  if (!wakeRec || !wakeMode || busy || speaking || manualListening || wakeRunning) return;
+  try { wakeRec.start(); wakeRunning = true; } catch (e) {}
+}
+function applyWake(on, persist) {
+  if (on && !wakeRec) {
+    addMessage("Le réveil à la voix fonctionne seulement dans Microsoft Edge ou Google Chrome.", "jarvis", "error");
+    on = false;
+  }
+  wakeMode = on;
+  $("wakeSetting").checked = on;
+  $("wakeToggle").textContent = on ? "👂 Réveil « Jarvis » : oui" : "👂 Réveil « Jarvis » : non";
+  $("wakeToggle").classList.toggle("on", on);
+  if (persist) saveSettings({ ecoute_permanente: on });
+  if (on) { setStatus("Dites « Jarvis »…"); resumeWake(); }
+  else { stopWake(); if (!busy) setStatus("En ligne"); }
+}
+$("wakeToggle").onclick = () => applyWake(!wakeMode, true);
+$("wakeSetting").onchange = () => applyWake($("wakeSetting").checked, true);
+
+loadSettings();
 
 // Fermer la fenêtre arrête aussi Jarvis.
 window.addEventListener("pagehide", () => navigator.sendBeacon("/api/bye"));

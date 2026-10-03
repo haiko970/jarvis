@@ -14,7 +14,9 @@ from pathlib import Path
 import httpx
 import ollama
 
+from . import config
 from .brain import MODEL, Brain
+from .powers import EVENTS
 
 PAGE = Path(__file__).parent / "static" / "index.html"
 PREFERRED_PORT = 8765
@@ -80,6 +82,14 @@ def serve(brain: Brain) -> None:
                 self._send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
             elif self.path == "/api/info":
                 self._json({"model": MODEL})
+            elif self.path == "/api/settings":
+                personalities = {k: v[0] for k, v in config.PERSONNALITES.items()}
+                self._json({"settings": config.load(), "personnalites": personalities})
+            elif self.path == "/api/events":
+                events = []
+                while not EVENTS.empty():
+                    events.append(EVENTS.get_nowait())
+                self._json({"events": events})
             else:
                 self._send(404, b"", "text/plain")
 
@@ -96,6 +106,16 @@ def serve(brain: Brain) -> None:
                 return
 
             cancel_shutdown()
+            if self.path == "/api/settings":
+                changes = json.loads(raw or b"{}")
+                before = config.load()
+                after = config.save(changes)
+                if (before["prenom"], before["personnalite"]) != (after["prenom"], after["personnalite"]):
+                    with lock:
+                        brain.reset()  # nouvelle personnalité : on repart d'une conversation neuve
+                self._json({"settings": after})
+                return
+
             if self.path == "/api/reset":
                 with lock:
                     brain.reset()

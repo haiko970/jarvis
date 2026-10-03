@@ -2,12 +2,14 @@
 
 import argparse
 import sys
+import threading
 
 import httpx
 import ollama
 from dotenv import load_dotenv
 
 from .brain import MODEL, Brain
+from .powers import EVENTS
 
 WAKE_WORD = "jarvis"
 QUIT_WORDS = {"quitter", "exit", "quit", "au revoir", "bonne nuit"}
@@ -63,6 +65,12 @@ def main() -> None:
 
         serve(brain)
         return
+
+    def print_events() -> None:  # les rappels qui sonnent pendant qu'on discute
+        while True:
+            print(f"\n🤖 Jarvis : {EVENTS.get()}\n")
+
+    threading.Thread(target=print_events, daemon=True).start()
 
     voice = None
     if args.voix:
