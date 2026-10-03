@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>J.A.R.V.I.S.</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23050b14' stroke='%234fd8ff' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%234fd8ff'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #050b14;
+    --panel: rgba(14, 30, 48, 0.72);
+    --line: rgba(80, 200, 255, 0.22);
+    --cyan: #4fd8ff;
+    --cyan-soft: rgba(79, 216, 255, 0.14);
+    --text: #dff6ff;
+    --muted: #7fa6b8;
+    --user: #12324a;
+    --danger: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(79, 216, 255, 0.12), transparent 55%),
+      linear-gradient(rgba(79, 216, 255, 0.035) 1px, transparent 1px) 0 0 / 100% 28px,
+      var(--bg);
+    color: var(--text);
+    font: 15px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  header { padding: 18px 16px 6px; text-align: center; flex-shrink: 0; }
+  .reactor {
+    width: 112px; height: 112px; margin: 0 auto; position: relative; cursor: pointer;
+    border-radius: 50%;
+  }
+  .reactor .ring, .reactor .core {
+    position: absolute; border-radius: 50%; inset: 0;
+  }
+  .reactor .ring {
+    border: 2px solid var(--cyan);
+    box-shadow: 0 0 18px var(--cyan), inset 0 0 18px rgba(79, 216, 255, 0.5);
+    opacity: 0.85;
+  }
+  .reactor .ring.r2 {
+    inset: 14px; border-style: dashed; opacity: 0.6; box-shadow: none;
+    animation: spin 18s linear infinite;
+  }
+  .reactor .ring.r3 {
+    inset: 26px; border-width: 4px; border-color: var(--cyan) transparent var(--cyan) transparent;
+    box-shadow: none; animation: spin 6s linear infinite reverse;
+  }
+  .reactor .core {
+    inset: 40px;
+    background: radial-gradient(circle, #ffffff 0%, var(--cyan) 45%, rgba(79, 216, 255, 0) 75%);
+    animation: breathe 3.2s ease-in-out infinite;
+  }
+  body.thinking .reactor .r3 { animation-duration: 1.1s; }
+  body.thinking .reactor .core { animation-duration: 0.8s; }
+  body.listening .reactor .ring { border-color: var(--danger); box-shadow: 0 0 22px var(--danger); }
+  body.listening .reactor .core {
+    background: radial-gradient(circle, #fff 0%, var(--danger) 45%, transparent 75%);
+    animation-duration: 0.9s;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes breathe {
+    0%, 100% { transform: scale(0.85); opacity: 0.8; }
+    50% { transform: scale(1.08); opacity: 1; }
+  }
+  h1 {
+    margin: 12px 0 0; font-size: 20px; letter-spacing: 0.42em; font-weight: 600;
+    color: var(--cyan); text-shadow: 0 0 12px rgba(79, 216, 255, 0.7);
+    padding-left: 0.42em;
+  }
+  .status { color: var(--muted); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; min-height: 18px; }
+
+  main {
+    flex: 1; overflow-y: auto; padding: 12px 16px 20px;
+    display: flex; flex-direction: column; gap: 10px;
+    scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+  }
+  .msg {
+    max-width: 86%; padding: 10px 14px; border-radius: 14px;
+    white-space: pre-wrap; word-wrap: break-word; animation: pop 0.18s ease-out;
+  }
+  .msg.jarvis {
+    align-self: flex-start; background: var(--panel);
+    border: 1px solid var(--line); border-bottom-left-radius: 4px;
+    backdrop-filter: blur(6px);
+  }
+  .msg.user {
+    align-self: flex-end; background: var(--user);
+    border: 1px solid rgba(79, 216, 255, 0.35); border-bottom-right-radius: 4px;
+  }
+  .msg.error { border-color: rgba(255, 107, 107, 0.5); }
+  .tools { align-self: flex-start; display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: 12px; color: var(--cyan); background: var(--cyan-soft);
+    border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px;
+  }
+  .typing { align-self: flex-start; display: flex; gap: 5px; padding: 12px 14px; }
+  .typing span {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--cyan);
+    animation: blink 1.2s infinite ease-in-out;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+  @keyframes pop { from { opacity: 0; transform: translateY(6px); } }
+
+  .suggestions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 4px 0; }
+  .suggestions button {
+    background: transparent; color: var(--text); border: 1px solid var(--line);
+    border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer;
+  }
+  .suggestions button:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  footer {
+    flex-shrink: 0; padding: 10px 12px 14px; border-top: 1px solid var(--line);
+    background: rgba(5, 11, 20, 0.85);
+  }
+  form { display: flex; gap: 8px; align-items: center; }
+  input[type=text] {
+    flex: 1; min-width: 0; background: var(--panel); color: var(--text);
+    border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font: inherit;
+    outline: none;
+  }
+  input[type=text]:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-soft); }
+  .icon-btn {
+    width: 44px; height: 44px; flex-shrink: 0; border-radius: 12px; cursor: pointer;
+    background: var(--panel); border: 1px solid var(--line); color: var(--cyan);
+    display: grid; place-items: center; font-size: 18px;
+  }
+  .icon-btn:hover { border-color: var(--cyan); }
+  .icon-btn.on { background: var(--cyan); color: var(--bg); }
+  .icon-btn.rec { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .bar { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .bar button {
+    background: none; border: none; color: var(--muted); font: inherit; cursor: pointer; padding: 0;
+  }
+  .bar button:hover { color: var(--cyan); }
+</style>
+</head>
+<body>
+<header>
+  <div class="reactor" id="reactor" title="Clique pour parler">
+    <div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div><div class="core"></div>
+  </div>
+  <h1>J.A.R.V.I.S.</h1>
+  <div class="status" id="status">En ligne</div>
+</header>
+
+<main id="chat">
+  <div class="msg jarvis">Bonjour, je suis Jarvis. Que puis-je faire pour vous ?</div>
+  <div class="suggestions" id="suggestions">
+    <button>Quelle heure est-il ?</button>
+    <button>Quel temps fait-il à Paris ?</button>
+    <button>Ouvre YouTube</button>
+    <button>Lis mes notes</button>
+  </div>
+</main>
+
+<footer>
+  <form id="form" autocomplete="off">
+    <button type="button" class="icon-btn" id="mic" title="Parler à Jarvis">🎙️</button>
+    <input type="text" id="input" placeholder="Écris ta demande…" autofocus>
+    <button type="submit" class="icon-btn" id="send" title="Envoyer">➤</button>
+  </form>
+  <div class="bar">
+    <button id="voiceToggle" type="button">🔊 Voix : activée</button>
+    <button id="reset" type="button">↺ Nouvelle conversation</button>
+  </div>
+</footer>
+
+<script>
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const statusEl = document.getElementById("status");
+const micBtn = document.getElementById("mic");
+const sendBtn = document.getElementById("send");
+const voiceToggle = document.getElementById("voiceToggle");
+
+const TOOL_LABELS = {
+  obtenir_date_heure: "🕒 Heure",
+  ouvrir_site_web: "🌐 Site web",
+  ouvrir_application: "🚀 Application",
+  infos_systeme: "💻 Système",
+  ajouter_note: "📝 Note ajoutée",
+  lire_notes: "📒 Notes",
+  effacer_notes: "🗑️ Notes effacées",
+  meteo: "🌦️ Météo",
+  recherche_web: "🔎 Recherche web",
+};
+
+let busy = false;
+let speakEnabled = true;
+try { speakEnabled = localStorage.getItem("jarvis-voice") !== "off"; } catch (e) {}
+
+function setStatus(text, mode) {
+  statusEl.textContent = text;
+  document.body.classList.toggle("thinking", mode === "thinking");
+  document.body.classList.toggle("listening", mode === "listening");
+}
+
+function scrollDown() { chat.scrollTop = chat.scrollHeight; }
+
+function addMessage(text, who, extraClass) {
+  const div = document.createElement("div");
+  div.className = `msg ${who}` + (extraClass ? ` ${extraClass}` : "");
+  div.textContent = text;
+  chat.appendChild(div);
+  scrollDown();
+  return div;
+}
+
+function addTools(tools) {
+  if (!tools.length) return;
+  const wrap = document.createElement("div");
+  wrap.className = "tools";
+  for (const t of tools) {
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.textContent = TOOL_LABELS[t.name] || `⚙️ ${t.name}`;
+    const detail = Object.values(t.args || {}).join(", ");
+    if (detail) chip.title = detail;
+    wrap.appendChild(chip);
+  }
+  chat.appendChild(wrap);
+}
+
+// ---------- Voix de Jarvis (synthèse vocale du navigateur) ----------
+let frVoice = null;
+function pickVoice() {
+  const voices = speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith("fr"));
+  // Les voix « Natural » / « Online » d'Edge sont les plus réalistes.
+  frVoice = voices.find(v => /natural|online/i.test(v.name) && /henri|remy|rémy|thomas|paul|claude/i.test(v.name))
+         || voices.find(v => /natural|online/i.test(v.name))
+         || voices[0] || null;
+}
+if ("speechSynthesis" in window) {
+  pickVoice();
+  speechSynthesis.onvoiceschanged = pickVoice;
+}
+
+function speak(text) {
+  if (!speakEnabled || !("speechSynthesis" in window) || !text) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "fr-FR";
+  if (frVoice) u.voice = frVoice;
+  u.rate = 1.05;
+  speechSynthesis.speak(u);
+}
+
+function renderVoiceToggle() {
+  voiceToggle.textContent = speakEnabled ? "🔊 Voix : activée" : "🔇 Voix : coupée";
+}
+voiceToggle.onclick = () => {
+  speakEnabled = !speakEnabled;
+  if (!speakEnabled && "speechSynthesis" in window) speechSynthesis.cancel();
+  try { localStorage.setItem("jarvis-voice", speakEnabled ? "on" : "off"); } catch (e) {}
+  renderVoiceToggle();
+};
+renderVoiceToggle();
+
+// ---------- Envoi d'une demande ----------
+async function send(text) {
+  text = text.trim();
+  if (!text || busy) return;
+  busy = true;
+  sendBtn.disabled = true;
+  document.getElementById("suggestions")?.remove();
+  addMessage(text, "user");
+  input.value = "";
+
+  const typing = document.createElement("div");
+  typing.className = "typing";
+  typing.innerHTML = "<span></span><span></span><span></span>";
+  chat.appendChild(typing);
+  scrollDown();
+  setStatus("Analyse en cours…", "thinking");
+
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    typing.remove();
+    addTools(data.tools || []);
+    addMessage(data.reply || "(pas de réponse)", "jarvis");
+    speak(data.reply);
+    setStatus("En ligne");
+  } catch (e) {
+    typing.remove();
+    addMessage("Je ne suis plus connecté. La fenêtre noire de Jarvis est-elle toujours ouverte ?", "jarvis", "error");
+    setStatus("Hors ligne");
+  } finally {
+    busy = false;
+    sendBtn.disabled = false;
+    input.focus();
+  }
+}
+
+document.getElementById("form").onsubmit = (e) => { e.preventDefault(); send(input.value); };
+document.getElementById("suggestions").onclick = (e) => {
+  if (e.target.tagName === "BUTTON") send(e.target.textContent);
+};
+
+document.getElementById("reset").onclick = async () => {
+  await fetch("/api/reset", { method: "POST" }).catch(() => {});
+  chat.innerHTML = "";
+  addMessage("Conversation effacée. Je vous écoute.", "jarvis");
+};
+
+// ---------- Micro (reconnaissance vocale du navigateur) ----------
+const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let listening = false;
+
+if (Recognition) {
+  recognition = new Recognition();
+  recognition.lang = "fr-FR";
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = (e) => {
+    let transcript = "";
+    for (const r of e.results) transcript += r[0].transcript;
+    input.value = transcript;
+    if (e.results[e.results.length - 1].isFinal) {
+      recognition.stop();
+      send(transcript);
+    }
+  };
+  recognition.onerror = (e) => {
+    if (e.error === "not-allowed") {
+      addMessage("Je n'ai pas accès au micro. Autorise-le quand la fenêtre te le demande.", "jarvis", "error");
+    }
+  };
+  recognition.onend = () => {
+    listening = false;
+    micBtn.classList.remove("rec");
+    if (!busy) setStatus("En ligne");
+  };
+} else {
+  micBtn.disabled = true;
+  micBtn.title = "Le micro fonctionne dans Microsoft Edge ou Google Chrome";
+}
+
+function toggleMic() {
+  if (!recognition || busy) return;
+  if (listening) { recognition.stop(); return; }
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  listening = true;
+  micBtn.classList.add("rec");
+  setStatus("Je vous écoute…", "listening");
+  recognition.start();
+}
+micBtn.onclick = toggleMic;
+document.getElementById("reactor").onclick = toggleMic;
+
+// Fermer la fenêtre arrête aussi Jarvis.
+window.addEventListener("pagehide", () => navigator.sendBeacon("/api/bye"));
+</script>
+</body>
+</html>

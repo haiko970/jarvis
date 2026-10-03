@@ -1,6 +1,7 @@
 # 🤖 Jarvis — ton assistant personnel
 
-Un assistant inspiré du Jarvis d'Iron Man, qui tourne sur ton ordinateur. Tu peux lui écrire ou lui parler.
+Un assistant inspiré du Jarvis d'Iron Man, qui tourne sur ton ordinateur, avec sa propre fenêtre
+façon Iron Man (réacteur animé, voix, micro). Tu peux lui écrire ou lui parler.
 Son « cerveau » est une IA **gratuite qui tourne directement sur ton ordinateur** grâce à
 [Ollama](https://ollama.com) : pas d'abonnement, pas de clé, et tes conversations restent chez toi.
 Il faut un PC avec au moins 8 Go de mémoire vive (16 Go recommandés) et ~6 Go d'espace disque.
@@ -25,9 +26,14 @@ Il fonctionne sous Windows, macOS et Linux.
 3. Télécharge Jarvis : https://github.com/haiko970/jarvis/archive/refs/heads/claude/adoring-mayer-u2tfmy.zip
    puis fais un clic droit sur le fichier ZIP → **Extraire tout**.
 4. Dans le dossier extrait, **double-clique** sur :
-   - `lancer_jarvis.bat` sous Windows (ou `lancer_jarvis_voix.bat` pour lui parler au micro) ;
+   - `lancer_jarvis.bat` sous Windows ;
    - `lancer_jarvis.command` sous macOS.
-5. La première fois, Jarvis s'installe et télécharge son « cerveau » (~5 Go, une seule fois). C'est tout !
+5. La première fois, Jarvis s'installe et télécharge son « cerveau » (~5 Go, une seule fois).
+6. La fenêtre de Jarvis s'ouvre. Écris ta demande, ou clique sur 🎙️ (ou sur le réacteur) pour lui parler.
+   Pour quitter, ferme simplement la fenêtre de Jarvis.
+
+> 💡 Le micro et la voix utilisent ceux de Microsoft Edge, qui est installé sur tous les Windows :
+> Jarvis s'ouvre donc dans une fenêtre Edge, même si ton navigateur habituel est Firefox ou Chrome.
 
 ## Installation manuelle (pour les curieux)
 
@@ -40,7 +46,9 @@ source .venv/bin/activate
 
 pip install -r requirements.txt
 pip install -r requirements-voix.txt   # optionnel, pour le mode vocal
-python -m jarvis                       # ou : python -m jarvis --voix
+python -m jarvis               # interface graphique
+python -m jarvis --terminal    # dans le terminal, sans interface
+python -m jarvis --voix        # dans le terminal, au micro (avec requirements-voix.txt)
 ```
 
 Ajoute `--mot-cle` pour qu'il ne réponde que lorsque ta phrase contient « Jarvis »
@@ -70,7 +78,9 @@ Dans la conversation :
 
 ```
 jarvis/
-├── __main__.py   # la boucle de conversation (texte ou voix)
+├── __main__.py   # le démarrage, et le mode terminal (texte ou voix)
+├── web.py        # l'interface graphique (petit serveur local + fenêtre)
+├── static/index.html  # le design de l'interface
 ├── brain.py      # le dialogue avec l'IA (Ollama) et l'utilisation des outils
 ├── tools.py      # les actions que Jarvis peut faire sur ton PC
 └── voice.py      # micro → texte et texte → voix

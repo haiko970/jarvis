@@ -1,4 +1,4 @@
-"""Point d'entrée : python -m jarvis [--voix]"""
+"""Point d'entrée : python -m jarvis [--terminal | --voix]"""
 
 import argparse
 import sys
@@ -39,7 +39,8 @@ def show_tool(name: str, args: dict) -> None:
 def main() -> None:
     load_dotenv()
     parser = argparse.ArgumentParser(description="Jarvis, ton assistant personnel")
-    parser.add_argument("--voix", action="store_true", help="parler à Jarvis au micro")
+    parser.add_argument("--terminal", action="store_true", help="discuter dans le terminal, sans interface")
+    parser.add_argument("--voix", action="store_true", help="parler à Jarvis au micro, dans le terminal")
     parser.add_argument(
         "--mot-cle",
         action="store_true",
@@ -56,6 +57,13 @@ def main() -> None:
     except ollama.ResponseError as e:
         print(f"\n❌ Impossible de télécharger le modèle {MODEL} : {e.error}")
         sys.exit(1)
+
+    if not (args.terminal or args.voix):
+        from .web import serve
+
+        serve(brain)
+        return
+
     voice = None
     if args.voix:
         try:
