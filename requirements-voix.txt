@@ -1,0 +1,4 @@
+# Dépendances optionnelles pour parler à Jarvis (micro + haut-parleurs)
+SpeechRecognition>=3.10
+PyAudio>=0.2.14
+pyttsx3>=2.90
