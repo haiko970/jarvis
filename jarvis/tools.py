@@ -11,7 +11,7 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
-from . import powers
+from . import config, powers
 
 NOTES_FILE = Path.home() / ".jarvis_notes.json"
 
@@ -67,8 +67,30 @@ TOOLS = [
     },
     {
         "name": "meteo",
-        "description": "Donne la météo actuelle et les prévisions des prochains jours pour une ville.",
-        "input_schema": _schema({"ville": {"type": "string", "description": "ex. Paris"}}, ["ville"]),
+        "description": (
+            "Donne la météo actuelle et les prévisions pour aujourd'hui, demain et après-demain. "
+            "Laisse 'ville' vide pour utiliser la ville de l'utilisateur."
+        ),
+        "input_schema": _schema({"ville": {"type": "string", "description": "ex. Paris (facultatif)"}}, []),
+    },
+    {
+        "name": "definir_ville",
+        "description": "Enregistre la ville où habite l'utilisateur (utilisée par défaut pour la météo).",
+        "input_schema": _schema({"ville": {"type": "string"}}, ["ville"]),
+    },
+    {
+        "name": "retenir_info",
+        "description": (
+            "Retient pour toujours une information sur l'utilisateur (goûts, famille, animaux, travail, "
+            "anniversaire, habitudes…). À utiliser quand il te demande de retenir quelque chose "
+            "ou quand il te confie une info personnelle durable."
+        ),
+        "input_schema": _schema({"info": {"type": "string", "description": "Phrase courte, ex. « Son chat s'appelle Moka »"}}, ["info"]),
+    },
+    {
+        "name": "oublier_info",
+        "description": "Oublie une information retenue sur l'utilisateur, quand il te le demande.",
+        "input_schema": _schema({"info": {"type": "string", "description": "Mots-clés de l'info à oublier"}}, ["info"]),
     },
     {
         "name": "recherche_web",
@@ -152,16 +174,52 @@ def effacer_notes() -> str:
     return "Toutes les notes ont été supprimées."
 
 
-def meteo(ville: str) -> str:
+def meteo(ville: str = "") -> str:
+    ville = (ville or "").strip() or config.load()["ville"]
+    if not ville:
+        return (
+            "Ville inconnue. Demande à l'utilisateur quelle est sa ville, "
+            "puis enregistre-la avec definir_ville."
+        )
     url = f"https://wttr.in/{urllib.parse.quote(ville)}?format=j1&lang=fr"
     with urllib.request.urlopen(url, timeout=10) as r:
         data = json.load(r)
+
+    def describe(block: dict) -> str:
+        return (block.get("lang_fr") or block["weatherDesc"])[0]["value"].strip()
+
     now = data["current_condition"][0]
-    desc = (now.get("lang_fr") or now["weatherDesc"])[0]["value"]
-    lines = [f"Maintenant à {ville} : {desc}, {now['temp_C']}°C (ressenti {now['FeelsLikeC']}°C)."]
-    for day in data["weather"][:3]:
-        lines.append(f"{day['date']} : min {day['mintempC']}°C, max {day['maxtempC']}°C")
+    lines = [f"Maintenant à {ville} : {describe(now)}, {now['temp_C']}°C (ressenti {now['FeelsLikeC']}°C)."]
+    for label, day in zip(("Aujourd'hui", "Demain", "Après-demain"), data["weather"]):
+        midday = day["hourly"][len(day["hourly"]) // 2]
+        lines.append(
+            f"{label} ({day['date']}) : {describe(midday)}, de {day['mintempC']}°C à {day['maxtempC']}°C, "
+            f"risque de pluie {midday.get('chanceofrain', '?')} %."
+        )
     return "\n".join(lines)
+
+
+def definir_ville(ville: str) -> str:
+    config.save({"ville": ville.strip()})
+    return f"Ville enregistrée : {ville}."
+
+
+def retenir_info(info: str) -> str:
+    souvenirs = config.load()["souvenirs"]
+    if info.strip() and info.strip() not in souvenirs:
+        souvenirs.append(info.strip())
+        config.save({"souvenirs": souvenirs})
+    return f"C'est retenu : {info}"
+
+
+def oublier_info(info: str) -> str:
+    souvenirs = config.load()["souvenirs"]
+    words = [w for w in info.lower().split() if len(w) > 2]
+    kept = [s for s in souvenirs if not (words and all(w in s.lower() for w in words))]
+    if len(kept) == len(souvenirs):
+        return "Je n'ai trouvé aucun souvenir correspondant."
+    config.save({"souvenirs": kept})
+    return f"{len(souvenirs) - len(kept)} souvenir(s) oublié(s)."
 
 
 def recherche_web(requete: str) -> str:
@@ -181,6 +239,9 @@ HANDLERS = {
     "ajouter_note": ajouter_note,
     "lire_notes": lire_notes,
     "meteo": meteo,
+    "definir_ville": definir_ville,
+    "retenir_info": retenir_info,
+    "oublier_info": oublier_info,
     "recherche_web": recherche_web,
     "effacer_notes": effacer_notes,
 }

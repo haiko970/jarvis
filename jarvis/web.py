@@ -110,9 +110,11 @@ def serve(brain: Brain) -> None:
                 changes = json.loads(raw or b"{}")
                 before = config.load()
                 after = config.save(changes)
-                if (before["prenom"], before["personnalite"]) != (after["prenom"], after["personnalite"]):
-                    with lock:
+                with lock:
+                    if before["personnalite"] != after["personnalite"]:
                         brain.reset()  # nouvelle personnalité : on repart d'une conversation neuve
+                    else:
+                        brain.refresh_profile()
                 self._json({"settings": after})
                 return
 

@@ -34,8 +34,21 @@ def build_system_prompt() -> str:
     settings = config.load()
     style = config.PERSONNALITES.get(settings["personnalite"], config.PERSONNALITES["majordome"])[1]
     parts = [SYSTEM_PROMPT, f"Ta personnalité : {style}"]
+    profile = []
     if settings["prenom"]:
-        parts.append(f"L'utilisateur s'appelle {settings['prenom']} : utilise son prénom de temps en temps.")
+        profile.append(f"- Prénom : {settings['prenom']} (utilise-le de temps en temps)")
+    if settings["ville"]:
+        profile.append(f"- Ville : {settings['ville']} (ville par défaut pour la météo et les questions locales)")
+    if settings["a_propos"].strip():
+        profile.append(f"- Présentation écrite par l'utilisateur : {settings['a_propos'].strip()}")
+    profile += [f"- {s}" for s in settings["souvenirs"]]
+    if profile:
+        parts.append("Ce que tu sais sur l'utilisateur :\n" + "\n".join(profile))
+    parts.append(
+        "Sers-toi de ces informations sans redemander ce que tu sais déjà. "
+        "Quand l'utilisateur te confie une info personnelle durable, retiens-la avec retenir_info ; "
+        "quand l'utilisateur mentionne sa ville, enregistre-la avec definir_ville."
+    )
     parts.append(f"Nous sommes le {datetime.date.today().strftime('%d/%m/%Y')}.")
     return "\n\n".join(parts)
 
@@ -62,6 +75,10 @@ class Brain:
 
     def reset(self) -> None:
         self.messages: list = [{"role": "system", "content": build_system_prompt()}]
+
+    def refresh_profile(self) -> None:
+        """Met à jour les infos sur l'utilisateur sans effacer la conversation."""
+        self.messages[0] = {"role": "system", "content": build_system_prompt()}
 
     def ensure_model(self, on_progress=None) -> None:
         """Vérifie qu'Ollama tourne et télécharge le modèle s'il n'est pas encore là."""
@@ -110,6 +127,8 @@ class Brain:
                 if on_tool:
                     on_tool(name, args)
                 output, _ = run_tool(name, args)
+                if name in ("definir_ville", "retenir_info", "oublier_info"):
+                    self.refresh_profile()
                 self.messages.append({"role": "tool", "content": output, "tool_name": name})
 
         return "Je me suis un peu perdu dans mes actions, peux-tu reformuler ?"

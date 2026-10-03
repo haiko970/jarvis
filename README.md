@@ -13,7 +13,8 @@ Il peut agir sur ton PC :
 - 🚀 lancer des applications (« lance la calculatrice », « ouvre Spotify »)
 - 📝 retenir des notes et des rappels (« note que je dois appeler maman »)
 - 💻 te donner des infos sur ton ordinateur (espace disque, système)
-- 🌦️ donner la météo d'une ville
+- 🌦️ donner la météo (aujourd'hui, demain, après-demain), chez toi ou ailleurs
+- 🧠 se souvenir de toi : ta ville, tes goûts, tes infos (« retiens que mon anniversaire est le 12 mars »)
 - 🔎 chercher sur internet (actualités, questions diverses)
 - 🔊 régler le volume (« monte le son », « mets le volume à 30 », « coupe le son »)
 - 🎵 contrôler la musique et les vidéos (pause, suivant, précédent) et chercher sur Spotify
@@ -82,7 +83,7 @@ Dans la conversation :
 
 ## 4. Personnaliser ton Jarvis
 
-- **Sa voix, son caractère, ton prénom** : clique sur ⚙️ en haut à droite de la fenêtre de Jarvis.
+- **Sa voix, son caractère, ton prénom, ta ville, ses souvenirs** : clique sur ⚙️ en haut à droite de la fenêtre de Jarvis.
 - **Ses instructions de base** : modifie `SYSTEM_PROMPT` dans `jarvis/brain.py`.
 - **De nouveaux pouvoirs** : dans `jarvis/tools.py`, écris une fonction Python, décris-la dans
   la liste `TOOLS` et ajoute-la à `HANDLERS`. Jarvis saura l'utiliser tout seul.

@@ -7,6 +7,9 @@ CONFIG_FILE = Path.home() / ".jarvis_config.json"
 
 DEFAULTS = {
     "prenom": "",
+    "ville": "",  # ville par défaut pour la météo
+    "a_propos": "",  # ce que l'utilisateur veut que Jarvis sache sur lui
+    "souvenirs": [],  # infos retenues au fil des conversations
     "personnalite": "majordome",
     "voix": "",  # nom de la voix choisie dans l'interface ("" = choix automatique)
     "vitesse": 1.0,

@@ -187,6 +187,18 @@
   .hint { font-size: 12px; color: var(--muted); margin: 0; }
   .toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
   .toggle input { width: 42px; height: 24px; accent-color: var(--cyan); flex-shrink: 0; }
+  .panel textarea {
+    width: 100%; min-height: 84px; resize: vertical; background: var(--panel); color: var(--text);
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: inherit; outline: none;
+  }
+  .panel textarea:focus { border-color: var(--cyan); }
+  .memories { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .memories li {
+    display: flex; gap: 8px; align-items: flex-start; justify-content: space-between;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 14px;
+  }
+  .memories li button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; padding: 0 2px; }
+  .memories li button:hover { color: var(--danger); }
   .saved { color: var(--cyan); font-size: 12px; letter-spacing: normal; opacity: 0; transition: opacity 0.2s; }
   .saved.show { opacity: 1; }
 </style>
@@ -263,6 +275,27 @@
   </section>
 
   <section>
+    <h3>🧠 Ce que Jarvis sait de toi</h3>
+    <div class="field">
+      <label for="ville">Ta ville (pour la météo)</label>
+      <input type="text" id="ville" maxlength="60" placeholder="ex. Lyon">
+    </div>
+    <div class="field">
+      <label for="aPropos">À propos de toi</label>
+      <textarea id="aPropos" maxlength="1500" placeholder="ex. J'adore les jeux vidéo et le foot, je travaille le samedi, j'ai un chien qui s'appelle Rex."></textarea>
+    </div>
+    <div class="field">
+      <label>Ses souvenirs</label>
+      <ul class="memories" id="memories"></ul>
+      <div class="row">
+        <input type="text" id="newMemory" maxlength="200" placeholder="Ajouter un souvenir…">
+        <button class="btn" id="addMemory" type="button">＋</button>
+      </div>
+      <p class="hint">Tu peux aussi lui dire « Retiens que… » ou « Oublie que… ».</p>
+    </div>
+  </section>
+
+  <section>
     <h3>👂 Réveil à la voix</h3>
     <label class="toggle">
       <span>Jarvis écoute en permanence et répond quand tu dis « Jarvis »<br>
@@ -283,6 +316,7 @@ const TOOL_LABELS = {
   effacer_notes: "🗑️ Notes effacées", meteo: "🌦️ Météo", recherche_web: "🔎 Recherche web",
   volume: "🔊 Volume", controle_musique: "🎵 Musique", spotify_rechercher: "🟢 Spotify",
   minuteur: "⏰ Minuteur", lister_minuteurs: "⏰ Minuteurs", annuler_minuteurs: "⏰ Annulés",
+  definir_ville: "📍 Ville enregistrée", retenir_info: "🧠 Retenu", oublier_info: "🧠 Oublié",
 };
 
 let settings = { voix: "", vitesse: 1, hauteur: 1, prenom: "", personnalite: "majordome", ecoute_permanente: false };
@@ -335,7 +369,7 @@ function openSettings(open) {
   $("panel").classList.toggle("open", open);
   $("overlay").classList.toggle("open", open);
 }
-$("openSettings").onclick = () => openSettings(true);
+$("openSettings").onclick = () => { loadSettings(); openSettings(true); };
 $("closeSettings").onclick = () => openSettings(false);
 $("overlay").onclick = () => openSettings(false);
 
@@ -349,6 +383,9 @@ async function loadSettings() {
   } catch (e) {}
   $("personnalite").value = settings.personnalite;
   $("prenom").value = settings.prenom || "";
+  $("ville").value = settings.ville || "";
+  $("aPropos").value = settings.a_propos || "";
+  renderMemories();
   $("rate").value = settings.vitesse; $("pitch").value = settings.hauteur;
   showSliderValues();
   fillVoices();
@@ -357,12 +394,47 @@ async function loadSettings() {
 
 $("prenom").onchange = () => {
   saveSettings({ prenom: $("prenom").value.trim() });
-  chat.innerHTML = ""; addMessage("C'est noté. Je vous écoute.", "jarvis");
 };
 $("personnalite").onchange = () => {
   saveSettings({ personnalite: $("personnalite").value });
   chat.innerHTML = ""; addMessage("Nouvelle personnalité activée. Que puis-je faire pour vous ?", "jarvis");
 };
+
+$("ville").onchange = () => saveSettings({ ville: $("ville").value.trim() });
+$("aPropos").onchange = () => saveSettings({ a_propos: $("aPropos").value.trim() });
+
+function renderMemories() {
+  const list = $("memories");
+  list.innerHTML = "";
+  const souvenirs = settings.souvenirs || [];
+  if (!souvenirs.length) {
+    const li = document.createElement("li");
+    li.innerHTML = '<span class="hint">Aucun souvenir pour l\'instant.</span>';
+    list.appendChild(li);
+    return;
+  }
+  souvenirs.forEach((text, i) => {
+    const li = document.createElement("li");
+    const span = document.createElement("span");
+    span.textContent = text;
+    const del = document.createElement("button");
+    del.textContent = "✕"; del.title = "Oublier"; del.type = "button";
+    del.onclick = () => {
+      const next = souvenirs.filter((_, j) => j !== i);
+      saveSettings({ souvenirs: next }).then(renderMemories);
+    };
+    li.append(span, del);
+    list.appendChild(li);
+  });
+}
+function addMemory() {
+  const text = $("newMemory").value.trim();
+  if (!text) return;
+  $("newMemory").value = "";
+  saveSettings({ souvenirs: [...(settings.souvenirs || []), text] }).then(renderMemories);
+}
+$("addMemory").onclick = addMemory;
+$("newMemory").onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); addMemory(); } };
 
 function showSliderValues() {
   $("rateVal").textContent = "×" + Number($("rate").value).toFixed(2);
