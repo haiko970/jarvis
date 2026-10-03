@@ -6,6 +6,8 @@ import platform
 import shutil
 import subprocess
 import sys
+import urllib.parse
+import urllib.request
 import webbrowser
 from pathlib import Path
 
@@ -25,13 +27,11 @@ TOOLS = [
     {
         "name": "obtenir_date_heure",
         "description": "Donne la date et l'heure actuelles de l'ordinateur.",
-        "strict": True,
         "input_schema": _schema({}, []),
     },
     {
         "name": "ouvrir_site_web",
         "description": "Ouvre une URL dans le navigateur par défaut de l'utilisateur.",
-        "strict": True,
         "input_schema": _schema(
             {"url": {"type": "string", "description": "URL complète, ex. https://youtube.com"}},
             ["url"],
@@ -43,7 +43,6 @@ TOOLS = [
             "Lance une application installée sur l'ordinateur "
             "(ex. 'notepad', 'calc', 'Spotify', 'firefox')."
         ),
-        "strict": True,
         "input_schema": _schema(
             {"nom": {"type": "string", "description": "Nom de l'application ou de l'exécutable"}},
             ["nom"],
@@ -52,25 +51,31 @@ TOOLS = [
     {
         "name": "infos_systeme",
         "description": "Donne des infos sur l'ordinateur : système, processeur, espace disque.",
-        "strict": True,
         "input_schema": _schema({}, []),
     },
     {
         "name": "ajouter_note",
         "description": "Enregistre une note ou un rappel pour l'utilisateur.",
-        "strict": True,
         "input_schema": _schema({"texte": {"type": "string"}}, ["texte"]),
     },
     {
         "name": "lire_notes",
         "description": "Relit toutes les notes enregistrées par l'utilisateur.",
-        "strict": True,
         "input_schema": _schema({}, []),
+    },
+    {
+        "name": "meteo",
+        "description": "Donne la météo actuelle et les prévisions des prochains jours pour une ville.",
+        "input_schema": _schema({"ville": {"type": "string", "description": "ex. Paris"}}, ["ville"]),
+    },
+    {
+        "name": "recherche_web",
+        "description": "Cherche sur internet (actualités, faits récents, informations que tu ne connais pas).",
+        "input_schema": _schema({"requete": {"type": "string"}}, ["requete"]),
     },
     {
         "name": "effacer_notes",
         "description": "Supprime toutes les notes. À n'utiliser que si l'utilisateur le demande explicitement.",
-        "strict": True,
         "input_schema": _schema({}, []),
     },
 ]
@@ -145,6 +150,27 @@ def effacer_notes() -> str:
     return "Toutes les notes ont été supprimées."
 
 
+def meteo(ville: str) -> str:
+    url = f"https://wttr.in/{urllib.parse.quote(ville)}?format=j1&lang=fr"
+    with urllib.request.urlopen(url, timeout=10) as r:
+        data = json.load(r)
+    now = data["current_condition"][0]
+    desc = (now.get("lang_fr") or now["weatherDesc"])[0]["value"]
+    lines = [f"Maintenant à {ville} : {desc}, {now['temp_C']}°C (ressenti {now['FeelsLikeC']}°C)."]
+    for day in data["weather"][:3]:
+        lines.append(f"{day['date']} : min {day['mintempC']}°C, max {day['maxtempC']}°C")
+    return "\n".join(lines)
+
+
+def recherche_web(requete: str) -> str:
+    from ddgs import DDGS
+
+    results = DDGS().text(requete, region="fr-fr", max_results=5)
+    if not results:
+        return "Aucun résultat."
+    return "\n\n".join(f"{r['title']}\n{r['body']}\n{r['href']}" for r in results)
+
+
 HANDLERS = {
     "obtenir_date_heure": obtenir_date_heure,
     "ouvrir_site_web": ouvrir_site_web,
@@ -152,6 +178,8 @@ HANDLERS = {
     "infos_systeme": infos_systeme,
     "ajouter_note": ajouter_note,
     "lire_notes": lire_notes,
+    "meteo": meteo,
+    "recherche_web": recherche_web,
     "effacer_notes": effacer_notes,
 }
 

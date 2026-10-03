@@ -1,16 +1,35 @@
 """Point d'entrée : python -m jarvis [--voix]"""
 
 import argparse
-import os
 import sys
 
-import anthropic
+import httpx
+import ollama
 from dotenv import load_dotenv
 
-from .brain import Brain
+from .brain import MODEL, Brain
 
 WAKE_WORD = "jarvis"
 QUIT_WORDS = {"quitter", "exit", "quit", "au revoir", "bonne nuit"}
+
+
+OLLAMA_MISSING = """
+❌ Je n'arrive pas à joindre Ollama.
+   1. Vérifie qu'Ollama est installé : https://ollama.com/download
+   2. Lance l'application Ollama (une petite icône de lama apparaît près de l'horloge).
+   3. Relance Jarvis.
+"""
+
+
+def show_download(progress) -> None:
+    if progress.total and progress.completed:
+        pct = progress.completed * 100 // progress.total
+        size = progress.total / 1e9
+        print(f"\r📥 Téléchargement du cerveau de Jarvis ({size:.1f} Go) : {pct:3d} %", end="", flush=True)
+    elif progress.status == "success":
+        print("\n✅ Cerveau téléchargé !")
+    elif progress.status:
+        print(f"\r📥 {progress.status:<60}", end="", flush=True)
 
 
 def show_tool(name: str, args: dict) -> None:
@@ -28,11 +47,15 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    if not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")):
-        print("❌ Clé API manquante. Copie .env.example en .env et mets-y ta clé ANTHROPIC_API_KEY.")
-        sys.exit(1)
-
     brain = Brain()
+    try:
+        brain.ensure_model(on_progress=show_download)
+    except (ConnectionError, httpx.ConnectError):
+        print(OLLAMA_MISSING)
+        sys.exit(1)
+    except ollama.ResponseError as e:
+        print(f"\n❌ Impossible de télécharger le modèle {MODEL} : {e.error}")
+        sys.exit(1)
     voice = None
     if args.voix:
         try:
@@ -77,15 +100,11 @@ def main() -> None:
 
         try:
             reply = brain.ask(text, on_tool=show_tool)
-        except anthropic.AuthenticationError:
-            print("❌ Clé API invalide. Vérifie ANTHROPIC_API_KEY dans ton fichier .env.")
-            break
-        except anthropic.RateLimitError:
-            reply = "Je suis un peu débordé, réessaie dans quelques secondes."
-        except anthropic.APIConnectionError:
-            reply = "Je n'arrive pas à joindre mes serveurs. Vérifie ta connexion internet."
-        except anthropic.APIStatusError as e:
-            reply = f"Une erreur est survenue côté serveur ({e.status_code})."
+        except (ConnectionError, httpx.ConnectError):
+            print(OLLAMA_MISSING)
+            continue
+        except ollama.ResponseError as e:
+            reply = f"Mon cerveau a rencontré une erreur : {e.error}"
 
         print(f"🤖 Jarvis : {reply}\n")
         if voice:

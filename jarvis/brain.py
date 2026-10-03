@@ -1,80 +1,87 @@
-"""Le cerveau de Jarvis : la conversation avec Claude et la boucle d'outils."""
+"""Le cerveau de Jarvis : une IA gratuite qui tourne sur ton PC grâce à Ollama."""
 
+import datetime
 import os
 
-import anthropic
+import ollama
 
 from .tools import TOOLS, run_tool
 
-MODEL = os.environ.get("JARVIS_MODEL", "claude-opus-5-5")
-EFFORT = os.environ.get("JARVIS_EFFORT", "low")  # low = réponses rapides, idéal pour discuter
+# qwen3:8b : bon en français, sait utiliser des outils, tourne bien avec 16 Go de RAM.
+MODEL = os.environ.get("JARVIS_MODEL", "qwen3:8b")
 
 SYSTEM_PROMPT = """Tu es Jarvis, l'assistant personnel de l'utilisateur, inspiré du majordome IA d'Iron Man.
-Tu parles français, avec un ton poli, efficace et une pointe d'humour britannique.
+Tu parles toujours français, avec un ton poli, efficace et une pointe d'humour britannique.
 Tu tournes sur l'ordinateur de l'utilisateur et tu peux agir dessus grâce à tes outils
-(ouvrir des sites et des applications, gérer des notes, consulter l'heure et le système)
-ainsi que chercher sur le web.
+(ouvrir des sites et des applications, gérer des notes, consulter l'heure, la météo et le système,
+chercher sur internet). Utilise un outil dès qu'il est utile plutôt que d'inventer une réponse,
+en particulier pour l'heure, la date, la météo et l'actualité.
 Tes réponses peuvent être lues à voix haute : sois concis (2 à 4 phrases en général),
 évite le Markdown, les listes à puces et les émojis sauf si on te demande un texte détaillé."""
 
-SERVER_TOOLS = [{"type": "web_search_20260209", "name": "web_search", "max_uses": 3}]
+# Format attendu par Ollama pour décrire les outils
+OLLAMA_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": t["name"],
+            "description": t["description"],
+            "parameters": t["input_schema"],
+        },
+    }
+    for t in TOOLS
+]
 
 
 class Brain:
     def __init__(self) -> None:
-        self.client = anthropic.Anthropic()
-        self.messages: list[dict] = []
+        self.client = ollama.Client()
+        self.think = False  # pas de « réflexion » à voix basse : réponses plus rapides
+        self.reset()
 
     def reset(self) -> None:
-        self.messages = []
+        today = datetime.date.today().strftime("%d/%m/%Y")
+        self.messages: list = [
+            {"role": "system", "content": f"{SYSTEM_PROMPT}\nNous sommes le {today}."}
+        ]
+
+    def ensure_model(self, on_progress=None) -> None:
+        """Vérifie qu'Ollama tourne et télécharge le modèle s'il n'est pas encore là."""
+        installed = {m.model for m in self.client.list().models}
+        if MODEL in installed or f"{MODEL}:latest" in installed:
+            return
+        for progress in self.client.pull(MODEL, stream=True):
+            if on_progress:
+                on_progress(progress)
+
+    def _chat(self):
+        try:
+            return self.client.chat(
+                model=MODEL, messages=self.messages, tools=OLLAMA_TOOLS, think=self.think
+            )
+        except ollama.ResponseError as e:
+            # Certains modèles ne connaissent pas l'option « think » : on réessaie sans.
+            if self.think is not None and "think" in str(e).lower():
+                self.think = None
+                return self._chat()
+            raise
 
     def ask(self, text: str, on_tool=None) -> str:
-        """Envoie un message à Claude, exécute les outils demandés et renvoie la réponse finale."""
+        """Envoie un message à l'IA, exécute les outils demandés et renvoie la réponse finale."""
         self.messages.append({"role": "user", "content": text})
 
-        for _ in range(10):  # garde-fou contre les boucles infinies
-            response = self.client.beta.messages.create(
-                model=MODEL,
-                max_tokens=16000,
-                system=SYSTEM_PROMPT,
-                tools=TOOLS + SERVER_TOOLS,
-                messages=self.messages,
-                output_config={"effort": EFFORT},
-                cache_control={"type": "ephemeral"},
-                betas=["server-side-fallback-2026-07-01"],
-                fallbacks="default",
-            )
-            # On garde le contenu complet (blocs de réflexion compris) : l'historique doit rester intact.
-            self.messages.append({"role": "assistant", "content": response.content})
+        for _ in range(8):  # garde-fou contre les boucles infinies
+            message = self._chat().message
+            self.messages.append(message)
 
-            if response.stop_reason == "refusal":
-                return "Désolé, je ne peux pas répondre à cette demande."
+            if not message.tool_calls:
+                return (message.content or "").strip() or "(pas de réponse)"
 
-            if response.stop_reason == "pause_turn":
-                continue  # recherche web longue : on relance pour que Claude termine
-
-            if response.stop_reason != "tool_use":
-                return _text_of(response) or "(pas de réponse)"
-
-            results = []
-            for block in response.content:
-                if block.type != "tool_use":
-                    continue
+            for call in message.tool_calls:
+                name, args = call.function.name, dict(call.function.arguments or {})
                 if on_tool:
-                    on_tool(block.name, block.input)
-                output, is_error = run_tool(block.name, dict(block.input))
-                results.append(
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": block.id,
-                        "content": output,
-                        "is_error": is_error,
-                    }
-                )
-            self.messages.append({"role": "user", "content": results})
+                    on_tool(name, args)
+                output, _ = run_tool(name, args)
+                self.messages.append({"role": "tool", "content": output, "tool_name": name})
 
         return "Je me suis un peu perdu dans mes actions, peux-tu reformuler ?"
-
-
-def _text_of(response) -> str:
-    return "".join(b.text for b in response.content if b.type == "text").strip()
