@@ -13,45 +13,36 @@ Son « cerveau » est Claude, l'IA d'Anthropic. Il peut agir sur ton PC :
 
 Il fonctionne sous Windows, macOS et Linux.
 
-## 1. Installation
+## 🚀 Démarrage rapide (le plus simple)
 
-1. Installe **Python 3.10 ou plus récent** : https://www.python.org/downloads/
-   (sous Windows, coche bien **« Add Python to PATH »** pendant l'installation).
-2. Télécharge ce projet (bouton vert **Code → Download ZIP**, puis décompresse-le) ou clone-le avec git.
-3. Ouvre un terminal dans le dossier du projet, puis lance :
+1. Installe **Python** depuis https://www.python.org/downloads/
+   (sous Windows, coche bien **« Add python.exe to PATH »** au début de l'installation).
+2. Télécharge Jarvis : https://github.com/haiko970/jarvis/archive/refs/heads/claude/adoring-mayer-u2tfmy.zip
+   puis fais un clic droit sur le fichier ZIP → **Extraire tout**.
+3. Crée ta clé API sur https://console.anthropic.com (**Settings → API Keys**, après avoir ajouté un peu de crédit).
+4. Dans le dossier extrait, **double-clique** sur :
+   - `lancer_jarvis.bat` sous Windows (ou `lancer_jarvis_voix.bat` pour lui parler au micro) ;
+   - `lancer_jarvis.command` sous macOS.
+5. La première fois, tout s'installe tout seul, puis on te demande de coller ta clé. C'est tout !
 
-   ```bash
-   python -m venv .venv
-   # Windows :
-   .venv\Scripts\activate
-   # macOS / Linux :
-   source .venv/bin/activate
+> ⚠️ Ta clé est enregistrée dans un fichier `.env`. Ne le partage jamais : il contient ta clé secrète.
+> Pour changer de clé, supprime simplement le fichier `.env` et relance Jarvis.
 
-   pip install -r requirements.txt
-   ```
-
-## 2. Ta clé API
-
-1. Crée un compte sur https://console.anthropic.com et ajoute un peu de crédit.
-2. Va dans **Settings → API Keys** et crée une clé.
-3. Copie le fichier `.env.example` en `.env`, puis remplace `sk-ant-...` par ta clé.
-
-> ⚠️ Ne partage jamais ton fichier `.env` : il contient ta clé secrète (il est déjà ignoré par git).
-
-## 3. Lancer Jarvis
-
-**Mode texte** (tu écris, il répond) :
+## Installation manuelle (pour les curieux)
 
 ```bash
-python -m jarvis
+python -m venv .venv
+# Windows :
+.venv\Scripts\activate
+# macOS / Linux :
+source .venv/bin/activate
+
+pip install -r requirements.txt
+pip install -r requirements-voix.txt   # optionnel, pour le mode vocal
 ```
 
-**Mode vocal** (tu parles au micro, il te répond à voix haute) : installe d'abord les dépendances vocales.
-
-```bash
-pip install -r requirements-voix.txt
-python -m jarvis --voix
-```
+Copie `.env.example` en `.env` et mets-y ta clé, puis lance Jarvis avec `python -m jarvis`
+(ou `python -m jarvis --voix` pour le mode vocal).
 
 Ajoute `--mot-cle` pour qu'il ne réponde que lorsque ta phrase contient « Jarvis »
 (par exemple « Jarvis, quelle heure est-il ? »).
