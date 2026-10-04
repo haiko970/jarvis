@@ -335,6 +335,32 @@
   </section>
 
   <section>
+    <h3>🎓 Pronote</h3>
+    <div class="field">
+      <label for="pronoteEnt">Comment tu te connectes</label>
+      <select id="pronoteEnt"></select>
+    </div>
+    <div class="field">
+      <label for="pronoteUrl">Adresse de ta page Pronote</label>
+      <input type="text" id="pronoteUrl" placeholder="https://0440000x.index-education.net/pronote/eleve.html">
+      <p class="hint">Connecte-toi à e-lyco → ouvre <b>Pronote</b> → copie l'adresse de la page dans la barre
+        du navigateur (elle contient <code>index-education.net/pronote</code>).</p>
+    </div>
+    <div class="field">
+      <label for="pronoteUser">Identifiant (celui d'e-lyco)</label>
+      <input type="text" id="pronoteUser" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="pronotePassword">Mot de passe (celui d'e-lyco)</label>
+      <input type="password" id="pronotePassword" autocomplete="new-password">
+      <p class="hint">🔒 Rangé dans le coffre-fort de Windows. Outil non officiel : il peut ne plus marcher
+        quelques jours après une grosse mise à jour de Pronote.</p>
+    </div>
+    <p><button class="btn" id="pronoteSave" type="button">Enregistrer et tester</button></p>
+    <p class="hint" id="pronoteStatus"></p>
+  </section>
+
+  <section>
     <h3>☀️ Brief du jour</h3>
     <label class="toggle" id="autostartRow">
       <span>Lancer Jarvis quand j'allume mon PC, avec mon brief<br>
@@ -421,7 +447,8 @@ const TOOL_LABELS = {
   minuteur: "⏰ Minuteur", lister_minuteurs: "⏰ Minuteurs", annuler_minuteurs: "⏰ Annulés",
   definir_ville: "📍 Ville enregistrée", retenir_info: "🧠 Retenu", oublier_info: "🧠 Oublié",
   ajouter_tache: "✅ Tâche ajoutée", lister_taches: "📋 Tâches", terminer_tache: "✔️ Tâche faite",
-  lire_mails: "📧 Mails", agenda: "📅 Agenda", marees: "🌊 Marées", brief_du_jour: "☀️ Brief du jour",
+  lire_mails: "📧 Mails", agenda: "📅 Agenda", marees: "🌊 Marées",
+  emploi_du_temps: "🎓 Emploi du temps", devoirs: "📚 Devoirs", notes: "📊 Notes", brief_du_jour: "☀️ Brief du jour",
 };
 
 let settings = { voix: "", vitesse: 1, hauteur: 1, prenom: "", personnalite: "majordome", ecoute_permanente: false };
@@ -897,6 +924,14 @@ function fillBriefSettings(data) {
   $("mailStatus").textContent = data.mail_ok ? "✅ Boîte mail connectée." : "";
   $("agendaIcs").value = settings.agenda_ics || "";
   $("mareeLieu").value = settings.maree_lieu || "";
+  const entSel = $("pronoteEnt");
+  if (!entSel.options.length) for (const [k, label] of Object.entries(data.pronote_ents || {})) entSel.add(new Option(label, k));
+  entSel.value = settings.pronote_ent || "ent_elyco";
+  $("pronoteUrl").value = settings.pronote_url || "";
+  $("pronoteUser").value = settings.pronote_identifiant || "";
+  $("pronotePassword").value = "";
+  $("pronotePassword").placeholder = data.pronote_ok ? "•••••••• (enregistré)" : "";
+  $("pronoteStatus").textContent = data.pronote_ok ? "✅ Pronote configuré." : "";
   $("autostart").checked = !!data.autostart;
   $("autostart").disabled = !data.autostart_supported;
   if (!data.autostart_supported) $("autostartHint").textContent = "Disponible seulement sous Windows.";
@@ -928,6 +963,20 @@ $("mailSave").onclick = async () => {
     $("mailStatus").textContent = (res.ok ? "✅ " : "❌ ") + res.message;
     if (res.ok) { $("mailPassword").value = ""; $("mailPassword").placeholder = "•••••••• (enregistré)"; }
   } catch (e) { $("mailStatus").textContent = "❌ Jarvis ne répond plus."; }
+};
+$("pronoteSave").onclick = async () => {
+  $("pronoteStatus").textContent = "⏳ Connexion à Pronote… (ça peut prendre une dizaine de secondes)";
+  try {
+    const res = await (await fetch("/api/pronote", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pronote_ent: $("pronoteEnt").value, pronote_url: $("pronoteUrl").value,
+        pronote_identifiant: $("pronoteUser").value, mot_de_passe: $("pronotePassword").value,
+      }),
+    })).json();
+    $("pronoteStatus").textContent = (res.ok ? "✅ " : "❌ ") + res.message;
+    if (res.ok) { $("pronotePassword").value = ""; $("pronotePassword").placeholder = "•••••••• (enregistré)"; }
+  } catch (e) { $("pronoteStatus").textContent = "❌ Jarvis ne répond plus."; }
 };
 $("mareeLieu").onchange = () => saveSettings({ maree_lieu: $("mareeLieu").value.trim() });
 $("agendaIcs").onchange = () => saveSettings({ agenda_ics: $("agendaIcs").value.trim() });

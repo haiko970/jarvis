@@ -15,7 +15,7 @@ import httpx
 import ollama
 
 from . import brief as brief_module
-from . import config, elevenlabs
+from . import config, elevenlabs, pronote
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -89,11 +89,14 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 settings = config.load()
                 settings.pop("mail_mdp_secours", None)  # les secrets ne sortent jamais
                 settings.pop("elevenlabs_cle_secours", None)
+                settings.pop("pronote_mdp_secours", None)
                 self._json({
                     "settings": settings,
                     "mail_services": {k: v[0] for k, v in brief_module.MAIL_SERVICES.items()},
                     "mail_ok": brief_module.mail_configured(),
                     "elevenlabs_ok": bool(config.get_secret("elevenlabs_cle")),
+                    "pronote_ok": pronote.configured(),
+                    "pronote_ents": pronote.ent_choices(),
                     "autostart_supported": brief_module.autostart_supported(),
                     "autostart": brief_module.autostart_enabled(),
                     "personnalites": personalities,
@@ -127,6 +130,7 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 changes = json.loads(raw or b"{}")
                 changes.pop("mail_mdp_secours", None)
                 changes.pop("elevenlabs_cle_secours", None)
+                changes.pop("pronote_mdp_secours", None)
                 before = config.load()
                 after = config.save(changes)
                 with lock:
@@ -163,6 +167,15 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 except RuntimeError as e:
                     config.save({"voix_moteur": "navigateur"})
                     self._json({"ok": False, "message": str(e)})
+                return
+
+            if self.path == "/api/pronote":
+                data = json.loads(raw or b"{}")
+                config.save({k: data.get(k, "").strip() for k in ("pronote_url", "pronote_identifiant", "pronote_ent") if k in data})
+                if data.get("mot_de_passe"):
+                    config.set_secret("pronote_mdp", data["mot_de_passe"])
+                ok, message = pronote.test()
+                self._json({"ok": ok, "message": message})
                 return
 
             if self.path == "/api/brief":

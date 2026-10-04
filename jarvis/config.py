@@ -25,6 +25,10 @@ DEFAULTS = {
     "mail_script_cle": "",  # clé secrète partagée entre Jarvis et le script
     "agenda_ics": "",
     "maree_lieu": "",
+    "pronote_url": "",
+    "pronote_identifiant": "",
+    "pronote_ent": "ent_elyco",
+    "pronote_mdp_secours": "",  # utilisé seulement si le coffre-fort de Windows est indisponible
     "voix_moteur": "navigateur",  # "navigateur" (gratuit) ou "elevenlabs"
     "elevenlabs_voix_id": "MBIQRZjHPU6xEjGuB3b8",
     "elevenlabs_cle_secours": "",  # utilisé seulement si le coffre-fort de Windows est indisponible  # port ou ville côtière pour les marées ("" = ville de l'utilisateur)  # lien secret iCal de l'agenda (Google Agenda, Outlook…)

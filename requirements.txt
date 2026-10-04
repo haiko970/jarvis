@@ -4,3 +4,4 @@ python-dotenv>=1.0
 keyring>=25
 icalendar>=6
 recurring-ical-events>=3
+pronotepy>=2.15
