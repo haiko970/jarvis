@@ -1,7 +1,9 @@
 """Pronote : emploi du temps, devoirs et notes (via pronotepy, outil non officiel)."""
 
 import datetime
+import json
 import threading
+import uuid as uuid_lib
 import unicodedata
 
 from . import config
@@ -41,11 +43,59 @@ def ent_choices() -> dict[str, str]:
     import pronotepy.ent
 
     names = sorted(n for n in dir(pronotepy.ent) if not n.startswith("_") and callable(getattr(pronotepy.ent, n)))
-    labels = {"aucun": "Aucun : identifiant Pronote direct", "ent_elyco": "e-lyco (Pays de la Loire)"}
+    labels = {
+        "qrcode": "📱 QR code Pronote (marche avec tous les ENT, recommandé)",
+        "aucun": "Identifiant Pronote direct (sans ENT)",
+        "ent_elyco": "e-lyco (Pays de la Loire)",
+    }
     return labels | {n: n.replace("_", " ") for n in names if n not in labels}
 
 
+def _qr_mode() -> bool:
+    return config.load()["pronote_ent"] == "qrcode"
+
+
+def _device_uuid() -> str:
+    value = config.load()["pronote_uuid"]
+    if not value:
+        value = str(uuid_lib.uuid4())
+        config.save({"pronote_uuid": value})
+    return value
+
+
+def _save_token(client) -> None:
+    """Après chaque connexion par QR code, Pronote donne un nouveau jeton pour la fois suivante."""
+    config.set_secret("pronote_jeton", json.dumps(client.export_credentials()))
+
+
+def qr_login(qr: dict, pin: str) -> tuple[bool, str]:
+    """Première connexion avec le QR code affiché dans Pronote et le code à 4 chiffres choisi."""
+    import pronotepy
+
+    global _client
+    try:
+        with _lock:
+            client = pronotepy.Client.qrcode_login(
+                qr, pin.strip(), uuid=_device_uuid(), device_name="Jarvis"
+            )
+            if not client.logged_in:
+                return False, "Pronote a refusé la connexion."
+            _save_token(client)
+            config.save({"pronote_ent": "qrcode", "pronote_url": qr.get("url", "")})
+            _client = client
+            return True, f"Connecté à Pronote : bonjour {client.info.name} !"
+    except pronotepy.QRCodeDecryptError:
+        return False, "Code à 4 chiffres incorrect : recommence avec le même code que dans Pronote."
+    except Exception as e:
+        return False, (
+            f"Échec de la connexion par QR code : {str(e).rstrip('.')}. Le QR code n'est valable que "
+            "quelques minutes : génères-en un nouveau et réessaie."
+        )
+
+
 def configured() -> bool:
+    if _qr_mode():
+        return bool(config.get_secret("pronote_jeton"))
     s = config.load()
     return bool(s["pronote_url"] and s["pronote_identifiant"] and config.get_secret("pronote_mdp"))
 
@@ -60,6 +110,17 @@ def _clean_url(url: str) -> str:
 def _connect():
     import pronotepy
     import pronotepy.ent
+
+    if _qr_mode():
+        creds = json.loads(config.get_secret("pronote_jeton"))
+        try:
+            client = pronotepy.Client.token_login(**creds, device_name="Jarvis")
+        except Exception as e:
+            raise RuntimeError(
+                f"La connexion à Pronote a expiré ({e}). Refais la connexion par QR code dans les réglages."
+            ) from None
+        _save_token(client)
+        return client
 
     s = config.load()
     ent_name = s["pronote_ent"]
@@ -83,6 +144,8 @@ def _get_client():
     if _client is not None:
         try:
             _client.session_check()
+            if _qr_mode():
+                _save_token(_client)  # le jeton a pu changer si pronotepy s'est reconnecté
             return _client
         except Exception:
             _client = None

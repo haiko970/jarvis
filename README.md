@@ -23,7 +23,7 @@ Il peut agir sur ton PC :
 - ✅ gérer ta liste de tâches (« ajoute à ma liste : appeler le dentiste demain »)
 - 📧 lire tes mails non lus (Gmail sans mot de passe grâce à un petit script Google, ou Outlook, Yahoo, Orange, Free…) sans les marquer comme lus
 - 🎓 lire **Pronote** : emploi du temps (cours annulés, profs absents), devoirs et notes
-  (connexion directe ou par ENT, dont e-lyco ; outil non officiel *pronotepy*)
+  (connexion par QR code, comme l'appli mobile, qui marche avec tous les ENT ; outil non officiel *pronotepy*)
 - 🌊 donner les heures de marée haute et basse (estimation)
 - 📅 lire ton agenda (Google Agenda ou tout agenda avec un lien iCal)
 - ☀️ te faire un **brief du jour** et **se lancer tout seul quand tu allumes ton PC**
@@ -116,3 +116,8 @@ jarvis/
 ├── config.py     # les réglages (voix, personnalité, prénom)
 └── voice.py      # micro → texte et texte → voix
 ```
+
+## Crédits
+
+- [pronotepy](https://github.com/bain3/pronotepy) (MIT) pour Pronote
+- [jsQR](https://github.com/cozmo/jsQR) (Apache 2.0) pour lire les QR codes, inclus dans `jarvis/static/jsQR.js`

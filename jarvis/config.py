@@ -27,7 +27,9 @@ DEFAULTS = {
     "maree_lieu": "",
     "pronote_url": "",
     "pronote_identifiant": "",
-    "pronote_ent": "ent_elyco",
+    "pronote_ent": "qrcode",  # "qrcode" (recommandé), "aucun" ou le nom d'un ENT pronotepy
+    "pronote_uuid": "",  # identifiant d'appareil de Jarvis auprès de Pronote (ne doit pas changer)
+    "pronote_jeton_secours": "",
     "pronote_mdp_secours": "",  # utilisé seulement si le coffre-fort de Windows est indisponible
     "voix_moteur": "navigateur",  # "navigateur" (gratuit) ou "elevenlabs"
     "elevenlabs_voix_id": "MBIQRZjHPU6xEjGuB3b8",

@@ -82,6 +82,8 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
             cancel_shutdown()
             if self.path.split("?")[0] in ("/", "/index.html"):
                 self._send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
+            elif self.path == "/jsQR.js":
+                self._send(200, (PAGE.parent / "jsQR.js").read_bytes(), "text/javascript; charset=utf-8")
             elif self.path == "/api/info":
                 self._json({"model": MODEL})
             elif self.path == "/api/settings":
@@ -90,6 +92,7 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 settings.pop("mail_mdp_secours", None)  # les secrets ne sortent jamais
                 settings.pop("elevenlabs_cle_secours", None)
                 settings.pop("pronote_mdp_secours", None)
+                settings.pop("pronote_jeton_secours", None)
                 self._json({
                     "settings": settings,
                     "mail_services": {k: v[0] for k, v in brief_module.MAIL_SERVICES.items()},
@@ -131,6 +134,7 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 changes.pop("mail_mdp_secours", None)
                 changes.pop("elevenlabs_cle_secours", None)
                 changes.pop("pronote_mdp_secours", None)
+                changes.pop("pronote_jeton_secours", None)
                 before = config.load()
                 after = config.save(changes)
                 with lock:
@@ -167,6 +171,18 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 except RuntimeError as e:
                     config.save({"voix_moteur": "navigateur"})
                     self._json({"ok": False, "message": str(e)})
+                return
+
+            if self.path == "/api/pronote_qr":
+                data = json.loads(raw or b"{}")
+                try:
+                    qr = json.loads(data.get("qr", ""))
+                    assert {"login", "jeton", "url"} <= set(qr)
+                except (ValueError, TypeError, AssertionError):
+                    self._json({"ok": False, "message": "Ce QR code n'est pas un QR code de connexion Pronote."})
+                    return
+                ok, message = pronote.qr_login(qr, data.get("pin", ""))
+                self._json({"ok": ok, "message": message})
                 return
 
             if self.path == "/api/pronote":
