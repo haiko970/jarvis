@@ -21,7 +21,7 @@ Il peut agir sur ton PC :
 - ⏰ programmer des minuteurs et des rappels (« rappelle-moi dans 10 minutes de sortir les pâtes »)
 - 👂 se réveiller quand tu dis « Jarvis » (à activer en bas de la fenêtre)
 - ✅ gérer ta liste de tâches (« ajoute à ma liste : appeler le dentiste demain »)
-- 📧 lire tes mails non lus (Gmail, Outlook, Yahoo, Orange, Free…) sans les marquer comme lus
+- 📧 lire tes mails non lus (Gmail sans mot de passe grâce à un petit script Google, ou Outlook, Yahoo, Orange, Free…) sans les marquer comme lus
 - 📅 lire ton agenda (Google Agenda ou tout agenda avec un lien iCal)
 - ☀️ te faire un **brief du jour** et **se lancer tout seul quand tu allumes ton PC**
   (⚙️ Réglages → « Brief du jour »)

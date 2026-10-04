@@ -7,7 +7,9 @@ import json
 import os
 import platform
 import re
+import secrets
 import subprocess
+import urllib.parse
 import urllib.request
 from email.header import decode_header, make_header
 from html import unescape
@@ -23,7 +25,8 @@ MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août
         "septembre", "octobre", "novembre", "décembre"]
 
 MAIL_SERVICES = {
-    "gmail": ("Gmail", "imap.gmail.com"),
+    "gmail_script": ("Gmail + Agenda Google — sans mot de passe (recommandé)", ""),
+    "gmail": ("Gmail — avec mot de passe d'application", "imap.gmail.com"),
     "outlook": ("Outlook / Hotmail / Live", "outlook.office365.com"),
     "yahoo": ("Yahoo", "imap.mail.yahoo.com"),
     "orange": ("Orange / Wanadoo", "imap.orange.fr"),
@@ -163,6 +166,77 @@ def terminer_tache(texte: str) -> str:
 
 
 # ---------- Mails ----------
+# ---------- Méthode Google Apps Script ----------
+# Un petit script qui tourne dans le compte Google de l'utilisateur et donne à Jarvis
+# ses mails non lus et son agenda, protégé par une clé secrète. Pas besoin de mot de passe.
+GOOGLE_SCRIPT = """// Script de Jarvis : donne tes mails non lus et ton agenda à TON Jarvis (et à personne d'autre).
+const CLE = "__CLE__";
+
+function doGet(e) {
+  if (!e || e.parameter.cle !== CLE) return json({ erreur: "Clé invalide" });
+  if (e.parameter.action === "agenda") {
+    const debut = new Date(e.parameter.date + "T00:00:00");
+    const fin = new Date(debut.getTime() + 24 * 3600 * 1000);
+    const tz = Session.getScriptTimeZone();
+    const evenements = [];
+    CalendarApp.getAllCalendars().forEach(function (agenda) {
+      agenda.getEvents(debut, fin).forEach(function (ev) {
+        evenements.push({
+          titre: ev.getTitle(),
+          journee: ev.isAllDayEvent(),
+          heure: Utilities.formatDate(ev.getStartTime(), tz, "HH:mm"),
+        });
+      });
+    });
+    return json({ evenements: evenements });
+  }
+  // Mails non lus des 3 derniers jours (ils restent non lus).
+  const mails = GmailApp.search("is:unread in:inbox newer_than:3d", 0, 8).map(function (fil) {
+    const messages = fil.getMessages();
+    const m = messages.filter(function (x) { return x.isUnread(); }).pop() || messages[messages.length - 1];
+    return { de: m.getFrom(), sujet: m.getSubject(), extrait: m.getPlainBody().replace(/\\s+/g, " ").slice(0, 280) };
+  });
+  return json({ mails: mails });
+}
+
+function json(objet) {
+  return ContentService.createTextOutput(JSON.stringify(objet)).setMimeType(ContentService.MimeType.JSON);
+}
+"""
+
+
+def google_script() -> str:
+    """Le code à coller dans Google Apps Script, avec la clé secrète de ce Jarvis."""
+    key = config.load()["mail_script_cle"]
+    if not key:
+        key = secrets.token_urlsafe(24)
+        config.save({"mail_script_cle": key})
+    return GOOGLE_SCRIPT.replace("__CLE__", key)
+
+
+def _uses_script() -> bool:
+    s = config.load()
+    return s["mail_service"] == "gmail_script" and bool(s["mail_script_url"].strip())
+
+
+def _call_script(**params) -> dict:
+    s = config.load()
+    url = s["mail_script_url"].strip()
+    query = urllib.parse.urlencode({"cle": s["mail_script_cle"], **params})
+    with urllib.request.urlopen(f"{url}{'&' if '?' in url else '?'}{query}", timeout=30) as r:
+        raw = r.read().decode("utf-8", errors="replace")
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        raise RuntimeError(
+            "Le script Google n'a pas répondu correctement. Vérifie que le déploiement est bien en "
+            "« Application Web », exécuté en tant que « Moi », accessible à « Tout le monde »."
+        ) from None
+    if data.get("erreur"):
+        raise RuntimeError(f"Script Google : {data['erreur']}")
+    return data
+
+
 def _secret_key(address: str) -> str:
     return f"jarvis-mail:{address}"
 
@@ -191,6 +265,8 @@ def _mail_password(address: str) -> str:
 
 
 def mail_configured() -> bool:
+    if config.load()["mail_service"] == "gmail_script":
+        return _uses_script()
     s = config.load()
     return bool(s["mail_adresse"] and _mail_password(s["mail_adresse"]))
 
@@ -236,6 +312,14 @@ def _connect() -> imaplib.IMAP4_SSL:
 
 
 def test_mail() -> tuple[bool, str]:
+    if config.load()["mail_service"] == "gmail_script":
+        if not _uses_script():
+            return False, "Colle d'abord l'URL de l'application Web de ton script."
+        try:
+            count = len(_call_script(action="mails")["mails"])
+            return True, f"Connexion réussie ! Jarvis voit {count} mail(s) non lu(s) récent(s)."
+        except Exception as e:
+            return False, f"Le script ne répond pas comme prévu : {e}"
     try:
         conn = _connect()
         conn.select("INBOX", readonly=True)
@@ -252,6 +336,11 @@ def test_mail() -> tuple[bool, str]:
 
 def fetch_unread(limit: int = 8) -> list[dict]:
     """Mails non lus des 3 derniers jours. Ne les marque PAS comme lus."""
+    if _uses_script():
+        mails = _call_script(action="mails")["mails"]
+        for m in mails:
+            m["de"] = re.sub(r"\s*<.*?>", "", m["de"]).strip('" ') or m["de"]
+        return mails[:limit]
     since = datetime.date.today() - datetime.timedelta(days=3)
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     since_str = f"{since.day:02d}-{months[since.month - 1]}-{since.year}"
@@ -296,6 +385,14 @@ def lire_mails() -> str:
 # ---------- Agenda (lien iCal secret, ex. Google Agenda) ----------
 def agenda(jour: str = "") -> str:
     url = config.load()["agenda_ics"].strip()
+    if not url and _uses_script():
+        day = parse_day(jour) or datetime.date.today()
+        events = _call_script(action="agenda", date=day.isoformat())["evenements"]
+        if not events:
+            return f"Aucun rendez-vous {french_date(day)}."
+        events.sort(key=lambda e: (not e["journee"], e["heure"]))
+        lines = [f"- {'toute la journée' if e['journee'] else e['heure']} : {e['titre']}" for e in events]
+        return f"Rendez-vous du {french_date(day)} :\n" + "\n".join(lines)
     if not url:
         return "L'agenda n'est pas configuré. L'utilisateur peut le faire dans ⚙️ Réglages → Brief du jour."
     import icalendar

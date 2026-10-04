@@ -98,6 +98,8 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                     "cerveaux": config.CERVEAUX,
                     "cerveau_actuel": MODEL,
                 })
+            elif self.path == "/api/script":
+                self._json({"code": brief_module.google_script()})
             elif self.path == "/api/events":
                 events = []
                 while not EVENTS.empty():
@@ -143,7 +145,12 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
 
             if self.path == "/api/mail":
                 data = json.loads(raw or b"{}")
-                config.save({k: data.get(k, "").strip() for k in ("mail_service", "mail_adresse", "mail_serveur")})
+                keys = ("mail_service", "mail_adresse", "mail_serveur", "mail_script_url")
+                config.save({k: data.get(k, "").strip() for k in keys if k in data})
+                if data.get("mail_service") == "gmail_script":
+                    ok, message = brief_module.test_mail()
+                    self._json({"ok": ok, "message": message})
+                    return
                 if data.get("mot_de_passe"):
                     brief_module.save_mail_password(data["mail_adresse"].strip(), data["mot_de_passe"].replace(" ", ""))
                 if not data.get("mail_adresse"):

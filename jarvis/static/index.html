@@ -201,6 +201,9 @@
   }
   .memories li button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; padding: 0 2px; }
   .memories li button:hover { color: var(--danger); }
+  .steps { margin: 0 0 12px; padding-left: 20px; font-size: 13px; display: flex; flex-direction: column; gap: 8px; }
+  .steps .btn { margin-top: 6px; display: block; }
+  .panel code { color: var(--cyan); }
   .saved { color: var(--cyan); font-size: 12px; letter-spacing: normal; opacity: 0; transition: opacity 0.2s; }
   .saved.show { opacity: 1; }
 </style>
@@ -319,15 +322,35 @@
       <label for="mailService">📧 Ta boîte mail</label>
       <select id="mailService"></select>
     </div>
+    <div id="scriptBox" hidden>
+      <ol class="steps">
+        <li>Ouvre <a href="https://script.google.com/home/projects/create" target="_blank">script.google.com</a>
+          (connecté à ton compte Google) : un nouveau projet s'ouvre.</li>
+        <li>Efface tout le texte qui s'y trouve, puis colle le code de Jarvis :
+          <button class="btn" id="copyScript" type="button">📋 Copier le code</button></li>
+        <li>Clique sur 💾 <b>Enregistrer</b>.</li>
+        <li>En haut à droite : <b>Déployer</b> → <b>Nouveau déploiement</b> → roue ⚙️ → <b>Application Web</b>.</li>
+        <li>« Exécuter en tant que » : <b>Moi</b>. « Qui a accès » : <b>Tout le monde</b>. Puis <b>Déployer</b>.</li>
+        <li><b>Autoriser l'accès</b> → choisis ton compte. Si Google affiche « Google n'a pas validé cette application »,
+          clique sur <b>Paramètres avancés</b> → <b>Accéder à Projet sans titre</b> → <b>Autoriser</b>.
+          C'est normal : c'est ton propre script.</li>
+        <li>Copie l'<b>URL de l'application Web</b> (elle finit par <code>/exec</code>) et colle-la ci-dessous.</li>
+      </ol>
+      <div class="field">
+        <label for="scriptUrl">URL de l'application Web</label>
+        <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/…/exec">
+      </div>
+      <p class="hint">Ton agenda Google est inclus : pas besoin du lien iCal plus bas.</p>
+    </div>
     <div class="field" id="mailServerRow" hidden>
       <label for="mailServer">Serveur IMAP</label>
       <input type="text" id="mailServer" placeholder="ex. imap.monfournisseur.fr">
     </div>
-    <div class="field">
+    <div class="field" id="mailAddressRow">
       <label for="mailAddress">Adresse mail</label>
       <input type="text" id="mailAddress" placeholder="ex. prenom.nom@gmail.com" autocomplete="off">
     </div>
-    <div class="field">
+    <div class="field" id="mailPasswordRow">
       <label for="mailPassword">Mot de passe d'application</label>
       <input type="password" id="mailPassword" autocomplete="new-password">
       <p class="hint" id="mailHelp"></p>
@@ -729,11 +752,16 @@ function showMailHelp() {
   const service = $("mailService").value;
   $("mailHelp").innerHTML = MAIL_HELP[service] || "Utilise le mot de passe de ta boîte mail (ou un mot de passe d'application si ton fournisseur en propose).";
   $("mailServerRow").hidden = service !== "autre";
+  const script = service === "gmail_script";
+  $("scriptBox").hidden = !script;
+  $("mailAddressRow").hidden = script;
+  $("mailPasswordRow").hidden = script;
 }
 function fillBriefSettings(data) {
   const sel = $("mailService");
   if (!sel.options.length) for (const [k, label] of Object.entries(data.mail_services)) sel.add(new Option(label, k));
-  sel.value = settings.mail_service || "gmail";
+  sel.value = settings.mail_service || "gmail_script";
+  $("scriptUrl").value = settings.mail_script_url || "";
   $("mailAddress").value = settings.mail_adresse || "";
   $("mailServer").value = settings.mail_serveur || "";
   $("mailPassword").value = "";
@@ -746,6 +774,17 @@ function fillBriefSettings(data) {
   showMailHelp();
 }
 $("mailService").onchange = showMailHelp;
+$("copyScript").onclick = async () => {
+  const btn = $("copyScript");
+  try {
+    const { code } = await (await fetch("/api/script")).json();
+    await navigator.clipboard.writeText(code);
+    btn.textContent = "✅ Code copié ! Colle-le avec Ctrl + V";
+  } catch (e) {
+    btn.textContent = "❌ Copie impossible, réessaie";
+  }
+  setTimeout(() => { btn.textContent = "📋 Copier le code"; }, 4000);
+};
 $("mailSave").onclick = async () => {
   $("mailStatus").textContent = "⏳ Connexion en cours…";
   try {
@@ -754,6 +793,7 @@ $("mailSave").onclick = async () => {
       body: JSON.stringify({
         mail_service: $("mailService").value, mail_adresse: $("mailAddress").value,
         mail_serveur: $("mailServer").value, mot_de_passe: $("mailPassword").value,
+        mail_script_url: $("scriptUrl").value,
       }),
     })).json();
     $("mailStatus").textContent = (res.ok ? "✅ " : "❌ ") + res.message;
