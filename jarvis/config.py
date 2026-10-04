@@ -15,6 +15,14 @@ DEFAULTS = {
     "vitesse": 1.0,
     "hauteur": 1.0,
     "ecoute_permanente": False,
+    "cerveau": "qwen3:8b",  # modèle Ollama utilisé (appliqué au prochain démarrage)
+    "processeur_seulement": False,  # mis à True si la carte graphique a planté
+}
+
+CERVEAUX = {
+    "qwen3:1.7b": "⚡⚡⚡ Éclair — très rapide, plus limité (1,4 Go)",
+    "qwen3:4b": "⚡⚡ Rapide — bon compromis (2,5 Go)",
+    "qwen3:8b": "⚡ Malin — le plus intelligent, plus lent (5,2 Go)",
 }
 
 PERSONNALITES = {

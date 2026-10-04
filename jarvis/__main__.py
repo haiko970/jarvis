@@ -60,6 +60,9 @@ def main() -> None:
         print(f"\n❌ Impossible de télécharger le modèle {MODEL} : {e.error}")
         sys.exit(1)
 
+    # Pendant que la fenêtre s'ouvre, le cerveau se réveille et lit ses instructions.
+    threading.Thread(target=brain.warm_up, daemon=True).start()
+
     if not (args.terminal or args.voix):
         from .web import serve
 

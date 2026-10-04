@@ -84,7 +84,12 @@ def serve(brain: Brain) -> None:
                 self._json({"model": MODEL})
             elif self.path == "/api/settings":
                 personalities = {k: v[0] for k, v in config.PERSONNALITES.items()}
-                self._json({"settings": config.load(), "personnalites": personalities})
+                self._json({
+                    "settings": config.load(),
+                    "personnalites": personalities,
+                    "cerveaux": config.CERVEAUX,
+                    "cerveau_actuel": MODEL,
+                })
             elif self.path == "/api/events":
                 events = []
                 while not EVENTS.empty():
@@ -129,19 +134,35 @@ def serve(brain: Brain) -> None:
                 return
 
             text = json.loads(raw or b"{}").get("text", "").strip()
-            if not text:
-                self._json({"reply": "", "tools": []})
-                return
 
-            tools: list[dict] = []
+            # La réponse est envoyée morceau par morceau (une ligne JSON par morceau),
+            # pour l'afficher et la lire à voix haute pendant qu'elle s'écrit.
+            self.send_response(200)
+            self.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+
+            def emit(event: dict) -> None:
+                self.wfile.write((json.dumps(event, ensure_ascii=False) + "\n").encode())
+                self.wfile.flush()
+
+            if not text:
+                emit({"type": "done"})
+                return
             try:
                 with lock:
-                    reply = brain.ask(text, on_tool=lambda n, a: tools.append({"name": n, "args": a}))
+                    for event in brain.ask_stream(text):
+                        if event[0] == "text":
+                            emit({"type": "text", "text": event[1]})
+                        else:
+                            emit({"type": "tool", "name": event[1], "args": event[2]})
             except (ConnectionError, httpx.ConnectError):
-                reply = "Je n'arrive pas à joindre Ollama. Vérifie que l'application Ollama est lancée."
+                emit({"type": "error", "text": "Je n'arrive pas à joindre Ollama. Vérifie que l'application Ollama est lancée."})
             except ollama.ResponseError as e:
-                reply = f"Mon cerveau a rencontré une erreur : {e.error}"
-            self._json({"reply": reply, "tools": tools})
+                emit({"type": "error", "text": f"Mon cerveau a rencontré une erreur : {e.error}"})
+            except (BrokenPipeError, ConnectionResetError):
+                return  # la fenêtre a été fermée pendant la réponse
+            emit({"type": "done"})
 
     port = _free_port()
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)

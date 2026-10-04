@@ -262,6 +262,15 @@
   </section>
 
   <section>
+    <h3>⚡ Son cerveau</h3>
+    <div class="field">
+      <label for="cerveau">Vitesse ou intelligence ?</label>
+      <select id="cerveau"></select>
+      <p class="hint" id="cerveauHint">Un cerveau plus petit répond plus vite, mais comprend un peu moins bien.</p>
+    </div>
+  </section>
+
+  <section>
     <h3>🎭 Sa personnalité</h3>
     <div class="field">
       <label for="prenom">Ton prénom (pour qu'il t'appelle par ton nom)</label>
@@ -380,6 +389,12 @@ async function loadSettings() {
     const sel = $("personnalite");
     sel.innerHTML = "";
     for (const [key, label] of Object.entries(data.personnalites)) sel.add(new Option(label, key));
+    const brainSel = $("cerveau");
+    brainSel.innerHTML = "";
+    for (const [key, label] of Object.entries(data.cerveaux)) brainSel.add(new Option(label, key));
+    brainSel.value = settings.cerveau;
+    brainSel.dataset.running = data.cerveau_actuel;
+    showBrainHint();
   } catch (e) {}
   $("personnalite").value = settings.personnalite;
   $("prenom").value = settings.prenom || "";
@@ -435,6 +450,14 @@ function addMemory() {
 }
 $("addMemory").onclick = addMemory;
 $("newMemory").onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); addMemory(); } };
+
+function showBrainHint() {
+  const sel = $("cerveau");
+  $("cerveauHint").textContent = sel.value === sel.dataset.running
+    ? "Un cerveau plus petit répond plus vite, mais comprend un peu moins bien."
+    : "✅ Enregistré ! Ferme Jarvis et relance-le pour changer de cerveau. La première fois, il sera téléchargé dans la fenêtre noire (quelques minutes).";
+}
+$("cerveau").onchange = () => { saveSettings({ cerveau: $("cerveau").value }); showBrainHint(); };
 
 function showSliderValues() {
   $("rateVal").textContent = "×" + Number($("rate").value).toFixed(2);
@@ -496,18 +519,28 @@ $("voiceSelect").onchange = () => {
 };
 $("testVoice").onclick = () => speak("Bonjour, je suis Jarvis, votre assistant personnel. Que puis-je faire pour vous ?", true);
 
-function speak(text, force) {
+let pendingUtterances = 0;
+function stopSpeaking() {
+  if (hasTTS) speechSynthesis.cancel();
+  pendingUtterances = 0; speaking = false;
+}
+// Ajoute une phrase à dire (sans couper ce qui est déjà en train d'être dit).
+function speakQueued(text, force) {
+  text = (text || "").replace(/[⏰🔊🎵]/gu, "").trim();
   if ((!speakEnabled && !force) || !hasTTS || !text) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text.replace(/[⏰🔊🎵]/gu, ""));
+  const u = new SpeechSynthesisUtterance(text);
   const v = currentVoice();
   if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "fr-FR"; }
   u.rate = Number($("rate").value) || 1;
   u.pitch = Number($("pitch").value) || 1;
-  u.onstart = () => { speaking = true; stopWake(); };
-  u.onend = u.onerror = () => { speaking = false; resumeWake(); };
+  pendingUtterances++; speaking = true; stopWake();
+  u.onend = u.onerror = () => {
+    pendingUtterances = Math.max(0, pendingUtterances - 1);
+    if (!pendingUtterances) { speaking = false; resumeWake(); }
+  };
   speechSynthesis.speak(u);
 }
+function speak(text, force) { stopSpeaking(); speakQueued(text, force); }
 
 function renderVoiceToggle() {
   $("voiceToggle").textContent = speakEnabled ? "🔊 Voix : activée" : "🔇 Voix : coupée";
@@ -526,6 +559,7 @@ async function send(text) {
   if (!text || busy) return;
   busy = true;
   stopWake();
+  stopSpeaking();
   sendBtn.disabled = true;
   $("suggestions")?.remove();
   addMessage(text, "user");
@@ -538,15 +572,60 @@ async function send(text) {
   scrollDown();
   setStatus("Analyse en cours…", "thinking");
 
+  let bubble = null, full = "", unspoken = "";
+  const tools = [];
+  const ensureBubble = () => {
+    if (!bubble) { typing.remove(); addTools(tools); bubble = addMessage("", "jarvis"); }
+  };
+  // Lit à voix haute chaque phrase dès qu'elle est terminée.
+  const speakFinishedSentences = (final) => {
+    const re = /^[\s\S]*?[.!?…:](\s+|$)/;
+    let m;
+    while ((m = unspoken.match(re)) && (m[1] || final)) {
+      speakQueued(m[0]);
+      unspoken = unspoken.slice(m[0].length);
+    }
+    if (final && unspoken.trim()) { speakQueued(unspoken); unspoken = ""; }
+  };
+
   try {
     const res = await fetch("/api/chat", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
     });
-    const data = await res.json();
-    typing.remove();
-    addTools(data.tools || []);
-    addMessage(data.reply || "(pas de réponse)", "jarvis");
-    speak(data.reply);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let nl;
+      while ((nl = buffer.indexOf("\n")) >= 0) {
+        const line = buffer.slice(0, nl).trim();
+        buffer = buffer.slice(nl + 1);
+        if (!line) continue;
+        const ev = JSON.parse(line);
+        if (ev.type === "tool") {
+          tools.push(ev);
+          if (bubble) addTools([ev]);
+          setStatus("Action en cours…", "thinking");
+        } else if (ev.type === "text") {
+          ensureBubble();
+          full += ev.text; unspoken += ev.text;
+          bubble.textContent = full.trimStart();
+          scrollDown();
+          setStatus("Réponse en cours…", "thinking");
+          speakFinishedSentences(false);
+        } else if (ev.type === "error") {
+          ensureBubble();
+          bubble.textContent = ev.text; bubble.classList.add("error");
+          unspoken = ev.text;
+        }
+      }
+    }
+    if (!bubble) { ensureBubble(); bubble.textContent = "(pas de réponse)"; }
+    else if (!bubble.classList.contains("error")) bubble.textContent = full.trim();
+    speakFinishedSentences(true);
     setStatus(wakeMode ? "Dites « Jarvis »…" : "En ligne");
   } catch (e) {
     typing.remove();
@@ -623,7 +702,7 @@ if (Recognition) {
 function toggleMic() {
   if (!manualRec || busy) return;
   if (manualListening) { manualRec.stop(); return; }
-  if (hasTTS) speechSynthesis.cancel();
+  stopSpeaking();
   stopWake();
   manualListening = true;
   micBtn.classList.add("rec");

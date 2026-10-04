@@ -2,14 +2,17 @@
 
 import datetime
 import os
+import threading
 
 import ollama
 
 from . import config
 from .tools import TOOLS, run_tool
 
-# qwen3:8b : bon en français, sait utiliser des outils, tourne bien avec 16 Go de RAM.
-MODEL = os.environ.get("JARVIS_MODEL", "qwen3:8b")
+# Le cerveau se choisit dans les réglages (qwen3:8b par défaut) ; JARVIS_MODEL dans .env a priorité.
+MODEL = os.environ.get("JARVIS_MODEL") or config.load()["cerveau"]
+KEEP_ALIVE = "4h"  # garde le cerveau en mémoire : pas de long rechargement entre deux questions
+MAX_MESSAGES = 40  # au-delà, on oublie le début de la conversation (moins de texte à relire = plus rapide)
 # JARVIS_CPU=1 : ne pas utiliser la carte graphique (utile si son pilote est trop ancien)
 FORCE_CPU = os.environ.get("JARVIS_CPU", "").strip() in ("1", "oui", "true")
 
@@ -17,6 +20,7 @@ GPU_CRASH_HINT = """
 ⚠️  La carte graphique a planté (pilote probablement trop ancien) : Jarvis passe sur le processeur.
     Il marche, mais plus lentement. Pour retrouver la vitesse, mets à jour le pilote de ta carte
     graphique (https://www.nvidia.com/fr-fr/drivers/), puis redémarre ton PC.
+    (Jarvis s'en souviendra : il utilisera directement le processeur aux prochains démarrages.)
 """
 
 SYSTEM_PROMPT = """Tu es Jarvis, l'assistant personnel de l'utilisateur, inspiré de l'IA d'Iron Man.
@@ -70,7 +74,8 @@ class Brain:
     def __init__(self) -> None:
         self.client = ollama.Client()
         self.think = False  # pas de « réflexion » à voix basse : réponses plus rapides
-        self.options = {"num_gpu": 0} if FORCE_CPU else None
+        self.cpu_only = FORCE_CPU or config.load()["processeur_seulement"]
+        self.lock = threading.RLock()  # une seule réflexion à la fois
         self.reset()
 
     def reset(self) -> None:
@@ -89,46 +94,106 @@ class Brain:
             if on_progress:
                 on_progress(progress)
 
-    def _chat(self):
-        try:
-            return self.client.chat(
-                model=MODEL,
-                messages=self.messages,
-                tools=OLLAMA_TOOLS,
-                think=self.think,
-                options=self.options,
-            )
-        except ollama.ResponseError as e:
-            error = str(e).lower()
-            # Certains modèles ne connaissent pas l'option « think » : on réessaie sans.
-            if self.think is not None and "think" in error:
-                self.think = None
-                return self._chat()
-            # La carte graphique plante (souvent un pilote trop ancien) : on passe sur le processeur.
-            if self.options is None and ("cuda" in error or "llama-server process has terminated" in error):
-                print(GPU_CRASH_HINT)
-                self.options = {"num_gpu": 0}
-                return self._chat()
-            raise
+    def warm_up(self) -> None:
+        """Charge le cerveau et lui fait lire ses instructions à l'avance (à lancer en arrière-plan)."""
+        with self.lock:
+            try:
+                messages = self.messages + [{"role": "user", "content": "Bonjour"}]
+                for _ in self._stream(messages, {"num_predict": 1}):
+                    pass
+            except Exception:
+                pass  # pas grave : ce n'était qu'un échauffement
+
+    def _recover(self, error: ollama.ResponseError) -> bool:
+        """Essaie de corriger une erreur connue. Renvoie True s'il faut réessayer."""
+        text = str(error).lower()
+        # Certains modèles ne connaissent pas l'option « think » : on réessaie sans.
+        if self.think is not None and "think" in text:
+            self.think = None
+            return True
+        # La carte graphique plante (souvent un pilote trop ancien) : on passe sur le processeur.
+        if not self.cpu_only and ("cuda" in text or "llama-server process has terminated" in text):
+            print(GPU_CRASH_HINT)
+            self.cpu_only = True
+            config.save({"processeur_seulement": True})
+            return True
+        return False
+
+    def _stream(self, messages: list, extra_options: dict | None = None):
+        """Envoie la conversation au cerveau et renvoie sa réponse morceau par morceau."""
+        for _ in range(3):
+            options = {"num_gpu": 0} if self.cpu_only else {}
+            options.update(extra_options or {})
+            started = False
+            try:
+                for chunk in self.client.chat(
+                    model=MODEL,
+                    messages=messages,
+                    tools=OLLAMA_TOOLS,
+                    think=self.think,
+                    options=options or None,
+                    keep_alive=KEEP_ALIVE,
+                    stream=True,
+                ):
+                    started = True
+                    yield chunk
+                return
+            except ollama.ResponseError as e:
+                if started or not self._recover(e):
+                    raise
+
+    def _trim(self) -> None:
+        # On coupe par gros morceaux (et pas à chaque message) pour que le cerveau garde
+        # en cache le début de la conversation, ce qui lui évite de tout relire.
+        if len(self.messages) <= MAX_MESSAGES:
+            return
+        rest = self.messages[-(MAX_MESSAGES // 2):]
+        while rest and rest[0]["role"] != "user":
+            rest.pop(0)
+        self.messages = [self.messages[0]] + rest
+
+    def ask_stream(self, text: str):
+        """Pose une question. Renvoie au fur et à mesure ("text", morceau) et ("tool", nom, arguments)."""
+        with self.lock:
+            self.messages.append({"role": "user", "content": text})
+            self._trim()
+            said_something = False
+
+            for _ in range(8):  # garde-fou contre les boucles infinies
+                content, calls = "", []
+                for chunk in self._stream(self.messages):
+                    message = chunk.message
+                    if message.content:
+                        if not content and said_something:
+                            yield ("text", " ")
+                        content += message.content
+                        yield ("text", message.content)
+                    if message.tool_calls:
+                        calls.extend(message.tool_calls)
+                said_something = said_something or bool(content.strip())
+                self.messages.append({"role": "assistant", "content": content, "tool_calls": calls or None})
+
+                if not calls:
+                    if not said_something:
+                        yield ("text", "(pas de réponse)")
+                    return
+
+                for call in calls:
+                    name, args = call.function.name, dict(call.function.arguments or {})
+                    yield ("tool", name, args)
+                    output, _ = run_tool(name, args)
+                    if name in ("definir_ville", "retenir_info", "oublier_info"):
+                        self.refresh_profile()
+                    self.messages.append({"role": "tool", "content": output, "tool_name": name})
+
+            yield ("text", "Je me suis un peu perdu dans mes actions, peux-tu reformuler ?")
 
     def ask(self, text: str, on_tool=None) -> str:
-        """Envoie un message à l'IA, exécute les outils demandés et renvoie la réponse finale."""
-        self.messages.append({"role": "user", "content": text})
-
-        for _ in range(8):  # garde-fou contre les boucles infinies
-            message = self._chat().message
-            self.messages.append(message)
-
-            if not message.tool_calls:
-                return (message.content or "").strip() or "(pas de réponse)"
-
-            for call in message.tool_calls:
-                name, args = call.function.name, dict(call.function.arguments or {})
-                if on_tool:
-                    on_tool(name, args)
-                output, _ = run_tool(name, args)
-                if name in ("definir_ville", "retenir_info", "oublier_info"):
-                    self.refresh_profile()
-                self.messages.append({"role": "tool", "content": output, "tool_name": name})
-
-        return "Je me suis un peu perdu dans mes actions, peux-tu reformuler ?"
+        """Comme ask_stream, mais renvoie la réponse complète d'un coup."""
+        reply = ""
+        for event in self.ask_stream(text):
+            if event[0] == "text":
+                reply += event[1]
+            elif on_tool:
+                on_tool(event[1], event[2])
+        return reply.strip()

@@ -79,7 +79,7 @@ Dans la conversation :
   Pour retrouver la vitesse, mets à jour ton pilote sur https://www.nvidia.com/fr-fr/drivers/
   puis redémarre ton PC. Pour forcer le processeur, ajoute `JARVIS_CPU=1` dans un fichier `.env`.
 - **« Je n'arrive pas à joindre Ollama »** : lance l'application Ollama depuis le menu Démarrer.
-- **Jarvis est trop lent** : mets `JARVIS_MODEL=qwen3:4b` dans un fichier `.env` (cerveau plus petit).
+- **Jarvis est trop lent** : dans ⚙️ → « Son cerveau », choisis « Rapide » ou « Éclair », puis relance Jarvis.
 
 ## 4. Personnaliser ton Jarvis
 
