@@ -14,6 +14,7 @@ from pathlib import Path
 import httpx
 import ollama
 
+from . import brief as brief_module
 from . import config
 from .brain import MODEL, Brain
 from .powers import EVENTS
@@ -47,12 +48,13 @@ def _find_edge() -> str | None:
 def open_window(url: str) -> None:
     edge = _find_edge()
     if edge:
-        subprocess.Popen([edge, f"--app={url}", "--window-size=520,820"])
+        # autoplay : permet à Jarvis de lire le brief à voix haute sans attendre un clic
+        subprocess.Popen([edge, f"--app={url}", "--window-size=520,820", "--autoplay-policy=no-user-gesture-required"])
     else:
         webbrowser.open(url)
 
 
-def serve(brain: Brain) -> None:
+def serve(brain: Brain, with_brief: bool = False) -> None:
     lock = threading.Lock()  # une seule question à la fois pour le cerveau
     state = {"shutdown_timer": None}
 
@@ -78,14 +80,20 @@ def serve(brain: Brain) -> None:
 
         def do_GET(self) -> None:
             cancel_shutdown()
-            if self.path in ("/", "/index.html"):
+            if self.path.split("?")[0] in ("/", "/index.html"):
                 self._send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
             elif self.path == "/api/info":
                 self._json({"model": MODEL})
             elif self.path == "/api/settings":
                 personalities = {k: v[0] for k, v in config.PERSONNALITES.items()}
+                settings = config.load()
+                settings.pop("mail_mdp_secours", None)  # le mot de passe ne sort jamais
                 self._json({
-                    "settings": config.load(),
+                    "settings": settings,
+                    "mail_services": {k: v[0] for k, v in brief_module.MAIL_SERVICES.items()},
+                    "mail_ok": brief_module.mail_configured(),
+                    "autostart_supported": brief_module.autostart_supported(),
+                    "autostart": brief_module.autostart_enabled(),
                     "personnalites": personalities,
                     "cerveaux": config.CERVEAUX,
                     "cerveau_actuel": MODEL,
@@ -113,6 +121,7 @@ def serve(brain: Brain) -> None:
             cancel_shutdown()
             if self.path == "/api/settings":
                 changes = json.loads(raw or b"{}")
+                changes.pop("mail_mdp_secours", None)
                 before = config.load()
                 after = config.save(changes)
                 with lock:
@@ -121,6 +130,27 @@ def serve(brain: Brain) -> None:
                     else:
                         brain.refresh_profile()
                 self._json({"settings": after})
+                return
+
+            if self.path == "/api/brief":
+                self._stream_answer("", collect_brief=True)
+                return
+
+            if self.path == "/api/autostart":
+                ok, message = brief_module.set_autostart(bool(json.loads(raw or b"{}").get("on")))
+                self._json({"ok": ok, "message": message, "enabled": brief_module.autostart_enabled()})
+                return
+
+            if self.path == "/api/mail":
+                data = json.loads(raw or b"{}")
+                config.save({k: data.get(k, "").strip() for k in ("mail_service", "mail_adresse", "mail_serveur")})
+                if data.get("mot_de_passe"):
+                    brief_module.save_mail_password(data["mail_adresse"].strip(), data["mot_de_passe"].replace(" ", ""))
+                if not data.get("mail_adresse"):
+                    self._json({"ok": False, "message": "Indique ton adresse mail."})
+                    return
+                ok, message = brief_module.test_mail()
+                self._json({"ok": ok, "message": message})
                 return
 
             if self.path == "/api/reset":
@@ -133,8 +163,9 @@ def serve(brain: Brain) -> None:
                 self._send(404, b"", "text/plain")
                 return
 
-            text = json.loads(raw or b"{}").get("text", "").strip()
+            self._stream_answer(json.loads(raw or b"{}").get("text", "").strip())
 
+        def _stream_answer(self, text: str, collect_brief: bool = False) -> None:
             # La réponse est envoyée morceau par morceau (une ligne JSON par morceau),
             # pour l'afficher et la lire à voix haute pendant qu'elle s'écrit.
             self.send_response(200)
@@ -146,27 +177,30 @@ def serve(brain: Brain) -> None:
                 self.wfile.write((json.dumps(event, ensure_ascii=False) + "\n").encode())
                 self.wfile.flush()
 
-            if not text:
-                emit({"type": "done"})
-                return
             try:
+                if collect_brief:
+                    emit({"type": "tool", "name": "brief_du_jour", "args": {}})
+                    text = brief_module.BRIEF_PROMPT + brief_module.brief_du_jour()
+                if not text:
+                    emit({"type": "done"})
+                    return
                 with lock:
                     for event in brain.ask_stream(text):
                         if event[0] == "text":
                             emit({"type": "text", "text": event[1]})
                         else:
                             emit({"type": "tool", "name": event[1], "args": event[2]})
+            except (BrokenPipeError, ConnectionResetError):
+                return  # la fenêtre a été fermée pendant la réponse
             except (ConnectionError, httpx.ConnectError):
                 emit({"type": "error", "text": "Je n'arrive pas à joindre Ollama. Vérifie que l'application Ollama est lancée."})
             except ollama.ResponseError as e:
                 emit({"type": "error", "text": f"Mon cerveau a rencontré une erreur : {e.error}"})
-            except (BrokenPipeError, ConnectionResetError):
-                return  # la fenêtre a été fermée pendant la réponse
             emit({"type": "done"})
 
     port = _free_port()
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    url = f"http://127.0.0.1:{port}/"
+    url = f"http://127.0.0.1:{port}/" + ("?brief=1" if with_brief else "")
 
     print(f"\n✅ Jarvis est prêt : sa fenêtre va s'ouvrir ({url})")
     print("   Tu peux réduire cette fenêtre noire, mais ne la ferme pas.")

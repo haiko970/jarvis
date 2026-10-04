@@ -3,6 +3,7 @@
 import argparse
 import sys
 import threading
+import time
 
 import httpx
 import ollama
@@ -48,17 +49,25 @@ def main() -> None:
         action="store_true",
         help="en mode voix, ne répondre que si la phrase contient « Jarvis »",
     )
+    parser.add_argument("--brief", action="store_true", help="faire le brief du jour dès l'ouverture")
     args = parser.parse_args()
 
     brain = Brain()
-    try:
-        brain.ensure_model(on_progress=show_download)
-    except (ConnectionError, httpx.ConnectError):
-        print(OLLAMA_MISSING)
-        sys.exit(1)
-    except ollama.ResponseError as e:
-        print(f"\n❌ Impossible de télécharger le modèle {MODEL} : {e.error}")
-        sys.exit(1)
+    # Au démarrage du PC, Ollama peut mettre un peu de temps à se lancer : on l'attend jusqu'à 2 minutes.
+    deadline = time.time() + (120 if args.brief else 0)
+    while True:
+        try:
+            brain.ensure_model(on_progress=show_download)
+            break
+        except (ConnectionError, httpx.ConnectError):
+            if time.time() > deadline:
+                print(OLLAMA_MISSING)
+                sys.exit(1)
+            print("⏳ En attente d'Ollama…")
+            time.sleep(5)
+        except ollama.ResponseError as e:
+            print(f"\n❌ Impossible de télécharger le modèle {MODEL} : {e.error}")
+            sys.exit(1)
 
     # Pendant que la fenêtre s'ouvre, le cerveau se réveille et lit ses instructions.
     threading.Thread(target=brain.warm_up, daemon=True).start()
@@ -66,7 +75,7 @@ def main() -> None:
     if not (args.terminal or args.voix):
         from .web import serve
 
-        serve(brain)
+        serve(brain, with_brief=args.brief)
         return
 
     def print_events() -> None:  # les rappels qui sonnent pendant qu'on discute

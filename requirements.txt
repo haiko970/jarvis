@@ -1,3 +1,6 @@
 ollama>=0.6
 ddgs>=9.0
 python-dotenv>=1.0
+keyring>=25
+icalendar>=6
+recurring-ical-events>=3

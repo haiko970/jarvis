@@ -17,6 +17,11 @@ DEFAULTS = {
     "ecoute_permanente": False,
     "cerveau": "qwen3:8b",  # modèle Ollama utilisé (appliqué au prochain démarrage)
     "processeur_seulement": False,  # mis à True si la carte graphique a planté
+    "mail_service": "gmail",
+    "mail_adresse": "",
+    "mail_serveur": "",  # seulement pour un service « autre »
+    "mail_mdp_secours": "",  # utilisé seulement si le coffre-fort de Windows est indisponible
+    "agenda_ics": "",  # lien secret iCal de l'agenda (Google Agenda, Outlook…)
 }
 
 CERVEAUX = {

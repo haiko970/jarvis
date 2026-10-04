@@ -26,9 +26,9 @@ if [ "$1" = "voix" ] && ! .venv/bin/python -c "import speech_recognition, pyttsx
   .venv/bin/python -m pip install -r requirements-voix.txt
 fi
 
-if [ "$1" = "voix" ]; then
-  .venv/bin/python -m jarvis --voix
-else
-  .venv/bin/python -m jarvis
-fi
+case "$1" in
+  voix) .venv/bin/python -m jarvis --voix ;;
+  brief) .venv/bin/python -m jarvis --brief ;;
+  *) .venv/bin/python -m jarvis ;;
+esac
 read -r -p "Appuie sur Entrée pour fermer..."

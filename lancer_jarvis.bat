@@ -1,6 +1,7 @@
 @echo off
 rem Double-clique sur ce fichier pour installer (la premiere fois) et lancer Jarvis.
 rem Pour le mode vocal, utilise plutot "lancer_jarvis_voix.bat".
+rem Avec "brief" (lancement automatique au demarrage du PC), Jarvis fait le brief du jour.
 cd /d "%~dp0"
 title Jarvis
 
@@ -50,11 +51,10 @@ echo === Installation du mode vocal... ===
 if errorlevel 1 goto erreur
 
 :lancer
-if /i "%~1"=="voix" (
-  ".venv\Scripts\python.exe" -m jarvis --voix
-) else (
-  ".venv\Scripts\python.exe" -m jarvis
-)
+set "MODE="
+if /i "%~1"=="voix" set "MODE=--voix"
+if /i "%~1"=="brief" set "MODE=--brief"
+".venv\Scripts\python.exe" -m jarvis %MODE%
 echo.
 pause
 exit /b 0

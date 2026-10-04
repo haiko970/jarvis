@@ -172,7 +172,9 @@
   .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
   .field label { font-size: 13px; }
   .field .row { display: flex; gap: 8px; }
-  .panel input[type=text], .panel select {
+  [hidden] { display: none !important; }
+  .panel a { color: var(--cyan); }
+  .panel input[type=text], .panel input[type=password], .panel select {
     width: 100%; min-width: 0; background: var(--panel); color: var(--text); border: 1px solid var(--line);
     border-radius: 10px; padding: 10px 12px; font: inherit; outline: none;
   }
@@ -219,7 +221,7 @@
     <button>Quelle heure est-il ?</button>
     <button>Quel temps fait-il à Paris ?</button>
     <button>Ouvre YouTube</button>
-    <button>Lis mes notes</button>
+    <button data-brief="1">☀️ Mon brief du jour</button>
   </div>
 </main>
 
@@ -305,6 +307,44 @@
   </section>
 
   <section>
+    <h3>☀️ Brief du jour</h3>
+    <label class="toggle" id="autostartRow">
+      <span>Lancer Jarvis quand j'allume mon PC, avec mon brief<br>
+      <span class="hint" id="autostartHint">Météo, rendez-vous, tâches, mails non lus…</span></span>
+      <input type="checkbox" id="autostart">
+    </label>
+    <p><button class="btn" id="briefNow" type="button">☀️ Faire mon brief maintenant</button></p>
+
+    <div class="field">
+      <label for="mailService">📧 Ta boîte mail</label>
+      <select id="mailService"></select>
+    </div>
+    <div class="field" id="mailServerRow" hidden>
+      <label for="mailServer">Serveur IMAP</label>
+      <input type="text" id="mailServer" placeholder="ex. imap.monfournisseur.fr">
+    </div>
+    <div class="field">
+      <label for="mailAddress">Adresse mail</label>
+      <input type="text" id="mailAddress" placeholder="ex. prenom.nom@gmail.com" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="mailPassword">Mot de passe d'application</label>
+      <input type="password" id="mailPassword" autocomplete="new-password">
+      <p class="hint" id="mailHelp"></p>
+    </div>
+    <p><button class="btn" id="mailSave" type="button">Enregistrer et tester</button></p>
+    <p class="hint" id="mailStatus"></p>
+
+    <div class="field">
+      <label for="agendaIcs">📅 Ton agenda (lien secret iCal)</label>
+      <input type="text" id="agendaIcs" placeholder="https://calendar.google.com/calendar/ical/…/basic.ics">
+      <p class="hint">Google Agenda sur ordinateur → ⚙️ Paramètres → clique sur ton agenda à gauche →
+        « Intégrer l'agenda » → copie l'<b>adresse secrète au format iCal</b>. Ne partage jamais ce lien.</p>
+    </div>
+    <p class="hint">🔒 Tout reste sur ton PC : tes mails ne sont envoyés nulle part. Jarvis ne les marque pas comme lus.</p>
+  </section>
+
+  <section>
     <h3>👂 Réveil à la voix</h3>
     <label class="toggle">
       <span>Jarvis écoute en permanence et répond quand tu dis « Jarvis »<br>
@@ -326,6 +366,8 @@ const TOOL_LABELS = {
   volume: "🔊 Volume", controle_musique: "🎵 Musique", spotify_rechercher: "🟢 Spotify",
   minuteur: "⏰ Minuteur", lister_minuteurs: "⏰ Minuteurs", annuler_minuteurs: "⏰ Annulés",
   definir_ville: "📍 Ville enregistrée", retenir_info: "🧠 Retenu", oublier_info: "🧠 Oublié",
+  ajouter_tache: "✅ Tâche ajoutée", lister_taches: "📋 Tâches", terminer_tache: "✔️ Tâche faite",
+  lire_mails: "📧 Mails", agenda: "📅 Agenda", brief_du_jour: "☀️ Brief du jour",
 };
 
 let settings = { voix: "", vitesse: 1, hauteur: 1, prenom: "", personnalite: "majordome", ecoute_permanente: false };
@@ -386,6 +428,7 @@ async function loadSettings() {
   try {
     const data = await (await fetch("/api/settings")).json();
     settings = data.settings;
+    window.briefData = data;
     const sel = $("personnalite");
     sel.innerHTML = "";
     for (const [key, label] of Object.entries(data.personnalites)) sel.add(new Option(label, key));
@@ -405,6 +448,7 @@ async function loadSettings() {
   showSliderValues();
   fillVoices();
   applyWake(!!settings.ecoute_permanente, false);
+  if (window.briefData) fillBriefSettings(window.briefData);
 }
 
 $("prenom").onchange = () => {
@@ -534,7 +578,11 @@ function speakQueued(text, force) {
   u.rate = Number($("rate").value) || 1;
   u.pitch = Number($("pitch").value) || 1;
   pendingUtterances++; speaking = true; stopWake();
-  u.onend = u.onerror = () => {
+  u.onerror = (e) => {
+    if (e.error === "not-allowed") showListenButton();
+    u.onend();
+  };
+  u.onend = () => {
     pendingUtterances = Math.max(0, pendingUtterances - 1);
     if (!pendingUtterances) { speaking = false; resumeWake(); }
   };
@@ -557,13 +605,24 @@ renderVoiceToggle();
 async function send(text) {
   text = text.trim();
   if (!text || busy) return;
+  $("suggestions")?.remove();
+  addMessage(text, "user");
+  input.value = "";
+  await streamReply("/api/chat", { text });
+}
+
+function runBrief() {
+  if (busy) return;
+  $("suggestions")?.remove();
+  openSettings(false);
+  streamReply("/api/brief", {});
+}
+
+async function streamReply(url, payload) {
   busy = true;
   stopWake();
   stopSpeaking();
   sendBtn.disabled = true;
-  $("suggestions")?.remove();
-  addMessage(text, "user");
-  input.value = "";
 
   const typing = document.createElement("div");
   typing.className = "typing";
@@ -589,8 +648,8 @@ async function send(text) {
   };
 
   try {
-    const res = await fetch("/api/chat", {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
+    const res = await fetch(url, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
     });
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -625,6 +684,7 @@ async function send(text) {
     }
     if (!bubble) { ensureBubble(); bubble.textContent = "(pas de réponse)"; }
     else if (!bubble.classList.contains("error")) bubble.textContent = full.trim();
+    lastReply = bubble.textContent;
     speakFinishedSentences(true);
     setStatus(wakeMode ? "Dites « Jarvis »…" : "En ligne");
   } catch (e) {
@@ -640,7 +700,75 @@ async function send(text) {
 }
 
 $("form").onsubmit = (e) => { e.preventDefault(); send(input.value); };
-$("suggestions").onclick = (e) => { if (e.target.tagName === "BUTTON") send(e.target.textContent); };
+$("suggestions").onclick = (e) => {
+  if (e.target.tagName !== "BUTTON") return;
+  if (e.target.dataset.brief) runBrief(); else send(e.target.textContent);
+};
+
+// Si le navigateur bloque la lecture automatique (ex. brief au démarrage), on propose un bouton.
+let lastReply = "";
+function showListenButton() {
+  if (document.getElementById("listenBtn") || !lastReply) return;
+  const btn = document.createElement("button");
+  btn.id = "listenBtn"; btn.className = "btn"; btn.type = "button";
+  btn.textContent = "🔊 Écouter";
+  btn.style.alignSelf = "flex-start";
+  btn.onclick = () => { btn.remove(); speak(lastReply, true); };
+  chat.appendChild(btn);
+  scrollDown();
+}
+
+// ---------- Brief du jour : réglages ----------
+const MAIL_HELP = {
+  gmail: 'Gmail demande un mot de passe spécial : active la « Validation en deux étapes » sur ton compte Google, puis crée un mot de passe d\'application sur <a href="https://myaccount.google.com/apppasswords" target="_blank">myaccount.google.com/apppasswords</a> (nom : Jarvis) et colle les 16 lettres ici.',
+  outlook: 'Outlook/Hotmail : crée un mot de passe d\'application sur <a href="https://account.live.com/proofs/AppPassword" target="_blank">account.live.com</a> (validation en deux étapes requise). Microsoft refuse parfois ce type de connexion.',
+  yahoo: 'Yahoo : crée un mot de passe d\'application dans « Sécurité du compte » sur <a href="https://login.yahoo.com/account/security" target="_blank">login.yahoo.com</a>.',
+  icloud: 'iCloud : crée un mot de passe pour app sur <a href="https://account.apple.com" target="_blank">account.apple.com</a> → Connexion et sécurité.',
+};
+function showMailHelp() {
+  const service = $("mailService").value;
+  $("mailHelp").innerHTML = MAIL_HELP[service] || "Utilise le mot de passe de ta boîte mail (ou un mot de passe d'application si ton fournisseur en propose).";
+  $("mailServerRow").hidden = service !== "autre";
+}
+function fillBriefSettings(data) {
+  const sel = $("mailService");
+  if (!sel.options.length) for (const [k, label] of Object.entries(data.mail_services)) sel.add(new Option(label, k));
+  sel.value = settings.mail_service || "gmail";
+  $("mailAddress").value = settings.mail_adresse || "";
+  $("mailServer").value = settings.mail_serveur || "";
+  $("mailPassword").value = "";
+  $("mailPassword").placeholder = data.mail_ok ? "•••••••• (enregistré)" : "";
+  $("mailStatus").textContent = data.mail_ok ? "✅ Boîte mail connectée." : "";
+  $("agendaIcs").value = settings.agenda_ics || "";
+  $("autostart").checked = !!data.autostart;
+  $("autostart").disabled = !data.autostart_supported;
+  if (!data.autostart_supported) $("autostartHint").textContent = "Disponible seulement sous Windows.";
+  showMailHelp();
+}
+$("mailService").onchange = showMailHelp;
+$("mailSave").onclick = async () => {
+  $("mailStatus").textContent = "⏳ Connexion en cours…";
+  try {
+    const res = await (await fetch("/api/mail", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mail_service: $("mailService").value, mail_adresse: $("mailAddress").value,
+        mail_serveur: $("mailServer").value, mot_de_passe: $("mailPassword").value,
+      }),
+    })).json();
+    $("mailStatus").textContent = (res.ok ? "✅ " : "❌ ") + res.message;
+    if (res.ok) { $("mailPassword").value = ""; $("mailPassword").placeholder = "•••••••• (enregistré)"; }
+  } catch (e) { $("mailStatus").textContent = "❌ Jarvis ne répond plus."; }
+};
+$("agendaIcs").onchange = () => saveSettings({ agenda_ics: $("agendaIcs").value.trim() });
+$("autostart").onchange = async () => {
+  const res = await (await fetch("/api/autostart", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ on: $("autostart").checked }),
+  })).json();
+  $("autostart").checked = res.enabled;
+  $("autostartHint").textContent = res.message;
+};
+$("briefNow").onclick = runBrief;
 $("reset").onclick = async () => {
   await fetch("/api/reset", { method: "POST" }).catch(() => {});
   chat.innerHTML = "";
@@ -772,6 +900,9 @@ $("wakeToggle").onclick = () => applyWake(!wakeMode, true);
 $("wakeSetting").onchange = () => applyWake($("wakeSetting").checked, true);
 
 loadSettings();
+
+// Lancé au démarrage du PC : le brief se fait tout seul.
+if (new URLSearchParams(location.search).get("brief")) setTimeout(runBrief, 300);
 
 // Fermer la fenêtre arrête aussi Jarvis.
 window.addEventListener("pagehide", () => navigator.sendBeacon("/api/bye"));
