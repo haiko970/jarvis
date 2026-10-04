@@ -319,6 +319,12 @@
     <p><button class="btn" id="briefNow" type="button">☀️ Faire mon brief maintenant</button></p>
 
     <div class="field">
+      <label for="mareeLieu">🌊 Marées : port ou ville côtière</label>
+      <input type="text" id="mareeLieu" maxlength="60" placeholder="ex. Saint-Malo (vide = ta ville)">
+      <p class="hint">Horaires estimés (à ~30 min près) : pratique pour la plage, pas pour la navigation.</p>
+    </div>
+
+    <div class="field">
       <label for="mailService">📧 Ta boîte mail</label>
       <select id="mailService"></select>
     </div>
@@ -390,7 +396,7 @@ const TOOL_LABELS = {
   minuteur: "⏰ Minuteur", lister_minuteurs: "⏰ Minuteurs", annuler_minuteurs: "⏰ Annulés",
   definir_ville: "📍 Ville enregistrée", retenir_info: "🧠 Retenu", oublier_info: "🧠 Oublié",
   ajouter_tache: "✅ Tâche ajoutée", lister_taches: "📋 Tâches", terminer_tache: "✔️ Tâche faite",
-  lire_mails: "📧 Mails", agenda: "📅 Agenda", brief_du_jour: "☀️ Brief du jour",
+  lire_mails: "📧 Mails", agenda: "📅 Agenda", marees: "🌊 Marées", brief_du_jour: "☀️ Brief du jour",
 };
 
 let settings = { voix: "", vitesse: 1, hauteur: 1, prenom: "", personnalite: "majordome", ecoute_permanente: false };
@@ -768,6 +774,7 @@ function fillBriefSettings(data) {
   $("mailPassword").placeholder = data.mail_ok ? "•••••••• (enregistré)" : "";
   $("mailStatus").textContent = data.mail_ok ? "✅ Boîte mail connectée." : "";
   $("agendaIcs").value = settings.agenda_ics || "";
+  $("mareeLieu").value = settings.maree_lieu || "";
   $("autostart").checked = !!data.autostart;
   $("autostart").disabled = !data.autostart_supported;
   if (!data.autostart_supported) $("autostartHint").textContent = "Disponible seulement sous Windows.";
@@ -800,6 +807,7 @@ $("mailSave").onclick = async () => {
     if (res.ok) { $("mailPassword").value = ""; $("mailPassword").placeholder = "•••••••• (enregistré)"; }
   } catch (e) { $("mailStatus").textContent = "❌ Jarvis ne répond plus."; }
 };
+$("mareeLieu").onchange = () => saveSettings({ maree_lieu: $("mareeLieu").value.trim() });
 $("agendaIcs").onchange = () => saveSettings({ agenda_ics: $("agendaIcs").value.trim() });
 $("autostart").onchange = async () => {
   const res = await (await fetch("/api/autostart", {

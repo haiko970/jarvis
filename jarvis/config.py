@@ -23,7 +23,8 @@ DEFAULTS = {
     "mail_mdp_secours": "",  # utilisé seulement si le coffre-fort de Windows est indisponible
     "mail_script_url": "",  # méthode Google Apps Script (sans mot de passe d'application)
     "mail_script_cle": "",  # clé secrète partagée entre Jarvis et le script
-    "agenda_ics": "",  # lien secret iCal de l'agenda (Google Agenda, Outlook…)
+    "agenda_ics": "",
+    "maree_lieu": "",  # port ou ville côtière pour les marées ("" = ville de l'utilisateur)  # lien secret iCal de l'agenda (Google Agenda, Outlook…)
 }
 
 CERVEAUX = {
