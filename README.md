@@ -89,6 +89,7 @@ Dans la conversation :
 
 ## 4. Personnaliser ton Jarvis
 
+- **Une voix ultra-réaliste** : ⚙️ → « Sa voix » → « ElevenLabs », avec ta clé gratuite et l'identifiant de la voix.
 - **Sa voix, son caractère, ton prénom, ta ville, ses souvenirs** : clique sur ⚙️ en haut à droite de la fenêtre de Jarvis.
 - **Ses instructions de base** : modifie `SYSTEM_PROMPT` dans `jarvis/brain.py`.
 - **De nouveaux pouvoirs** : dans `jarvis/tools.py`, écris une fonction Python, décris-la dans

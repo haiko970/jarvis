@@ -248,6 +248,30 @@
   <section>
     <h3>🎙️ Sa voix</h3>
     <div class="field">
+      <label for="voiceEngine">Type de voix</label>
+      <select id="voiceEngine">
+        <option value="navigateur">Voix de Windows/Edge — gratuite et illimitée</option>
+        <option value="elevenlabs">ElevenLabs — ultra-réaliste (clé gratuite, quota mensuel)</option>
+      </select>
+    </div>
+    <div id="elevenBox" hidden>
+      <div class="field">
+        <label for="elevenVoice">Identifiant de la voix ElevenLabs</label>
+        <input type="text" id="elevenVoice" placeholder="ex. MBIQRZjHPU6xEjGuB3b8">
+      </div>
+      <div class="field">
+        <label for="elevenKey">Clé API ElevenLabs</label>
+        <input type="password" id="elevenKey" autocomplete="new-password" placeholder="sk_…">
+        <p class="hint">Crée un compte sur <a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a>, puis
+          <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank">Paramètres → API Keys</a> → « Create API Key »
+          (coche l'accès « Text to Speech »). Si la voix vient de la bibliothèque (« Voice Library »),
+          ajoute-la d'abord à « My Voices ». Le texte des réponses est envoyé à ElevenLabs.</p>
+      </div>
+      <p><button class="btn" id="elevenSave" type="button">Activer et tester</button></p>
+      <p class="hint" id="elevenStatus"></p>
+    </div>
+    <div id="browserVoiceBox">
+    <div class="field">
       <label for="voiceSelect">Voix</label>
       <div class="row">
         <select id="voiceSelect"></select>
@@ -263,6 +287,7 @@
       <label for="pitch">Grave ↔ aigu : <span id="pitchVal"></span></label>
       <input type="range" id="pitch" min="0.5" max="1.5" step="0.05">
       <p class="hint">Certaines voix naturelles ignorent ce réglage.</p>
+    </div>
     </div>
   </section>
 
@@ -478,6 +503,10 @@ async function loadSettings() {
   fillVoices();
   applyWake(!!settings.ecoute_permanente, false);
   if (window.briefData) fillBriefSettings(window.briefData);
+  $("voiceEngine").value = settings.voix_moteur || "navigateur";
+  $("elevenVoice").value = settings.elevenlabs_voix_id || "";
+  $("elevenKey").placeholder = window.briefData?.elevenlabs_ok ? "•••••••• (enregistrée)" : "sk_…";
+  showEngine();
 }
 
 $("prenom").onchange = () => {
@@ -523,6 +552,36 @@ function addMemory() {
 }
 $("addMemory").onclick = addMemory;
 $("newMemory").onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); addMemory(); } };
+
+function showEngine() {
+  const eleven = $("voiceEngine").value === "elevenlabs";
+  $("elevenBox").hidden = !eleven;
+  $("browserVoiceBox").hidden = eleven;
+}
+$("voiceEngine").onchange = async () => {
+  showEngine();
+  if ($("voiceEngine").value === "navigateur") {
+    await fetch("/api/elevenlabs", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ actif: false, voix_id: $("elevenVoice").value }) }).catch(() => {});
+    settings.voix_moteur = "navigateur";
+  }
+};
+$("elevenSave").onclick = async () => {
+  $("elevenStatus").textContent = "⏳ Test en cours…";
+  try {
+    const res = await (await fetch("/api/elevenlabs", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ actif: true, cle: $("elevenKey").value, voix_id: $("elevenVoice").value }),
+    })).json();
+    $("elevenStatus").textContent = (res.ok ? "✅ " : "❌ ") + res.message;
+    settings.voix_moteur = res.ok ? "elevenlabs" : "navigateur";
+    if (res.ok) {
+      $("elevenKey").value = ""; $("elevenKey").placeholder = "•••••••• (enregistrée)";
+      elevenWarned = false;
+      speak("Bonjour, je suis Jarvis. Voici ma nouvelle voix. Elle vous plaît ?", true);
+    }
+  } catch (e) { $("elevenStatus").textContent = "❌ Jarvis ne répond plus."; }
+};
 
 function showBrainHint() {
   const sel = $("cerveau");
@@ -593,28 +652,91 @@ $("voiceSelect").onchange = () => {
 $("testVoice").onclick = () => speak("Bonjour, je suis Jarvis, votre assistant personnel. Que puis-je faire pour vous ?", true);
 
 let pendingUtterances = 0;
+let audioGen = 0, audioQueue = [], audioEl = null, audioBusy = false, elevenWarned = false;
+
 function stopSpeaking() {
   if (hasTTS) speechSynthesis.cancel();
+  audioGen++; audioQueue = [];
+  if (audioEl) { audioEl.pause(); audioEl = null; }
   pendingUtterances = 0; speaking = false;
 }
-// Ajoute une phrase à dire (sans couper ce qui est déjà en train d'être dit).
-function speakQueued(text, force) {
-  text = (text || "").replace(/[⏰🔊🎵]/gu, "").trim();
-  if ((!speakEnabled && !force) || !hasTTS || !text) return;
+function startUtterance() { pendingUtterances++; speaking = true; stopWake(); }
+function finishUtterance() {
+  pendingUtterances = Math.max(0, pendingUtterances - 1);
+  if (!pendingUtterances) { speaking = false; resumeWake(); }
+}
+
+function browserUtterance(text) {
   const u = new SpeechSynthesisUtterance(text);
   const v = currentVoice();
   if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "fr-FR"; }
   u.rate = Number($("rate").value) || 1;
   u.pitch = Number($("pitch").value) || 1;
-  pendingUtterances++; speaking = true; stopWake();
+  return u;
+}
+// Voix du navigateur, en attendant la fin (utilisé en secours d'ElevenLabs).
+function speakBrowserAndWait(text) {
+  return new Promise((done) => {
+    if (!hasTTS) return done();
+    const u = browserUtterance(text);
+    u.onend = u.onerror = done;
+    speechSynthesis.speak(u);
+  });
+}
+
+// ---------- Voix ElevenLabs : chaque phrase est demandée tout de suite, puis jouée dans l'ordre ----------
+function speakEleven(text) {
+  const job = fetch("/api/tts", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }),
+  }).then(async (r) => r.ok
+    ? { url: URL.createObjectURL(await r.blob()) }
+    : { error: (await r.json().catch(() => ({}))).erreur || "erreur inconnue", text }
+  ).catch(() => ({ error: "Jarvis ne répond plus", text }));
+  audioQueue.push(job);
+  startUtterance();
+  pumpAudio();
+}
+async function pumpAudio() {
+  if (audioBusy) return;
+  audioBusy = true;
+  const gen = audioGen;
+  while (audioQueue.length && gen === audioGen) {
+    const job = await audioQueue[0];
+    if (gen !== audioGen) break;
+    audioQueue.shift();
+    if (job.url) {
+      await new Promise((done) => {
+        audioEl = new Audio(job.url);
+        audioEl.onended = audioEl.onerror = done;
+        audioEl.play().catch((e) => { if (e.name === "NotAllowedError") showListenButton(); done(); });
+      });
+      URL.revokeObjectURL(job.url);
+    } else {
+      if (!elevenWarned) {
+        elevenWarned = true;
+        addMessage(`Voix ElevenLabs indisponible (${job.error}). J'utilise ma voix normale.`, "jarvis", "error");
+      }
+      await speakBrowserAndWait(job.text);
+    }
+    if (gen === audioGen) finishUtterance();
+  }
+  audioBusy = false;
+  if (audioQueue.length) pumpAudio();
+}
+
+// Ajoute une phrase à dire (sans couper ce qui est déjà en train d'être dit).
+function speakQueued(text, force) {
+  text = (text || "").replace(/[⏰🔊🎵]/gu, "").trim();
+  if ((!speakEnabled && !force) || !text) return;
+  if (settings.voix_moteur === "elevenlabs") return speakEleven(text);
+  if (!hasTTS) return;
+  const u = browserUtterance(text);
+  startUtterance();
   u.onerror = (e) => {
     if (e.error === "not-allowed") showListenButton();
-    u.onend();
+    finishUtterance();
   };
-  u.onend = () => {
-    pendingUtterances = Math.max(0, pendingUtterances - 1);
-    if (!pendingUtterances) { speaking = false; resumeWake(); }
-  };
+  u.onend = finishUtterance;
   speechSynthesis.speak(u);
 }
 function speak(text, force) { stopSpeaking(); speakQueued(text, force); }

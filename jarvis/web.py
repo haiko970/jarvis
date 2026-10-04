@@ -15,7 +15,7 @@ import httpx
 import ollama
 
 from . import brief as brief_module
-from . import config
+from . import config, elevenlabs
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -87,11 +87,13 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
             elif self.path == "/api/settings":
                 personalities = {k: v[0] for k, v in config.PERSONNALITES.items()}
                 settings = config.load()
-                settings.pop("mail_mdp_secours", None)  # le mot de passe ne sort jamais
+                settings.pop("mail_mdp_secours", None)  # les secrets ne sortent jamais
+                settings.pop("elevenlabs_cle_secours", None)
                 self._json({
                     "settings": settings,
                     "mail_services": {k: v[0] for k, v in brief_module.MAIL_SERVICES.items()},
                     "mail_ok": brief_module.mail_configured(),
+                    "elevenlabs_ok": bool(config.get_secret("elevenlabs_cle")),
                     "autostart_supported": brief_module.autostart_supported(),
                     "autostart": brief_module.autostart_enabled(),
                     "personnalites": personalities,
@@ -124,6 +126,7 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
             if self.path == "/api/settings":
                 changes = json.loads(raw or b"{}")
                 changes.pop("mail_mdp_secours", None)
+                changes.pop("elevenlabs_cle_secours", None)
                 before = config.load()
                 after = config.save(changes)
                 with lock:
@@ -132,6 +135,34 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                     else:
                         brain.refresh_profile()
                 self._json({"settings": after})
+                return
+
+            if self.path == "/api/tts":
+                # Voix ElevenLabs : renvoie le MP3 de la phrase, ou une erreur que la page affichera.
+                text = json.loads(raw or b"{}").get("text", "").strip()
+                try:
+                    self._send(200, elevenlabs.synthesize(text), "audio/mpeg")
+                except RuntimeError as e:
+                    self._json({"erreur": str(e)}, code=502)
+                return
+
+            if self.path == "/api/elevenlabs":
+                data = json.loads(raw or b"{}")
+                if data.get("cle", "").strip():
+                    config.set_secret("elevenlabs_cle", data["cle"].strip())
+                config.save({
+                    "elevenlabs_voix_id": data.get("voix_id", "").strip(),
+                    "voix_moteur": "elevenlabs" if data.get("actif") else "navigateur",
+                })
+                if not data.get("actif"):
+                    self._json({"ok": True, "message": "Jarvis reprend sa voix normale."})
+                    return
+                try:
+                    elevenlabs.synthesize("Test.")
+                    self._json({"ok": True, "message": "Voix ElevenLabs activée !"})
+                except RuntimeError as e:
+                    config.save({"voix_moteur": "navigateur"})
+                    self._json({"ok": False, "message": str(e)})
                 return
 
             if self.path == "/api/brief":

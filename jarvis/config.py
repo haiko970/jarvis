@@ -24,7 +24,10 @@ DEFAULTS = {
     "mail_script_url": "",  # méthode Google Apps Script (sans mot de passe d'application)
     "mail_script_cle": "",  # clé secrète partagée entre Jarvis et le script
     "agenda_ics": "",
-    "maree_lieu": "",  # port ou ville côtière pour les marées ("" = ville de l'utilisateur)  # lien secret iCal de l'agenda (Google Agenda, Outlook…)
+    "maree_lieu": "",
+    "voix_moteur": "navigateur",  # "navigateur" (gratuit) ou "elevenlabs"
+    "elevenlabs_voix_id": "MBIQRZjHPU6xEjGuB3b8",
+    "elevenlabs_cle_secours": "",  # utilisé seulement si le coffre-fort de Windows est indisponible  # port ou ville côtière pour les marées ("" = ville de l'utilisateur)  # lien secret iCal de l'agenda (Google Agenda, Outlook…)
 }
 
 CERVEAUX = {
@@ -68,3 +71,26 @@ def save(changes: dict) -> dict:
     data.update({k: v for k, v in changes.items() if k in DEFAULTS})
     CONFIG_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     return data
+
+
+def set_secret(name: str, value: str) -> None:
+    """Range un secret (clé, mot de passe) dans le coffre-fort de Windows, ou à défaut dans les réglages."""
+    try:
+        import keyring
+
+        keyring.set_password("jarvis", name, value)
+        save({f"{name}_secours": ""})
+    except Exception:
+        save({f"{name}_secours": value})
+
+
+def get_secret(name: str) -> str:
+    try:
+        import keyring
+
+        value = keyring.get_password("jarvis", name)
+        if value:
+            return value
+    except Exception:
+        pass
+    return load().get(f"{name}_secours", "")
