@@ -32,8 +32,13 @@
       var(--bg);
     color: var(--text);
     font: 14px/1.45 "Segoe UI", "Bahnschrift", system-ui, -apple-system, sans-serif;
-    display: grid; grid-template-rows: auto 1fr;
     overflow: hidden;
+  }
+  /* Tout le tableau de bord est dessiné à 1366×720 puis agrandi/réduit pour remplir la fenêtre,
+     comme une image : rien ne déborde et il n'y a jamais besoin de faire défiler. */
+  #stage {
+    position: absolute; left: 0; top: 0; width: 1366px; height: 720px;
+    display: grid; grid-template-rows: auto 1fr; transform-origin: 0 0;
   }
   body::after { /* lignes de balayage façon écran holographique */
     content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 5;
@@ -198,7 +203,8 @@
 
   /* Journée */
   .timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
-  .timeline li { display: grid; grid-template-columns: 48px 12px 1fr; gap: 8px; align-items: start; font-size: 13px; padding: 3px 0; }
+  .timeline li { display: grid; grid-template-columns: 44px 12px 1fr; gap: 6px; align-items: start; font-size: 13px; padding: 2px 0; }
+  .timeline .sub { display: inline; margin-left: 6px; }
   .timeline .t { color: var(--cyan); font-size: 12px; }
   .timeline .dot { width: 8px; height: 8px; margin-top: 5px; border: 1px solid var(--cyan); transform: rotate(45deg); }
   .timeline li.rdv .dot { background: var(--cyan); }
@@ -232,15 +238,6 @@
   .power .bar-line { height: 4px; background: rgba(79, 216, 255, 0.12); margin-top: 4px; }
   .power .bar-line i { display: block; height: 100%; background: var(--cyan); box-shadow: var(--glow); width: 0; transition: width 0.6s; }
 
-  /* Petits écrans : tout en une colonne */
-  @media (max-width: 1080px) {
-    body { display: block; overflow: auto; }
-    .hud-grid { grid-template-columns: 1fr; }
-    .col.side { overflow: visible; }
-    .center { order: -1; min-height: 80vh; }
-    .topbar { grid-template-columns: 1fr auto; }
-    .clock { display: none; }
-  }
 
   .overlay {
     position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); display: none; z-index: 10;
@@ -306,6 +303,7 @@
 </style>
 </head>
 <body>
+<div id="stage">
 <header class="topbar">
   <div class="brand">
     <svg class="brand-logo" viewBox="0 0 40 40" aria-hidden="true">
@@ -391,7 +389,7 @@
 
   <!-- Colonne de droite : journée, tâches, mails, PC -->
   <div class="col side">
-    <section class="hud">
+    <section class="hud grow">
       <div class="hud-title"><span>// Aujourd'hui</span><span class="tag mono">AG-03</span></div>
       <div id="dayBody" class="empty">Chargement…</div>
     </section>
@@ -401,6 +399,7 @@
     </section>
   </div>
 </div>
+</div><!-- /stage -->
 
 <div class="overlay" id="overlay"></div>
 <aside class="panel" id="panel" aria-label="Réglages">
@@ -1410,6 +1409,16 @@ const nowMinutes = () => { const d = new Date(); return d.getHours() * 60 + d.ge
 const toMinutes = (h) => { const m = /(\d{1,2})[h:](\d{2})/.exec(h || ""); return m ? +m[1] * 60 + +m[2] : null; };
 const settingsLink = (txt) => `<span class="empty">${txt} <button type="button" data-open-settings>Ouvrir les réglages</button></span>`;
 document.addEventListener("click", (e) => { if (e.target.matches("[data-open-settings]")) { loadSettings(); openSettings(true); } });
+
+// ---------- Le tableau de bord remplit toujours la fenêtre, sans défilement ----------
+function fitStage() {
+  const stage = $("stage"), W = 1366, H = 720;
+  const scale = Math.min(innerWidth / W, innerHeight / H);
+  const x = (innerWidth - W * scale) / 2, y = (innerHeight - H * scale) / 2;
+  stage.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+}
+fitStage();
+addEventListener("resize", fitStage);
 
 // ---------- Horloge ----------
 function tickClock() {
