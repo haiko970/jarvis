@@ -9,6 +9,7 @@ import httpx
 import ollama
 from dotenv import load_dotenv
 
+from . import systeme
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -33,6 +34,21 @@ def show_download(progress) -> None:
         print("\n✅ Cerveau téléchargé !")
     elif progress.status:
         print(f"\r📥 {progress.status:<60}", end="", flush=True)
+
+
+def setup_autostart() -> None:
+    """Jarvis démarre avec le PC : activé automatiquement la première fois (Windows),
+    et le raccourci est remis à jour à chaque lancement au cas où le dossier aurait bougé."""
+    from . import brief, config
+
+    if not brief.autostart_supported():
+        return
+    settings = config.load()
+    if not settings["demarrage_auto_regle"] or brief.autostart_enabled():
+        ok, _ = brief.set_autostart(True)
+        if ok and not settings["demarrage_auto_regle"]:
+            config.save({"demarrage_auto_regle": True})
+            print("✅ Jarvis se lancera désormais à chaque démarrage du PC (désactivable dans ⚙️ Réglages).")
 
 
 def show_tool(name: str, args: dict) -> None:
@@ -68,6 +84,8 @@ def main() -> None:
         except ollama.ResponseError as e:
             print(f"\n❌ Impossible de télécharger le modèle {MODEL} : {e.error}")
             sys.exit(1)
+
+    threading.Thread(target=setup_autostart, daemon=True).start()
 
     # Pendant que la fenêtre s'ouvre, le cerveau se réveille et lit ses instructions.
     threading.Thread(target=brain.warm_up, daemon=True).start()
@@ -121,6 +139,15 @@ def main() -> None:
         lowered = text.lower().strip(" .!?")
         if lowered in QUIT_WORDS:
             break
+        command = systeme.quick_command(text)
+        if command:  # fermer Jarvis, éteindre ou redémarrer le PC, annuler
+            reply = systeme.run_quick(command)
+            print(f"🤖 Jarvis : {reply}\n")
+            if voice:
+                voice.say(reply)
+            if command == "fermer_jarvis":
+                return
+            continue
         if lowered in {"oublie", "reset", "nouvelle conversation"}:
             brain.reset()
             print("🤖 Jarvis : Conversation effacée.\n")

@@ -629,6 +629,7 @@ const TOOL_LABELS = {
   volume: "🔊 Volume", controle_musique: "🎵 Musique", spotify_rechercher: "🟢 Spotify",
   minuteur: "⏰ Minuteur", lister_minuteurs: "⏰ Minuteurs", annuler_minuteurs: "⏰ Annulés",
   definir_ville: "📍 Ville enregistrée", retenir_info: "🧠 Retenu", oublier_info: "🧠 Oublié",
+  fermer_jarvis: "⏻ Extinction de Jarvis", eteindre_ordinateur: "⏻ Extinction du PC", annuler_extinction: "↺ Extinction annulée",
   ajouter_tache: "✅ Tâche ajoutée", lister_taches: "📋 Tâches", terminer_tache: "✔️ Tâche faite",
   lire_mails: "📧 Mails", agenda: "📅 Agenda", marees: "🌊 Marées",
   emploi_du_temps: "🎓 Emploi du temps", devoirs: "📚 Devoirs", notes: "📊 Notes", brief_du_jour: "☀️ Brief du jour",
@@ -1011,6 +1012,18 @@ function runBrief() {
   streamReply("/api/brief", {});
 }
 
+let quitAfterSpeech = false;
+// « Jarvis, ferme-toi » : on finit de parler, on affiche un écran d'extinction, puis la fenêtre se ferme.
+async function shutdownJarvis() {
+  for (let i = 0; i < 40 && speaking; i++) await new Promise((r) => setTimeout(r, 250));
+  const screen = document.createElement("div");
+  screen.style.cssText = "position:fixed;inset:0;z-index:50;background:#02070d;display:grid;place-items:center;" +
+    "color:#4fd8ff;font:300 22px Bahnschrift,Segoe UI,sans-serif;letter-spacing:.4em;text-shadow:0 0 12px #4fd8ff;transition:opacity 1s";
+  screen.textContent = "J.A.R.V.I.S. — HORS LIGNE";
+  document.body.appendChild(screen);
+  setTimeout(() => window.close(), 1200);
+}
+
 async function streamReply(url, payload) {
   busy = true;
   stopWake();
@@ -1070,6 +1083,8 @@ async function streamReply(url, payload) {
           scrollDown();
           setStatus("Réponse en cours…", "thinking");
           speakFinishedSentences(false);
+        } else if (ev.type === "action" && ev.action === "quit") {
+          quitAfterSpeech = true;
         } else if (ev.type === "error") {
           ensureBubble();
           bubble.textContent = ev.text; bubble.classList.add("error");
@@ -1081,6 +1096,7 @@ async function streamReply(url, payload) {
     else if (!bubble.classList.contains("error")) renderRich(bubble, full.trim());
     lastReply = bubble.textContent;
     speakFinishedSentences(true);
+    if (quitAfterSpeech) shutdownJarvis();
     setStatus(wakeMode ? "Dites « Jarvis »…" : "En ligne");
   } catch (e) {
     typing.remove();

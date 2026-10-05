@@ -30,5 +30,4 @@ case "$1" in
   voix) .venv/bin/python -m jarvis --voix ;;
   brief) .venv/bin/python -m jarvis --brief ;;
   *) .venv/bin/python -m jarvis ;;
-esac
-read -r -p "Appuie sur Entrée pour fermer..."
+esac || read -r -p "Jarvis s'est arrêté à cause d'un problème. Appuie sur Entrée pour fermer..."

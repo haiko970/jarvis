@@ -15,7 +15,7 @@ import httpx
 import ollama
 
 from . import brief as brief_module
-from . import config, dashboard, elevenlabs, pronote
+from . import config, dashboard, elevenlabs, pronote, systeme
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -45,6 +45,31 @@ def _find_edge() -> str | None:
     return next((c for c in candidates if c and os.path.exists(c)), None)
 
 
+def close_app_window() -> None:
+    """Plan B pour « ferme-toi » : demande à Windows de fermer la fenêtre « J.A.R.V.I.S. »."""
+    if platform.system() != "Windows":
+        return
+    import ctypes
+    from ctypes import wintypes
+
+    user32 = ctypes.windll.user32
+    found = []
+
+    @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    def visit(hwnd, _):
+        length = user32.GetWindowTextLengthW(hwnd)
+        if length:
+            buffer = ctypes.create_unicode_buffer(length + 1)
+            user32.GetWindowTextW(hwnd, buffer, length + 1)
+            if buffer.value.startswith("J.A.R.V.I.S."):
+                found.append(hwnd)
+        return True
+
+    user32.EnumWindows(visit, 0)
+    for hwnd in found:
+        user32.PostMessageW(hwnd, 0x0010, 0, 0)  # WM_CLOSE
+
+
 def open_window(url: str) -> None:
     edge = _find_edge()
     if edge:
@@ -59,6 +84,8 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
     state = {"shutdown_timer": None}
 
     def cancel_shutdown() -> None:
+        if systeme.STATE["quit"]:
+            return  # « ferme-toi » a été demandé : plus rien n'annule l'arrêt
         if state["shutdown_timer"]:
             state["shutdown_timer"].cancel()
             state["shutdown_timer"] = None
@@ -234,9 +261,14 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 self._send(404, b"", "text/plain")
                 return
 
-            self._stream_answer(json.loads(raw or b"{}").get("text", "").strip())
+            text = json.loads(raw or b"{}").get("text", "").strip()
+            command = systeme.quick_command(text)
+            if command:
+                self._stream_answer("", quick=command)
+            else:
+                self._stream_answer(text)
 
-        def _stream_answer(self, text: str, collect_brief: bool = False) -> None:
+        def _stream_answer(self, text: str, collect_brief: bool = False, quick: str | None = None) -> None:
             # La réponse est envoyée morceau par morceau (une ligne JSON par morceau),
             # pour l'afficher et la lire à voix haute pendant qu'elle s'écrit.
             self.send_response(200)
@@ -248,12 +280,34 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 self.wfile.write((json.dumps(event, ensure_ascii=False) + "\n").encode())
                 self.wfile.flush()
 
+            def finish() -> None:
+                if systeme.STATE["quit"]:
+                    # « Ferme-toi » : la page dit au revoir, ferme sa fenêtre, puis Jarvis s'arrête.
+                    emit({"type": "action", "action": "quit"})
+                    if state["shutdown_timer"]:
+                        state["shutdown_timer"].cancel()
+                    def stop() -> None:
+                        try:
+                            close_app_window()
+                        finally:
+                            server.shutdown()
+
+                    state["shutdown_timer"] = threading.Timer(9, stop)
+                    state["shutdown_timer"].start()
+                emit({"type": "done"})
+
             try:
+                if quick:
+                    # Commande système reconnue directement (fermer Jarvis, éteindre le PC…)
+                    tool = {"annuler": "annuler_extinction", "fermer_jarvis": "fermer_jarvis"}.get(quick, "eteindre_ordinateur")
+                    emit({"type": "tool", "name": tool, "args": {}})
+                    emit({"type": "text", "text": systeme.run_quick(quick)})
+                    text = ""
                 if collect_brief:
                     emit({"type": "tool", "name": "brief_du_jour", "args": {}})
                     text = brief_module.BRIEF_PROMPT + brief_module.brief_du_jour()
                 if not text:
-                    emit({"type": "done"})
+                    finish()
                     return
                 with lock:
                     for event in brain.ask_stream(text):
@@ -267,7 +321,7 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 emit({"type": "error", "text": "Je n'arrive pas à joindre Ollama. Vérifie que l'application Ollama est lancée."})
             except ollama.ResponseError as e:
                 emit({"type": "error", "text": f"Mon cerveau a rencontré une erreur : {e.error}"})
-            emit({"type": "done"})
+            finish()
 
     port = _free_port()
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)

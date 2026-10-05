@@ -21,6 +21,8 @@ Il peut agir sur ton PC :
 - 🎵 contrôler la musique et les vidéos (pause, suivant, précédent) et chercher sur Spotify
 - ⏰ programmer des minuteurs et des rappels (« rappelle-moi dans 10 minutes de sortir les pâtes »)
 - 👂 se réveiller quand tu dis « Jarvis » (à activer en bas de la fenêtre)
+- ⏻ se fermer (« Jarvis, ferme-toi »), éteindre ou redémarrer le PC (« ferme mon ordi » : extinction
+  dans 30 secondes, « annule » pour l'arrêter)
 - ✅ gérer ta liste de tâches (« ajoute à ma liste : appeler le dentiste demain »)
 - 📧 lire tes mails non lus (Gmail sans mot de passe grâce à un petit script Google, ou Outlook, Yahoo, Orange, Free…) sans les marquer comme lus
 - 🎓 lire **Pronote** : emploi du temps (cours annulés, profs absents), devoirs et notes
@@ -28,7 +30,7 @@ Il peut agir sur ton PC :
 - 🌊 donner les heures de marée haute et basse (estimation)
 - 📅 lire ton agenda (Google Agenda ou tout agenda avec un lien iCal)
 - ☀️ te faire un **brief du jour** et **se lancer tout seul quand tu allumes ton PC**
-  (⚙️ Réglages → « Brief du jour »)
+  (activé automatiquement sous Windows, désactivable dans ⚙️ Réglages → « Brief du jour »)
 - 💬 discuter, expliquer, rédiger, traduire…
 
 Il fonctionne sous Windows, macOS et Linux.

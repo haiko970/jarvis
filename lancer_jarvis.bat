@@ -55,9 +55,16 @@ set "MODE="
 if /i "%~1"=="voix" set "MODE=--voix"
 if /i "%~1"=="brief" set "MODE=--brief"
 ".venv\Scripts\python.exe" -m jarvis %MODE%
-echo.
-pause
+rem Fermeture normale ("Jarvis, ferme-toi") : la fenetre noire se ferme toute seule.
+if errorlevel 1 goto plantage
 exit /b 0
+
+:plantage
+echo.
+echo Jarvis s'est arrete a cause d'un probleme (voir le message au-dessus).
+echo Fais une capture d'ecran de cette fenetre pour demander de l'aide.
+pause
+exit /b 1
 
 :erreur
 echo.

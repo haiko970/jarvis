@@ -25,6 +25,7 @@ DEFAULTS = {
     "mail_script_cle": "",  # clé secrète partagée entre Jarvis et le script
     "agenda_ics": "",
     "maree_lieu": "",
+    "demarrage_auto_regle": False,  # devient True après la première activation automatique
     "pronote_url": "",
     "pronote_identifiant": "",
     "pronote_ent": "qrcode",  # "qrcode" (recommandé), "aucun" ou le nom d'un ENT pronotepy
