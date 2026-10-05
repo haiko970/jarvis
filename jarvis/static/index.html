@@ -492,6 +492,38 @@ function setStatus(text, mode) {
   document.body.classList.toggle("listening", mode === "listening");
 }
 function scrollDown() { chat.scrollTop = chat.scrollHeight; }
+// Transforme le texte écrit en texte « à dire » : plus d'astérisques, de dièses, d'émojis…
+function cleanForSpeech(text) {
+  return (text || "")
+    .replace(/```[\s\S]*?```/g, " ")                          // blocs de code
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")                    // [texte](lien) → texte
+    .replace(/https?:\/\/\S+|www\.\S+/g, "le lien")                // adresses web
+    .replace(/^\s{0,3}#{1,6}\s*/gm, "")                        // titres « # »
+    .replace(/^\s*[-*•+]\s+/gm, "")                            // puces de liste
+    .replace(/^\s*>\s?/gm, "")                                 // citations
+    .replace(/(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)/g, "$1 sur $2") // 15/20 → 15 sur 20
+    .replace(/°\s*C\b/g, " degrés").replace(/°/g, " degrés")
+    .replace(/\s&\s/g, " et ")
+    .replace(/[*_~`#|]+/g, " ")                                // symboles de mise en forme
+    .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu, "") // émojis
+    .replace(/[ \t]*\n\s*/g, "\n").trim()
+    .replace(/([^.!?:;,\n])\n/g, "$1. ")                       // une ligne sans ponctuation = une pause
+    .replace(/\s+/g, " ")
+    .replace(/\s+([.,!?;:])/g, "$1")
+    .trim();
+}
+
+// Affiche le gras/italique au lieu des astérisques (sans jamais injecter de HTML).
+function renderRich(el, text) {
+  const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  el.innerHTML = escaped
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[^*])\*(?!\s)([^*\n]+?)\*(?!\*)/g, "$1<i>$2</i>")
+    .replace(/`([^`\n]+)`/g, "<code>$1</code>")
+    .replace(/^\s{0,3}#{1,6}\s*(.+)$/gm, "<b>$1</b>")
+    .replace(/^\s*[-*•]\s+/gm, "• ");
+}
+
 function addMessage(text, who, extraClass) {
   const div = document.createElement("div");
   div.className = `msg ${who}` + (extraClass ? ` ${extraClass}` : "");
@@ -783,8 +815,8 @@ async function pumpAudio() {
 
 // Ajoute une phrase à dire (sans couper ce qui est déjà en train d'être dit).
 function speakQueued(text, force) {
-  text = (text || "").replace(/[⏰🔊🎵]/gu, "").trim();
-  if ((!speakEnabled && !force) || !text) return;
+  text = cleanForSpeech(text);
+  if ((!speakEnabled && !force) || !text || !/[\p{L}\p{N}]/u.test(text)) return;
   if (settings.voix_moteur === "elevenlabs") return speakEleven(text);
   if (!hasTTS) return;
   const u = browserUtterance(text);
@@ -846,9 +878,11 @@ async function streamReply(url, payload) {
   };
   // Lit à voix haute chaque phrase dès qu'elle est terminée.
   const speakFinishedSentences = (final) => {
-    const re = /^[\s\S]*?[.!?…:](\s+|$)/;
+    // Une phrase se termine par . ! ? … suivi d'un espace, ou par un retour à la ligne.
+    // (Pas « : » ni les chiffres comme « 10.5 », pour ne pas parler de façon hachée.)
+    const re = /^[\s\S]*?(?:[.!?…]+\s+|\n)/;
     let m;
-    while ((m = unspoken.match(re)) && (m[1] || final)) {
+    while ((m = unspoken.match(re))) {
       speakQueued(m[0]);
       unspoken = unspoken.slice(m[0].length);
     }
@@ -879,7 +913,7 @@ async function streamReply(url, payload) {
         } else if (ev.type === "text") {
           ensureBubble();
           full += ev.text; unspoken += ev.text;
-          bubble.textContent = full.trimStart();
+          renderRich(bubble, full.trimStart());
           scrollDown();
           setStatus("Réponse en cours…", "thinking");
           speakFinishedSentences(false);
@@ -891,7 +925,7 @@ async function streamReply(url, payload) {
       }
     }
     if (!bubble) { ensureBubble(); bubble.textContent = "(pas de réponse)"; }
-    else if (!bubble.classList.contains("error")) bubble.textContent = full.trim();
+    else if (!bubble.classList.contains("error")) renderRich(bubble, full.trim());
     lastReply = bubble.textContent;
     speakFinishedSentences(true);
     setStatus(wakeMode ? "Dites « Jarvis »…" : "En ligne");

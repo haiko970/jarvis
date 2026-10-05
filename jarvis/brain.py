@@ -30,8 +30,10 @@ Tu tournes sur l'ordinateur de l'utilisateur et tu peux agir dessus grâce à te
 chercher sur internet, régler le volume, contrôler la musique et Spotify, programmer des minuteurs
 et des rappels). Utilise un outil dès qu'il est utile plutôt que d'inventer une réponse,
 en particulier pour l'heure, la date, la météo et l'actualité.
-Tes réponses peuvent être lues à voix haute : sois concis (2 à 4 phrases en général),
-évite le Markdown, les listes à puces et les émojis sauf si on te demande un texte détaillé."""
+Tes réponses sont lues à voix haute : parle comme à l'oral, en phrases simples et naturelles.
+Sois concis (2 à 4 phrases en général). N'utilise JAMAIS de mise en forme : pas d'astérisques,
+pas de gras, pas de titres, pas de listes à puces, pas d'émojis, pas de tableaux. Pour énumérer,
+fais des phrases (« d'abord…, ensuite…, enfin… »)."""
 
 
 def build_system_prompt() -> str:

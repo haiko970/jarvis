@@ -3,7 +3,25 @@
 Ces dépendances sont optionnelles : sans elles, Jarvis fonctionne en mode texte.
 """
 
+import re
+
 LANGUAGE = "fr-FR"
+
+
+def clean_for_speech(text: str) -> str:
+    """Enlève la mise en forme (astérisques, dièses, puces, émojis…) pour lire comme un humain."""
+    text = re.sub(r"```.*?```", " ", text, flags=re.S)
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    text = re.sub(r"https?://\S+|www\.\S+", "le lien", text)
+    text = re.sub(r"^\s{0,3}#{1,6}\s*", "", text, flags=re.M)
+    text = re.sub(r"^\s*[-*•+]\s+", "", text, flags=re.M)
+    text = re.sub(r"(\d+(?:[.,]\d+)?)\s*/\s*(\d+(?:[.,]\d+)?)", r"\1 sur \2", text)
+    text = re.sub(r"°\s*C\b|°", " degrés", text)
+    text = re.sub(r"[*_~`#|]+", " ", text)
+    text = re.sub(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\u200D]", "", text)
+    text = re.sub(r"[ \t]*\n\s*", "\n", text.strip())
+    text = re.sub(r"(?<![.!?:;,])\n", ". ", text)  # une ligne sans ponctuation = une petite pause
+    return re.sub(r"\s+", " ", text).strip()
 
 
 class Voice:
@@ -45,5 +63,5 @@ class Voice:
             return None
 
     def say(self, text: str) -> None:
-        self.engine.say(text)
+        self.engine.say(clean_for_speech(text))
         self.engine.runAndWait()
