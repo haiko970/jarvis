@@ -174,13 +174,11 @@ def effacer_notes() -> str:
     return "Toutes les notes ont été supprimées."
 
 
-def meteo(ville: str = "") -> str:
+def weather_data(ville: str = "") -> dict:
+    """Météo structurée (pour le tableau de bord et pour les réponses de Jarvis)."""
     ville = (ville or "").strip() or config.load()["ville"]
     if not ville:
-        return (
-            "Ville inconnue. Demande à l'utilisateur quelle est sa ville, "
-            "puis enregistre-la avec definir_ville."
-        )
+        raise ValueError("ville inconnue")
     url = f"https://wttr.in/{urllib.parse.quote(ville)}?format=j1&lang=fr"
     with urllib.request.urlopen(url, timeout=10) as r:
         data = json.load(r)
@@ -189,12 +187,33 @@ def meteo(ville: str = "") -> str:
         return (block.get("lang_fr") or block["weatherDesc"])[0]["value"].strip()
 
     now = data["current_condition"][0]
-    lines = [f"Maintenant à {ville} : {describe(now)}, {now['temp_C']}°C (ressenti {now['FeelsLikeC']}°C)."]
+    days = []
     for label, day in zip(("Aujourd'hui", "Demain", "Après-demain"), data["weather"]):
         midday = day["hourly"][len(day["hourly"]) // 2]
+        days.append({
+            "label": label, "date": day["date"], "desc": describe(midday), "code": int(midday.get("weatherCode", 0)),
+            "min": int(day["mintempC"]), "max": int(day["maxtempC"]), "pluie": int(midday.get("chanceofrain", 0) or 0),
+        })
+    return {
+        "ville": ville,
+        "temp": int(now["temp_C"]), "ressenti": int(now["FeelsLikeC"]), "desc": describe(now),
+        "code": int(now.get("weatherCode", 0)), "humidite": int(now.get("humidity", 0) or 0),
+        "vent": int(now.get("windspeedKmph", 0) or 0), "jours": days,
+    }
+
+
+def meteo(ville: str = "") -> str:
+    try:
+        w = weather_data(ville)
+    except ValueError:
+        return (
+            "Ville inconnue. Demande à l'utilisateur quelle est sa ville, "
+            "puis enregistre-la avec definir_ville."
+        )
+    lines = [f"Maintenant à {w['ville']} : {w['desc']}, {w['temp']}°C (ressenti {w['ressenti']}°C)."]
+    for d in w["jours"]:
         lines.append(
-            f"{label} ({day['date']}) : {describe(midday)}, de {day['mintempC']}°C à {day['maxtempC']}°C, "
-            f"risque de pluie {midday.get('chanceofrain', '?')} %."
+            f"{d['label']} ({d['date']}) : {d['desc']}, de {d['min']}°C à {d['max']}°C, risque de pluie {d['pluie']} %."
         )
     return "\n".join(lines)
 

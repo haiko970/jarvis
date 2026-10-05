@@ -391,22 +391,18 @@ def lire_mails() -> str:
 
 
 # ---------- Agenda (lien iCal secret, ex. Google Agenda) ----------
-def agenda(jour: str = "") -> str:
+def agenda_events(day: datetime.date) -> list[tuple[str, str]] | None:
+    """Rendez-vous du jour [(heure, titre)], ou None si aucun agenda n'est configuré."""
     url = config.load()["agenda_ics"].strip()
     if not url and _uses_script():
-        day = parse_day(jour) or datetime.date.today()
         events = _call_script(action="agenda", date=day.isoformat())["evenements"]
-        if not events:
-            return f"Aucun rendez-vous {french_date(day)}."
         events.sort(key=lambda e: (not e["journee"], e["heure"]))
-        lines = [f"- {'toute la journée' if e['journee'] else e['heure']} : {e['titre']}" for e in events]
-        return f"Rendez-vous du {french_date(day)} :\n" + "\n".join(lines)
+        return [("toute la journée" if e["journee"] else e["heure"], e["titre"]) for e in events]
     if not url:
-        return "L'agenda n'est pas configuré. L'utilisateur peut le faire dans ⚙️ Réglages → Brief du jour."
+        return None
     import icalendar
     import recurring_ical_events
 
-    day = parse_day(jour) or datetime.date.today()
     url = url.replace("webcal://", "https://")
     with urllib.request.urlopen(url, timeout=20) as r:
         cal = icalendar.Calendar.from_ical(r.read())
@@ -420,9 +416,17 @@ def agenda(jour: str = "") -> str:
             events.append((start.strftime("%H:%M"), title))
         else:
             events.append(("toute la journée", title))
+    events.sort(key=lambda e: (e[0] != "toute la journée", e[0]))
+    return events
+
+
+def agenda(jour: str = "") -> str:
+    day = parse_day(jour) or datetime.date.today()
+    events = agenda_events(day)
+    if events is None:
+        return "L'agenda n'est pas configuré. L'utilisateur peut le faire dans ⚙️ Réglages → Brief du jour."
     if not events:
         return f"Aucun rendez-vous {french_date(day)}."
-    events.sort(key=lambda e: (e[0] != "toute la journée", e[0]))
     return f"Rendez-vous du {french_date(day)} :\n" + "\n".join(f"- {h} : {t}" for h, t in events)
 
 
@@ -459,12 +463,13 @@ def tide_extremes(times: list[str], heights: list) -> list[tuple[datetime.dateti
     return found
 
 
-def marees(lieu: str = "", jour: str = "") -> str:
+def tide_data(lieu: str = "", day: datetime.date | None = None) -> dict:
+    """Marées structurées : hautes/basses du jour et courbe de hauteur d'eau heure par heure."""
     settings = config.load()
     place = (lieu or "").strip() or settings["maree_lieu"] or settings["ville"]
     if not place:
-        return "Lieu inconnu : demande à l'utilisateur pour quel port ou quelle ville côtière il veut les marées."
-    day = parse_day(jour) or datetime.date.today()
+        raise ValueError("lieu inconnu")
+    day = day or datetime.date.today()
     lat, lon, name = _geocode(place)
     query = urllib.parse.urlencode({
         "latitude": lat, "longitude": lon, "hourly": "sea_level_height_msl",
@@ -472,15 +477,36 @@ def marees(lieu: str = "", jour: str = "") -> str:
     })
     data = _get_json(f"https://marine-api.open-meteo.com/v1/marine?{query}")
     hourly = data.get("hourly", {})
-    heights = hourly.get("sea_level_height_msl") or []
+    times, heights = hourly.get("time") or [], hourly.get("sea_level_height_msl") or []
     if not any(h is not None for h in heights):
-        return f"Pas de données de marée pour {name} : choisis un port ou une ville au bord de la mer."
-    tides = [t for t in tide_extremes(hourly["time"], heights) if t[0].date() == day]
-    if not tides:
-        return f"Pas de marée trouvée pour {name} le {french_date(day)}."
-    lines = [f"- Marée {kind} vers {when.strftime('%Hh%M')}" for when, kind, _ in tides]
+        return {"lieu": name, "disponible": False}
+    extremes = [t for t in tide_extremes(times, heights) if t[0].date() == day]
+    curve = [
+        {"h": datetime.datetime.fromisoformat(t).hour, "v": round(v, 2)}
+        for t, v in zip(times, heights)
+        if v is not None and datetime.datetime.fromisoformat(t).date() == day
+    ]
+    return {
+        "lieu": name, "disponible": True, "date": day.isoformat(),
+        "extremes": [{"heure": w.strftime("%Hh%M"), "minutes": w.hour * 60 + w.minute, "type": k, "hauteur": round(v, 2)}
+                     for w, k, v in extremes],
+        "courbe": curve,
+    }
+
+
+def marees(lieu: str = "", jour: str = "") -> str:
+    try:
+        t = tide_data(lieu, parse_day(jour))
+    except ValueError:
+        return "Lieu inconnu : demande à l'utilisateur pour quel port ou quelle ville côtière il veut les marées."
+    day = datetime.date.fromisoformat(t["date"]) if t.get("date") else datetime.date.today()
+    if not t["disponible"]:
+        return f"Pas de données de marée pour {t['lieu']} : choisis un port ou une ville au bord de la mer."
+    if not t["extremes"]:
+        return f"Pas de marée trouvée pour {t['lieu']} le {french_date(day)}."
+    lines = [f"- Marée {e['type']} vers {e['heure']}" for e in t["extremes"]]
     return (
-        f"Marées à {name}, {french_date(day)} (estimation à environ 30 minutes près) :\n" + "\n".join(lines)
+        f"Marées à {t['lieu']}, {french_date(day)} (estimation à environ 30 minutes près) :\n" + "\n".join(lines)
     )
 
 

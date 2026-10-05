@@ -15,7 +15,7 @@ import httpx
 import ollama
 
 from . import brief as brief_module
-from . import config, elevenlabs, pronote
+from . import config, dashboard, elevenlabs, pronote
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -49,7 +49,7 @@ def open_window(url: str) -> None:
     edge = _find_edge()
     if edge:
         # autoplay : permet à Jarvis de lire le brief à voix haute sans attendre un clic
-        subprocess.Popen([edge, f"--app={url}", "--window-size=520,820", "--autoplay-policy=no-user-gesture-required"])
+        subprocess.Popen([edge, f"--app={url}", "--window-size=1366,800", "--start-maximized", "--autoplay-policy=no-user-gesture-required"])
     else:
         webbrowser.open(url)
 
@@ -84,6 +84,10 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 self._send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
             elif self.path == "/jsQR.js":
                 self._send(200, (PAGE.parent / "jsQR.js").read_bytes(), "text/javascript; charset=utf-8")
+            elif self.path.startswith("/api/dashboard"):
+                self._json(dashboard.collect(force="force=1" in self.path))
+            elif self.path == "/api/system":
+                self._json(dashboard.system())
             elif self.path == "/api/info":
                 self._json({"model": MODEL})
             elif self.path == "/api/settings":

@@ -1,7 +1,8 @@
 # 🤖 Jarvis — ton assistant personnel
 
-Un assistant inspiré du Jarvis d'Iron Man, qui tourne sur ton ordinateur, avec sa propre fenêtre
-façon Iron Man (réacteur animé, voix, micro). Tu peux lui écrire ou lui parler.
+Un assistant inspiré du Jarvis d'Iron Man, qui tourne sur ton ordinateur, avec un **tableau de bord
+holographique** façon Iron Man : réacteur animé, horloge, météo et marées illustrées, journée,
+tâches, mails et jauges du PC. Tu peux lui écrire ou lui parler.
 Son « cerveau » est une IA **gratuite qui tourne directement sur ton ordinateur** grâce à
 [Ollama](https://ollama.com) : pas d'abonnement, pas de clé, et tes conversations restent chez toi.
 Il faut un PC avec au moins 8 Go de mémoire vive (16 Go recommandés) et ~6 Go d'espace disque.
@@ -106,6 +107,7 @@ Dans la conversation :
 jarvis/
 ├── __main__.py   # le démarrage, et le mode terminal (texte ou voix)
 ├── web.py        # l'interface graphique (petit serveur local + fenêtre)
+├── dashboard.py  # les données du tableau de bord (météo, marées, journée, PC…)
 ├── static/index.html  # le design de l'interface
 ├── brain.py      # le dialogue avec l'IA (Ollama) et l'utilisation des outils
 ├── tools.py      # les actions que Jarvis peut faire sur ton PC

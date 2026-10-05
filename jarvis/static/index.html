@@ -7,150 +7,240 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23050b14' stroke='%234fd8ff' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%234fd8ff'/%3E%3C/svg%3E">
 <style>
   :root {
-    --bg: #050b14;
-    --panel: rgba(14, 30, 48, 0.72);
-    --line: rgba(80, 200, 255, 0.22);
+    --bg: #02070d;
+    --panel: rgba(8, 26, 40, 0.62);
+    --panel-solid: #061523;
+    --line: rgba(80, 200, 255, 0.24);
+    --line-strong: rgba(80, 200, 255, 0.55);
     --cyan: #4fd8ff;
-    --cyan-soft: rgba(79, 216, 255, 0.14);
+    --cyan-soft: rgba(79, 216, 255, 0.13);
+    --glow: 0 0 10px rgba(79, 216, 255, 0.55);
     --text: #dff6ff;
-    --muted: #7fa6b8;
-    --user: #12324a;
-    --danger: #ff6b6b;
+    --muted: #6f9db3;
+    --user: #0f3048;
+    --danger: #ff5f6d;
+    --warn: #ffc861;
+    --ok: #5dffb4;
+    --accent: var(--cyan);
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body {
     background:
-      radial-gradient(circle at 50% 0%, rgba(79, 216, 255, 0.12), transparent 55%),
-      linear-gradient(rgba(79, 216, 255, 0.035) 1px, transparent 1px) 0 0 / 100% 28px,
+      radial-gradient(ellipse at 50% 38%, rgba(30, 140, 200, 0.18), transparent 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='48' viewBox='0 0 56 48'%3E%3Cpath d='M14 1 L42 1 L55 24 L42 47 L14 47 L1 24 Z' fill='none' stroke='%234fd8ff' stroke-opacity='0.05'/%3E%3C/svg%3E"),
       var(--bg);
     color: var(--text);
-    font: 15px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
-    display: flex; flex-direction: column;
+    font: 14px/1.45 "Segoe UI", "Bahnschrift", system-ui, -apple-system, sans-serif;
+    display: grid; grid-template-rows: auto 1fr;
     overflow: hidden;
   }
+  body::after { /* lignes de balayage façon écran holographique */
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 5;
+    background: repeating-linear-gradient(0deg, rgba(79, 216, 255, 0.025) 0 1px, transparent 1px 3px);
+  }
+  .mono { font-family: "Bahnschrift", "Consolas", "Segoe UI", monospace; letter-spacing: 0.06em; }
+  .glow { color: var(--cyan); text-shadow: var(--glow); }
 
-  header { padding: 18px 16px 6px; text-align: center; flex-shrink: 0; }
-  .reactor {
-    width: 112px; height: 112px; margin: 0 auto; position: relative; cursor: pointer;
-    border-radius: 50%;
+  /* ---------- Barre du haut ---------- */
+  .topbar {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    padding: 8px 16px 4px; border-bottom: 1px solid var(--line); position: relative;
+    background: linear-gradient(180deg, rgba(79, 216, 255, 0.06), transparent);
   }
-  .reactor .ring, .reactor .core {
-    position: absolute; border-radius: 50%; inset: 0;
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-logo { width: 34px; height: 34px; }
+  .brand h1 { margin: 0; font-size: 18px; letter-spacing: 0.42em; font-weight: 600; color: var(--cyan); text-shadow: var(--glow); }
+  .status { color: var(--muted); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; }
+  .clock { text-align: center; line-height: 1; }
+  .clock .time { font-size: 40px; font-weight: 300; letter-spacing: 0.08em; color: var(--cyan); text-shadow: var(--glow); }
+  .clock .time small { font-size: 18px; color: var(--muted); margin-left: 4px; }
+  .clock .date { font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+  .top-actions { display: flex; justify-content: flex-end; gap: 8px; align-items: center; }
+  .top-actions .pill {
+    background: var(--panel); border: 1px solid var(--line); color: var(--muted); border-radius: 999px;
+    padding: 6px 12px; font: inherit; font-size: 12px; cursor: pointer;
   }
-  .reactor .ring {
-    border: 2px solid var(--cyan);
-    box-shadow: 0 0 18px var(--cyan), inset 0 0 18px rgba(79, 216, 255, 0.5);
-    opacity: 0.85;
+  .top-actions .pill:hover, .top-actions .pill.on { color: var(--cyan); border-color: var(--line-strong); }
+  .gear {
+    width: 36px; height: 36px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line);
+    color: var(--cyan); font-size: 17px; cursor: pointer; display: grid; place-items: center;
   }
-  .reactor .ring.r2 {
-    inset: 14px; border-style: dashed; opacity: 0.6; box-shadow: none;
-    animation: spin 18s linear infinite;
+  .gear:hover { border-color: var(--cyan); box-shadow: var(--glow); }
+
+  /* ---------- Grille principale ---------- */
+  .hud-grid {
+    display: grid; grid-template-columns: minmax(270px, 330px) minmax(380px, 1fr) minmax(270px, 330px);
+    gap: 14px; padding: 12px 14px 14px; min-height: 0;
   }
-  .reactor .ring.r3 {
-    inset: 26px; border-width: 4px; border-color: var(--cyan) transparent var(--cyan) transparent;
-    box-shadow: none; animation: spin 6s linear infinite reverse;
+  .col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+  .col.side { overflow-y: auto; scrollbar-width: none; }
+  .col > .hud { flex-shrink: 0; } /* un panneau ne s'écrase jamais : la colonne défile si besoin */
+  .col.side::-webkit-scrollbar { display: none; }
+
+  /* ---------- Panneaux avec coins high-tech ---------- */
+  .hud {
+    position: relative; background: var(--panel); border: 1px solid var(--line);
+    padding: 12px 14px 12px; backdrop-filter: blur(4px);
+    clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+    animation: boot 0.6s ease-out both;
   }
+  .hud::before, .hud::after {
+    content: ""; position: absolute; width: 18px; height: 18px; border: 2px solid var(--cyan);
+    filter: drop-shadow(0 0 4px var(--cyan)); pointer-events: none;
+  }
+  .hud::before { top: -1px; right: -1px; border-left: 0; border-bottom: 0; }
+  .hud::after { bottom: -1px; left: -1px; border-right: 0; border-top: 0; }
+  .hud-title {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--cyan);
+  }
+  .hud-title .tag { color: var(--muted); letter-spacing: 0.12em; font-size: 10px; }
+  .empty { color: var(--muted); font-size: 13px; }
+  .empty button { background: none; border: none; color: var(--cyan); text-decoration: underline; cursor: pointer; font: inherit; padding: 0; }
+  @keyframes boot { from { opacity: 0; transform: translateY(8px); filter: blur(3px); } }
+
+  /* Météo */
+  .wx-now { display: grid; grid-template-columns: 96px 1fr; gap: 10px; align-items: center; }
+  .wx-icon svg { width: 96px; height: 96px; overflow: visible; filter: drop-shadow(0 0 6px rgba(79, 216, 255, 0.6)); }
+  .wx-temp { font-size: 46px; font-weight: 200; line-height: 1; color: var(--cyan); text-shadow: var(--glow); }
+  .wx-temp sup { font-size: 20px; }
+  .wx-desc { font-size: 13px; text-transform: capitalize; }
+  .wx-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .wx-days { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+  .wx-day { border: 1px solid var(--line); padding: 6px 4px; text-align: center; font-size: 11px; background: rgba(79, 216, 255, 0.04); }
+  .wx-day svg { width: 34px; height: 34px; overflow: visible; }
+  .wx-day .range { color: var(--cyan); }
+  .wx-day .rain { color: var(--muted); font-size: 10px; }
+
+  /* Marées */
+  .tide-chart { width: 100%; height: auto; max-height: 150px; display: block; overflow: visible; }
+  .tide-next { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; margin-top: 6px; }
+  .tide-next > div { white-space: nowrap; }
+  .tide-next .big { font-size: 26px; font-weight: 300; color: var(--cyan); text-shadow: var(--glow); line-height: 1; }
+  .tide-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .tide-list span { font-size: 11px; border: 1px solid var(--line); padding: 2px 8px; }
+  .tide-list .haute { color: var(--cyan); border-color: var(--line-strong); }
+
+  /* Centre : réacteur + discussion */
+  .center { display: grid; grid-template-rows: auto 1fr auto; gap: 10px; min-height: 0; }
+  .hub { display: flex; justify-content: center; align-items: center; gap: 22px; }
+  .hub-side .gauge svg { width: 70px; height: 70px; }
+  .hub-side { font-size: 10px; letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; display: flex; flex-direction: column; gap: 6px; }
+  .hub-side.left { text-align: right; }
+  .hub-side .gauge { text-align: center; }
+  .hub-side b { display: block; color: var(--cyan); font-size: 13px; letter-spacing: 0.08em; font-weight: 500; }
+  .reactor { width: 200px; height: 200px; position: relative; cursor: pointer; flex-shrink: 0; }
+  .reactor svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .reactor .spin { transform-origin: 100px 100px; animation: spin 24s linear infinite; }
+  .reactor .spin.rev { animation-duration: 14s; animation-direction: reverse; }
+  .reactor .spin.fast { animation-duration: 7s; }
   .reactor .core {
-    inset: 40px;
-    background: radial-gradient(circle, #ffffff 0%, var(--cyan) 45%, rgba(79, 216, 255, 0) 75%);
+    position: absolute; inset: 70px; border-radius: 50%;
+    background: radial-gradient(circle, #ffffff 0%, var(--accent) 40%, rgba(79, 216, 255, 0) 72%);
     animation: breathe 3.2s ease-in-out infinite;
   }
-  body.thinking .reactor .r3 { animation-duration: 1.1s; }
+  .reactor:hover .core { filter: brightness(1.25); }
+  body.thinking .reactor .spin { animation-duration: 3s; }
+  body.thinking .reactor .spin.rev { animation-duration: 1.6s; }
   body.thinking .reactor .core { animation-duration: 0.8s; }
-  body.listening .reactor .ring { border-color: var(--danger); box-shadow: 0 0 22px var(--danger); }
-  body.listening .reactor .core {
-    background: radial-gradient(circle, #fff 0%, var(--danger) 45%, transparent 75%);
-    animation-duration: 0.9s;
-  }
+  body.listening { --accent: var(--danger); }
+  body.listening .reactor .core { animation-duration: 0.9s; }
+  body.listening .reactor svg { filter: hue-rotate(160deg) saturate(1.6); }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes breathe {
-    0%, 100% { transform: scale(0.85); opacity: 0.8; }
-    50% { transform: scale(1.08); opacity: 1; }
-  }
-  h1 {
-    margin: 12px 0 0; font-size: 20px; letter-spacing: 0.42em; font-weight: 600;
-    color: var(--cyan); text-shadow: 0 0 12px rgba(79, 216, 255, 0.7);
-    padding-left: 0.42em;
-  }
-  .status { color: var(--muted); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; min-height: 18px; }
+  @keyframes breathe { 0%, 100% { transform: scale(0.86); opacity: 0.8; } 50% { transform: scale(1.06); opacity: 1; } }
 
-  main {
-    flex: 1; overflow-y: auto; padding: 12px 16px 20px;
-    display: flex; flex-direction: column; gap: 10px;
-    scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+  .chat-box { display: flex; flex-direction: column; min-height: 0; padding: 0; }
+  main#chat {
+    flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 9px;
+    scrollbar-width: thin; scrollbar-color: var(--line) transparent; min-height: 0;
   }
-  .msg {
-    max-width: 86%; padding: 10px 14px; border-radius: 14px;
-    white-space: pre-wrap; word-wrap: break-word; animation: pop 0.18s ease-out;
-  }
+  .msg { max-width: 88%; padding: 9px 13px; white-space: pre-wrap; word-wrap: break-word; animation: pop 0.18s ease-out; }
   .msg.jarvis {
-    align-self: flex-start; background: var(--panel);
-    border: 1px solid var(--line); border-bottom-left-radius: 4px;
-    backdrop-filter: blur(6px);
+    align-self: flex-start; background: rgba(79, 216, 255, 0.07); border: 1px solid var(--line);
+    border-left: 3px solid var(--cyan);
   }
-  .msg.user {
-    align-self: flex-end; background: var(--user);
-    border: 1px solid rgba(79, 216, 255, 0.35); border-bottom-right-radius: 4px;
-  }
-  .msg.error { border-color: rgba(255, 107, 107, 0.5); }
+  .msg.user { align-self: flex-end; background: var(--user); border: 1px solid rgba(79, 216, 255, 0.3); border-right: 3px solid var(--muted); }
+  .msg.error { border-color: rgba(255, 95, 109, 0.55); }
+  .msg.reminder { border-color: var(--warn); box-shadow: 0 0 14px rgba(255, 200, 97, 0.25); }
   .tools { align-self: flex-start; display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip {
-    font-size: 12px; color: var(--cyan); background: var(--cyan-soft);
-    border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px;
-  }
-  .typing { align-self: flex-start; display: flex; gap: 5px; padding: 12px 14px; }
-  .typing span {
-    width: 7px; height: 7px; border-radius: 50%; background: var(--cyan);
-    animation: blink 1.2s infinite ease-in-out;
-  }
+  .chip { font-size: 11px; color: var(--cyan); background: var(--cyan-soft); border: 1px solid var(--line); padding: 1px 9px; letter-spacing: 0.04em; }
+  .typing { align-self: flex-start; display: flex; gap: 5px; padding: 10px 12px; }
+  .typing span { width: 7px; height: 7px; background: var(--cyan); animation: blink 1.2s infinite ease-in-out; }
   .typing span:nth-child(2) { animation-delay: 0.2s; }
   .typing span:nth-child(3) { animation-delay: 0.4s; }
   @keyframes blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
   @keyframes pop { from { opacity: 0; transform: translateY(6px); } }
-
   .suggestions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 4px 0; }
   .suggestions button {
-    background: transparent; color: var(--text); border: 1px solid var(--line);
-    border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer;
+    background: transparent; color: var(--text); border: 1px solid var(--line); padding: 5px 12px;
+    font: inherit; font-size: 12px; cursor: pointer;
   }
   .suggestions button:hover { border-color: var(--cyan); color: var(--cyan); }
 
-  footer {
-    flex-shrink: 0; padding: 10px 12px 14px; border-top: 1px solid var(--line);
-    background: rgba(5, 11, 20, 0.85);
-  }
+  .composer { padding: 10px 12px 10px; border-top: 1px solid var(--line); }
   form { display: flex; gap: 8px; align-items: center; }
   input[type=text] {
-    flex: 1; min-width: 0; background: var(--panel); color: var(--text);
-    border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font: inherit;
-    outline: none;
+    flex: 1; min-width: 0; background: rgba(2, 10, 18, 0.7); color: var(--text);
+    border: 1px solid var(--line); padding: 11px 14px; font: inherit; outline: none;
   }
   input[type=text]:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-soft); }
   .icon-btn {
-    width: 44px; height: 44px; flex-shrink: 0; border-radius: 12px; cursor: pointer;
-    background: var(--panel); border: 1px solid var(--line); color: var(--cyan);
-    display: grid; place-items: center; font-size: 18px;
+    width: 42px; height: 42px; flex-shrink: 0; cursor: pointer; background: var(--panel);
+    border: 1px solid var(--line); color: var(--cyan); display: grid; place-items: center; font-size: 17px;
   }
   .icon-btn:hover { border-color: var(--cyan); }
-  .icon-btn.on { background: var(--cyan); color: var(--bg); }
   .icon-btn.rec { background: var(--danger); border-color: var(--danger); color: #fff; }
   .icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-  .bar { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--muted); }
-  .bar button {
-    background: none; border: none; color: var(--muted); font: inherit; cursor: pointer; padding: 0;
-  }
-  .bar button:hover { color: var(--cyan); }
+  .bar { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--muted); }
+  .bar button { background: none; border: none; color: var(--muted); font: inherit; cursor: pointer; padding: 0; }
+  .bar button:hover, .bar .on { color: var(--cyan); }
 
-  header { position: relative; }
-  .gear {
-    position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; border-radius: 12px;
-    background: var(--panel); border: 1px solid var(--line); color: var(--cyan);
-    font-size: 19px; cursor: pointer; display: grid; place-items: center;
+  /* Journée */
+  .timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .timeline li { display: grid; grid-template-columns: 48px 12px 1fr; gap: 8px; align-items: start; font-size: 13px; padding: 3px 0; }
+  .timeline .t { color: var(--cyan); font-size: 12px; }
+  .timeline .dot { width: 8px; height: 8px; margin-top: 5px; border: 1px solid var(--cyan); transform: rotate(45deg); }
+  .timeline li.rdv .dot { background: var(--cyan); }
+  .timeline li.now .dot { background: var(--ok); border-color: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .timeline li.past { opacity: 0.45; }
+  .timeline .sub { color: var(--muted); font-size: 11px; }
+  .timeline li.annule .what { text-decoration: line-through; color: var(--muted); }
+  .badge { font-size: 10px; padding: 0 6px; margin-left: 4px; border: 1px solid currentColor; letter-spacing: 0.06em; }
+  .badge.red { color: var(--danger); }
+  .badge.gold { color: var(--warn); }
+  .homework { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); font-size: 12px; }
+  .homework div { margin-top: 3px; }
+  .homework b { color: var(--cyan); font-weight: 500; }
+
+  /* Tâches + mails */
+  .tasks { list-style: none; margin: 0; padding: 0; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+  .tasks li { display: flex; gap: 8px; align-items: baseline; }
+  .tasks li::before { content: ""; width: 9px; height: 9px; border: 1px solid var(--cyan); flex-shrink: 0; }
+  .tasks li.late { color: var(--warn); }
+  .tasks li.late::before { border-color: var(--warn); }
+  .mail-row { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+  .mail-list { font-size: 12px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .mail-list div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mail-list b { color: var(--cyan); font-weight: 500; }
+
+  /* Jauges du PC */
+  .gauges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
+  .gauge svg { width: 64px; height: 64px; }
+  .gauge .lbl { font-size: 9px; letter-spacing: 0.16em; color: var(--muted); }
+  .power { margin-top: 8px; font-size: 10px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
+  .power .bar-line { height: 4px; background: rgba(79, 216, 255, 0.12); margin-top: 4px; }
+  .power .bar-line i { display: block; height: 100%; background: var(--cyan); box-shadow: var(--glow); width: 0; transition: width 0.6s; }
+
+  /* Petits écrans : tout en une colonne */
+  @media (max-width: 1080px) {
+    body { display: block; overflow: auto; }
+    .hud-grid { grid-template-columns: 1fr; }
+    .col.side { overflow: visible; }
+    .center { order: -1; min-height: 80vh; }
+    .topbar { grid-template-columns: 1fr auto; }
+    .clock { display: none; }
   }
-  .gear:hover { border-color: var(--cyan); }
-  .msg.reminder { border-color: #ffc861; box-shadow: 0 0 14px rgba(255, 200, 97, 0.25); }
-  .bar .on { color: var(--cyan); }
 
   .overlay {
     position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); display: none; z-index: 10;
@@ -216,37 +306,101 @@
 </style>
 </head>
 <body>
-<header>
-  <button class="gear" id="openSettings" title="Réglages" aria-label="Réglages">⚙️</button>
-  <div class="reactor" id="reactor" title="Clique pour parler">
-    <div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div><div class="core"></div>
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-logo" viewBox="0 0 40 40" aria-hidden="true">
+      <circle cx="20" cy="20" r="17" fill="none" stroke="#4fd8ff" stroke-width="2"/>
+      <circle cx="20" cy="20" r="11" fill="none" stroke="#4fd8ff" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <circle cx="20" cy="20" r="5" fill="#bff3ff"/>
+    </svg>
+    <div>
+      <h1>J.A.R.V.I.S.</h1>
+      <div class="status" id="status">En ligne</div>
+    </div>
   </div>
-  <h1>J.A.R.V.I.S.</h1>
-  <div class="status" id="status">En ligne</div>
+  <div class="clock mono">
+    <div class="time"><span id="clockTime">--:--</span><small id="clockSec">--</small></div>
+    <div class="date" id="clockDate"></div>
+  </div>
+  <div class="top-actions">
+    <button class="pill" id="voiceToggle" type="button">🔊 Voix : activée</button>
+    <button class="pill" id="wakeToggle" type="button">👂 Réveil « Jarvis » : non</button>
+    <button class="gear" id="openSettings" title="Réglages" aria-label="Réglages">⚙️</button>
+  </div>
 </header>
 
-<main id="chat">
-  <div class="msg jarvis">Bonjour, je suis Jarvis. Que puis-je faire pour vous ?</div>
-  <div class="suggestions" id="suggestions">
-    <button>Quelle heure est-il ?</button>
-    <button>Quel temps fait-il à Paris ?</button>
-    <button>Ouvre YouTube</button>
-    <button data-brief="1">☀️ Mon brief du jour</button>
+<div class="hud-grid">
+  <!-- Colonne de gauche : météo et marées -->
+  <div class="col side">
+    <section class="hud" id="wxPanel">
+      <div class="hud-title"><span>// Météo</span><span class="tag mono" id="wxCity">WX-01</span></div>
+      <div id="wxBody" class="empty">Chargement…</div>
+    </section>
+    <section class="hud" id="tidePanel">
+      <div class="hud-title"><span>// Marées</span><span class="tag mono" id="tideCity">TD-02</span></div>
+      <div id="tideBody" class="empty">Chargement…</div>
+    </section>
   </div>
-</main>
 
-<footer>
-  <form id="form" autocomplete="off">
-    <button type="button" class="icon-btn" id="mic" title="Parler à Jarvis">🎙️</button>
-    <input type="text" id="input" placeholder="Écris ta demande…" autofocus>
-    <button type="submit" class="icon-btn" id="send" title="Envoyer">➤</button>
-  </form>
-  <div class="bar">
-    <button id="voiceToggle" type="button">🔊 Voix : activée</button>
-    <button id="wakeToggle" type="button">👂 Réveil « Jarvis » : non</button>
-    <button id="reset" type="button">↺ Nouvelle conversation</button>
+  <!-- Centre : réacteur et discussion -->
+  <div class="center">
+    <div class="hub">
+      <div class="hub-side left mono" id="gaugesLeft"></div>
+      <div class="reactor" id="reactor" title="Clique pour parler">
+        <svg viewBox="0 0 200 200" aria-hidden="true">
+          <defs>
+            <filter id="neon"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <g filter="url(#neon)" fill="none" stroke="#4fd8ff">
+            <circle cx="100" cy="100" r="96" stroke-opacity="0.35"/>
+            <g class="spin"><circle cx="100" cy="100" r="90" stroke-width="5" stroke-dasharray="2 7" stroke-opacity="0.8"/></g>
+            <g class="spin rev"><circle cx="100" cy="100" r="78" stroke-width="2" stroke-dasharray="60 18 8 18"/></g>
+            <g class="spin fast"><path d="M100 36 A64 64 0 0 1 164 100" stroke-width="4"/><path d="M100 164 A64 64 0 0 1 36 100" stroke-width="4"/></g>
+            <circle cx="100" cy="100" r="52" stroke-opacity="0.6"/>
+            <g class="spin rev"><circle cx="100" cy="100" r="44" stroke-width="7" stroke-dasharray="10 6" stroke-opacity="0.9"/></g>
+          </g>
+        </svg>
+        <div class="core"></div>
+      </div>
+      <div class="hub-side mono" id="gaugesRight"></div>
+    </div>
+
+    <section class="hud chat-box">
+      <main id="chat">
+        <div class="msg jarvis">Bonjour, je suis Jarvis. Que puis-je faire pour vous ?</div>
+        <div class="suggestions" id="suggestions">
+          <button data-brief="1">☀️ Mon brief du jour</button>
+          <button>Quel temps fera-t-il demain ?</button>
+          <button>Quelles sont mes tâches ?</button>
+          <button>Ouvre YouTube</button>
+        </div>
+      </main>
+      <div class="composer">
+        <form id="form" autocomplete="off">
+          <button type="button" class="icon-btn" id="mic" title="Parler à Jarvis">🎙️</button>
+          <input type="text" id="input" placeholder="Écris ta demande…" autofocus>
+          <button type="submit" class="icon-btn" id="send" title="Envoyer">➤</button>
+        </form>
+        <div class="bar">
+          <span class="mono">CERVEAU <span id="hubBrain" class="glow">LOCAL</span> · MAJ <span id="hubMaj" class="glow">--:--</span></span>
+          <button id="reset" type="button">↺ Nouvelle conversation</button>
+        </div>
+      </div>
+    </section>
   </div>
-</footer>
+
+  <!-- Colonne de droite : journée, tâches, mails, PC -->
+  <div class="col side">
+    <section class="hud">
+      <div class="hud-title"><span>// Aujourd'hui</span><span class="tag mono">AG-03</span></div>
+      <div id="dayBody" class="empty">Chargement…</div>
+    </section>
+    <section class="hud">
+      <div class="hud-title"><span>// Tâches &amp; mails</span><span class="tag mono">TK-04</span></div>
+      <div id="taskBody" class="empty">Chargement…</div>
+    </section>
+  </div>
+</div>
 
 <div class="overlay" id="overlay"></div>
 <aside class="panel" id="panel" aria-label="Réglages">
@@ -1245,6 +1399,234 @@ function applyWake(on, persist) {
 }
 $("wakeToggle").onclick = () => applyWake(!wakeMode, true);
 $("wakeSetting").onchange = () => applyWake($("wakeSetting").checked, true);
+
+// =====================================================================
+//                       TABLEAU DE BORD (HUD)
+// =====================================================================
+const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+const MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+const nowMinutes = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+const toMinutes = (h) => { const m = /(\d{1,2})[h:](\d{2})/.exec(h || ""); return m ? +m[1] * 60 + +m[2] : null; };
+const settingsLink = (txt) => `<span class="empty">${txt} <button type="button" data-open-settings>Ouvrir les réglages</button></span>`;
+document.addEventListener("click", (e) => { if (e.target.matches("[data-open-settings]")) { loadSettings(); openSettings(true); } });
+
+// ---------- Horloge ----------
+function tickClock() {
+  const d = new Date(), p = (n) => String(n).padStart(2, "0");
+  $("clockTime").textContent = `${p(d.getHours())}:${p(d.getMinutes())}`;
+  $("clockSec").textContent = p(d.getSeconds());
+  $("clockDate").textContent = `${JOURS[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}`;
+}
+tickClock(); setInterval(tickClock, 1000);
+
+// ---------- Illustrations météo (dessins néon animés) ----------
+const WX_CODES = {
+  sun: [113], partly: [116], cloud: [119, 122], fog: [143, 248, 260],
+  storm: [200, 386, 389, 392, 395],
+  snow: [179, 182, 185, 227, 230, 281, 284, 311, 314, 317, 320, 323, 326, 329, 332, 335, 338, 350, 362, 365, 368, 371, 374, 377],
+};
+function wxKind(code) {
+  for (const [k, list] of Object.entries(WX_CODES)) if (list.includes(code)) return k;
+  return [176, 263, 266, 293, 296, 299, 302, 305, 308, 353, 356, 359].includes(code) ? "rain" : "cloud";
+}
+const CLOUD = '<path d="M30 70 H70 A15 15 0 0 0 70 40 A21 21 0 0 0 31 37 A16.5 16.5 0 0 0 30 70 Z"/>';
+function sunRays(cx, cy, r1, r2, n) {
+  let s = "";
+  for (let i = 0; i < n; i++) {
+    const a = (i * 2 * Math.PI) / n;
+    s += `<line x1="${cx + r1 * Math.cos(a)}" y1="${cy + r1 * Math.sin(a)}" x2="${cx + r2 * Math.cos(a)}" y2="${cy + r2 * Math.sin(a)}"/>`;
+  }
+  return `<g>${s}<animateTransform attributeName="transform" type="rotate" from="0 ${cx} ${cy}" to="360 ${cx} ${cy}" dur="18s" repeatCount="indefinite"/></g>`;
+}
+function drops(char) {
+  return [32, 48, 64].map((x, i) =>
+    char === "line"
+      ? `<line x1="${x}" y1="76" x2="${x - 4}" y2="88"><animate attributeName="opacity" values="0;1;0" dur="1.2s" begin="${i * 0.3}s" repeatCount="indefinite"/><animateTransform attributeName="transform" type="translate" values="0 -4;0 6" dur="1.2s" begin="${i * 0.3}s" repeatCount="indefinite"/></line>`
+      : `<g><path d="M${x} 78 v8 M${x - 4} 82 h8"/><animate attributeName="opacity" values="0.2;1;0.2" dur="2s" begin="${i * 0.5}s" repeatCount="indefinite"/></g>`
+  ).join("");
+}
+function wxIcon(code) {
+  const k = wxKind(code);
+  let inner = "";
+  if (k === "sun") inner = `<circle cx="50" cy="50" r="15"/><circle cx="50" cy="50" r="8" fill="#4fd8ff" fill-opacity="0.35"/>${sunRays(50, 50, 22, 31, 12)}<circle cx="50" cy="50" r="40" stroke-dasharray="3 6" stroke-opacity="0.5"/>`;
+  else if (k === "partly") inner = `<circle cx="36" cy="36" r="11"/>${sunRays(36, 36, 16, 22, 10)}<g transform="translate(8 8)">${CLOUD}</g>`;
+  else if (k === "cloud") inner = `<g transform="translate(-8 -6) scale(0.8)" stroke-opacity="0.5">${CLOUD}</g><g transform="translate(6 6)">${CLOUD}</g>`;
+  else if (k === "rain") inner = `<g transform="translate(0 -8)">${CLOUD}</g>${drops("line")}`;
+  else if (k === "snow") inner = `<g transform="translate(0 -8)">${CLOUD}</g>${drops("flake")}`;
+  else if (k === "storm") inner = `<g transform="translate(0 -10)">${CLOUD}</g><path d="M52 64 L43 80 H52 L47 94 L63 74 H54 L58 64 Z" fill="#4fd8ff" fill-opacity="0.4"><animate attributeName="opacity" values="1;0.2;1;1;0.3;1" dur="2.4s" repeatCount="indefinite"/></path>`;
+  else inner = [34, 46, 58, 70].map((y, i) => `<line x1="${18 + i * 4}" y1="${y}" x2="${82 - i * 3}" y2="${y}" stroke-dasharray="14 6"><animate attributeName="stroke-dashoffset" values="0;40" dur="${3 + i}s" repeatCount="indefinite"/></line>`).join("");
+  return `<svg viewBox="0 0 100 100" fill="none" stroke="#4fd8ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+}
+
+function renderWeather(block) {
+  const body = $("wxBody");
+  if (!block.ok) { body.innerHTML = `<span class="empty">Météo indisponible (${esc(block.erreur)}).</span>`; return; }
+  const w = block.data;
+  if (!w) { body.innerHTML = settingsLink("Indique ta ville pour voir la météo."); return; }
+  $("wxCity").textContent = w.ville.toUpperCase();
+  body.className = "";
+  body.innerHTML = `
+    <div class="wx-now">
+      <div class="wx-icon">${wxIcon(w.code)}</div>
+      <div>
+        <div class="wx-temp mono">${w.temp}<sup>°C</sup></div>
+        <div class="wx-desc">${esc(w.desc)}</div>
+      </div>
+    </div>
+    <div class="wx-meta mono"><span>RESSENTI ${w.ressenti}°</span><span>VENT ${w.vent} KM/H</span><span>HUMIDITÉ ${w.humidite}%</span></div>
+    <div class="wx-days">${w.jours.map((d) => `
+      <div class="wx-day">
+        <div class="mono">${esc(d.label === "Aujourd'hui" ? "AUJ." : d.label === "Demain" ? "DEMAIN" : "APRÈS-DEM.")}</div>
+        ${wxIcon(d.code)}
+        <div class="range mono">${d.min}° / ${d.max}°</div>
+        <div class="rain mono">☂ ${d.pluie}%</div>
+      </div>`).join("")}
+    </div>`;
+}
+
+// ---------- Marées : courbe de la journée ----------
+function smoothPath(pts) {
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    d += ` C${p1[0] + (p2[0] - p0[0]) / 6},${p1[1] + (p2[1] - p0[1]) / 6} ${p2[0] - (p3[0] - p1[0]) / 6},${p2[1] - (p3[1] - p1[1]) / 6} ${p2[0]},${p2[1]}`;
+  }
+  return d;
+}
+function renderTides(block) {
+  const body = $("tideBody");
+  if (!block.ok) { body.innerHTML = `<span class="empty">Marées indisponibles (${esc(block.erreur)}).</span>`; return; }
+  const t = block.data;
+  if (!t) { body.innerHTML = settingsLink("Indique un port ou une ville côtière pour voir les marées."); return; }
+  $("tideCity").textContent = t.lieu.toUpperCase();
+  body.className = "";
+  const W = 300, H = 120, top = 18, bottom = 100;
+  const vals = t.courbe.map((p) => p.v), lo = Math.min(...vals), hi = Math.max(...vals);
+  const x = (minutes) => (minutes / 1440) * W;
+  const y = (v) => bottom - ((v - lo) / (hi - lo || 1)) * (bottom - top);
+  const pts = t.courbe.map((p) => [x(p.h * 60), y(p.v)]);
+  const line = smoothPath(pts);
+  const now = nowMinutes();
+  // Niveau actuel : interpolation entre les deux heures qui encadrent maintenant
+  const h = now / 60, i = Math.min(Math.floor(h), t.courbe.length - 2);
+  const level = t.courbe.length > 1 ? t.courbe[i].v + (t.courbe[i + 1].v - t.courbe[i].v) * (h - i) : lo;
+  const pct = Math.round(((level - lo) / (hi - lo || 1)) * 100);
+  const next = t.extremes.find((e) => e.type === "haute" && e.minutes > now);
+  const wait = next ? next.minutes - now : null;
+  const grid = [0, 6, 12, 18, 24].map((hh) => `<line x1="${x(hh * 60)}" y1="${top - 6}" x2="${x(hh * 60)}" y2="${bottom}" stroke="#4fd8ff" stroke-opacity="0.12"/><text x="${x(hh * 60)}" y="${H - 4}" fill="#6f9db3" font-size="9" text-anchor="middle">${String(hh).padStart(2, "0")}h</text>`).join("");
+  const marks = t.extremes.map((e) => {
+    const yy = e.type === "haute" ? top - 4 : y(e.hauteur) - 8;
+    return `<circle cx="${x(e.minutes)}" cy="${y(e.hauteur)}" r="3.5" fill="${e.type === "haute" ? "#4fd8ff" : "#02070d"}" stroke="#4fd8ff"/>
+            <text x="${x(e.minutes)}" y="${yy}" fill="${e.type === "haute" ? "#4fd8ff" : "#6f9db3"}" font-size="9" text-anchor="middle">${e.type === "haute" ? "PM" : "BM"} ${e.heure}</text>`;
+  }).join("");
+  body.innerHTML = `
+    <svg class="tide-chart mono" viewBox="0 0 ${W} ${H}">
+      <defs><linearGradient id="tideFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4fd8ff" stop-opacity="0.45"/><stop offset="1" stop-color="#4fd8ff" stop-opacity="0"/></linearGradient></defs>
+      ${grid}
+      <path d="${line} L${pts[pts.length - 1][0]},${bottom} L${pts[0][0]},${bottom} Z" fill="url(#tideFill)"/>
+      <path d="${line}" fill="none" stroke="#4fd8ff" stroke-width="2" style="filter: drop-shadow(0 0 4px #4fd8ff)"/>
+      <line x1="${x(now)}" y1="${top - 8}" x2="${x(now)}" y2="${bottom}" stroke="#5dffb4" stroke-dasharray="3 3"/>
+      <circle cx="${x(now)}" cy="${y(level)}" r="4" fill="#5dffb4"><animate attributeName="r" values="3;6;3" dur="2s" repeatCount="indefinite"/></circle>
+      ${marks}
+    </svg>
+    <div class="tide-next">
+      <div><div class="status">Marée haute</div><div class="big mono">${next ? next.heure : "demain"}</div></div>
+      <div class="mono" style="text-align:right"><div class="status">Dans</div><div class="glow">${wait != null ? `${Math.floor(wait / 60)} h ${String(wait % 60).padStart(2, "0")}` : "—"}</div></div>
+      <div class="mono" style="text-align:right"><div class="status">Niveau</div><div class="glow">${pct}%</div></div>
+    </div>
+    <div class="tide-list mono">${t.extremes.map((e) => `<span class="${e.type}">${e.type === "haute" ? "▲ PM" : "▼ BM"} ${e.heure}</span>`).join("")}</div>`;
+}
+
+// ---------- Journée : cours et rendez-vous ----------
+function renderDay(day, homework) {
+  const body = $("dayBody");
+  if (!day.ok) { body.innerHTML = `<span class="empty">Indisponible (${esc(day.erreur)}).</span>`; return; }
+  const items = day.data || [];
+  const now = nowMinutes();
+  let html = items.length ? "" : '<span class="empty">Rien de prévu aujourd\'hui. Profites-en !</span>';
+  if (items.length) {
+    html = '<ul class="timeline">' + items.map((it) => {
+      const start = toMinutes(it.heure), end = toMinutes(it.fin) ?? (start != null ? start + 60 : null);
+      const state = start == null ? "" : end <= now ? "past" : start <= now ? "now" : "";
+      const badges = (it.annule ? `<span class="badge red">${esc(it.statut || "ANNULÉ")}</span>` : it.statut ? `<span class="badge gold">${esc(it.statut)}</span>` : "")
+        + (it.controle ? '<span class="badge gold">CONTRÔLE</span>' : "");
+      return `<li class="${it.type} ${state} ${it.annule ? "annule" : ""}">
+        <span class="t mono">${esc(it.heure === "toute la journée" ? "JOUR" : it.heure)}</span><span class="dot"></span>
+        <span><span class="what">${esc(it.titre)}</span>${badges}${it.detail ? `<div class="sub">${esc(it.detail)}</div>` : ""}</span></li>`;
+    }).join("") + "</ul>";
+  }
+  if (homework.ok && homework.data && homework.data.length) {
+    html += '<div class="homework"><div class="status">Devoirs pour demain</div>' +
+      homework.data.map((h) => `<div><b>${esc(h.matiere)}</b> · ${esc(h.texte)}</div>`).join("") + "</div>";
+  }
+  body.className = "";
+  body.innerHTML = html;
+}
+
+// ---------- Tâches et mails ----------
+function ring(value, label, max = 100, text) {
+  const r = 26, c = 2 * Math.PI * r, v = value == null ? 0 : Math.max(0, Math.min(1, value / max));
+  const color = value != null && max === 100 && value > 85 ? "#ff5f6d" : "#4fd8ff";
+  return `<div class="gauge"><svg viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="${r}" fill="none" stroke="#4fd8ff" stroke-opacity="0.12" stroke-width="5"/>
+      <circle cx="32" cy="32" r="${r}" fill="none" stroke="${color}" stroke-width="5" stroke-dasharray="${c * v} ${c}"
+        transform="rotate(-90 32 32)" style="filter: drop-shadow(0 0 3px ${color}); transition: stroke-dasharray .6s"/>
+      <circle cx="32" cy="32" r="19" fill="none" stroke="#4fd8ff" stroke-opacity="0.3" stroke-dasharray="2 3"/>
+      <text x="32" y="36" text-anchor="middle" fill="#dff6ff" font-size="12" font-family="Bahnschrift, Segoe UI">${text ?? (value == null ? "—" : value + "%")}</text>
+    </svg><div class="lbl mono">${label}</div></div>`;
+}
+function renderTasks(tasks, mails) {
+  const body = $("taskBody");
+  let html = "";
+  if (!tasks.ok) html = `<span class="empty">Tâches indisponibles.</span>`;
+  else if (!tasks.data.length) html = '<span class="empty">Aucune tâche. Dis « ajoute à ma liste… » pour en créer.</span>';
+  else html = '<ul class="tasks">' + tasks.data.map((t) => {
+    const when = t.date ? new Date(t.date + "T12:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" }) : "";
+    return `<li class="${t.retard ? "late" : ""}"><span>${esc(t.texte)}${when ? ` <span class="sub mono">· ${esc(when)}</span>` : ""}</span></li>`;
+  }).join("") + "</ul>";
+  if (mails.ok && mails.data) {
+    const m = mails.data;
+    html += `<div class="mail-row">${ring(m.nombre, "NON LUS", Math.max(10, m.nombre), String(m.nombre))}
+      <div class="mail-list">${m.liste.length ? m.liste.map((x) => `<div><b>${esc(x.de)}</b> · ${esc(x.sujet)}</div>`).join("") : '<span class="empty">Aucun nouveau mail.</span>'}</div></div>`;
+  } else if (mails.ok) {
+    html += `<div class="mail-row" style="grid-template-columns:1fr">${settingsLink("Connecte ta boîte mail pour voir tes nouveaux mails.")}</div>`;
+  }
+  body.className = "";
+  body.innerHTML = html;
+}
+
+// ---------- Chargement ----------
+async function loadDashboard(force) {
+  try {
+    const d = await (await fetch("/api/dashboard" + (force ? "?force=1" : ""))).json();
+    window.lastDash = d;
+    renderWeather(d.meteo);
+    renderTides(d.marees);
+    renderDay(d.journee, d.devoirs);
+    renderTasks(d.taches, d.mails);
+    $("hubMaj").textContent = d.maj;
+  } catch (e) { /* Jarvis est peut-être en train de démarrer : on réessaiera */ }
+}
+async function loadSystem() {
+  try {
+    const s = await (await fetch("/api/system")).json();
+    $("gaugesLeft").innerHTML = ring(s.cpu, "PROCESSEUR") + ring(s.ram, "MÉMOIRE");
+    $("gaugesRight").innerHTML = ring(s.disque, "DISQUE")
+      + ring(s.batterie, s.batterie == null || s.secteur ? "ÉNERGIE" : "BATTERIE", 100, s.batterie == null ? "100%" : undefined);
+  } catch (e) {}
+}
+fetch("/api/info").then((r) => r.json()).then((i) => { $("hubBrain").textContent = i.model; }).catch(() => {});
+loadDashboard(); setInterval(() => loadDashboard(), 10 * 60 * 1000);
+loadSystem(); setInterval(loadSystem, 3000);
+// Chaque minute, le repère « maintenant » des marées et de la journée avance.
+setInterval(() => {
+  const d = window.lastDash;
+  if (d) { renderTides(d.marees); renderDay(d.journee, d.devoirs); }
+}, 60 * 1000);
+// Après avoir changé les réglages (ville, marées, Pronote…), on rafraîchit tout.
+$("closeSettings").addEventListener("click", () => loadDashboard(true));
+$("overlay").addEventListener("click", () => loadDashboard(true));
 
 loadSettings();
 

@@ -181,30 +181,42 @@ def _hm(t: datetime.datetime) -> str:
     return t.strftime("%Hh%M")
 
 
-def emploi_du_temps(jour: str = "") -> str:
-    from .brief import french_date, parse_day
-
-    day = parse_day(jour) or datetime.date.today()
+def lessons_data(day: datetime.date) -> list[dict]:
+    """Cours du jour (un seul par créneau, comme Pronote les affiche)."""
     with _lock:
         lessons = _get_client().lessons(day)
-    # Pour un même créneau, Pronote affiche le cours qui a le plus grand « num ».
     shown: dict = {}
     for lesson in lessons:
         key = (lesson.start, lesson.end)
         if key not in shown or (lesson.num or 0) > (shown[key].num or 0):
             shown[key] = lesson
-    if not shown:
+    return [
+        {
+            "debut": _hm(l.start), "fin": _hm(l.end),
+            "matiere": l.subject.name if l.subject else (l.status or "Cours"),
+            "prof": l.teacher_name or "", "salle": l.classroom or "",
+            "annule": bool(l.canceled), "statut": l.status or "", "controle": bool(l.test),
+        }
+        for l in sorted(shown.values(), key=lambda l: l.start)
+    ]
+
+
+def emploi_du_temps(jour: str = "") -> str:
+    from .brief import french_date, parse_day
+
+    day = parse_day(jour) or datetime.date.today()
+    lessons = lessons_data(day)
+    if not lessons:
         return f"Aucun cours {french_date(day)}."
     lines = []
-    for lesson in sorted(shown.values(), key=lambda l: l.start):
-        subject = lesson.subject.name if lesson.subject else (lesson.status or "Cours")
-        details = ", ".join(x for x in (lesson.teacher_name, f"salle {lesson.classroom}" if lesson.classroom else "") if x)
-        line = f"- {_hm(lesson.start)}-{_hm(lesson.end)} : {subject}" + (f" ({details})" if details else "")
-        if lesson.canceled:
-            line += f" — ANNULÉ ({lesson.status or 'cours annulé'})"
-        elif lesson.status:
-            line += f" — {lesson.status}"
-        if lesson.test:
+    for l in lessons:
+        details = ", ".join(x for x in (l["prof"], f"salle {l['salle']}" if l["salle"] else "") if x)
+        line = f"- {l['debut']}-{l['fin']} : {l['matiere']}" + (f" ({details})" if details else "")
+        if l["annule"]:
+            line += f" — ANNULÉ ({l['statut'] or 'cours annulé'})"
+        elif l["statut"]:
+            line += f" — {l['statut']}"
+        if l["controle"]:
             line += " — contrôle prévu"
         lines.append(line)
     return f"Emploi du temps du {french_date(day)} :\n" + "\n".join(lines)
