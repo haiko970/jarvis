@@ -14,11 +14,14 @@ Il peut agir sur ton PC :
 - 🚀 lancer des applications (« lance la calculatrice », « ouvre Spotify »)
 - 📝 retenir des notes et des rappels (« note que je dois appeler maman »)
 - 💻 te donner des infos sur ton ordinateur (espace disque, système)
-- 🌦️ donner la météo (aujourd'hui, demain, après-demain), chez toi ou ailleurs
+- 🌦️ donner la météo (aujourd'hui, demain, après-demain), chez toi ou ailleurs, avec la force du vent
+  (boussole, rafales, échelle de Beaufort)
 - 🧠 se souvenir de toi : ta ville, tes goûts, tes infos (« retiens que mon anniversaire est le 12 mars »)
 - 🔎 chercher sur internet (actualités, questions diverses)
 - 🔊 régler le volume (« monte le son », « mets le volume à 30 », « coupe le son »)
-- 🎵 contrôler la musique et les vidéos (pause, suivant, précédent) et chercher sur Spotify
+- 🎵 contrôler la musique et les vidéos (pause, suivant, précédent), chercher sur Spotify et afficher
+  le morceau en cours sur le tableau de bord
+- 🎮 lancer tes jeux Steam et Epic Games à la voix (« lance Rocket League », « lance GTA »)
 - ⏰ programmer des minuteurs et des rappels (« rappelle-moi dans 10 minutes de sortir les pâtes »)
 - 👂 se réveiller quand tu dis « Jarvis » (à activer en bas de la fenêtre)
 - ⏻ se fermer (« Jarvis, ferme-toi »), éteindre ou redémarrer le PC (« ferme mon ordi » : extinction
@@ -114,6 +117,9 @@ jarvis/
 ├── brain.py      # le dialogue avec l'IA (Ollama) et l'utilisation des outils
 ├── tools.py      # les actions que Jarvis peut faire sur ton PC
 ├── powers.py     # volume, musique, Spotify, minuteurs
+├── musique.py    # morceau en cours sur Spotify
+├── jeux.py       # jeux Steam et Epic Games
+├── systeme.py    # fermer Jarvis, éteindre ou redémarrer le PC
 ├── brief.py      # tâches, mails, agenda, brief du jour, démarrage automatique
 ├── pronote.py    # emploi du temps, devoirs et notes Pronote
 ├── elevenlabs.py # voix ElevenLabs (option)

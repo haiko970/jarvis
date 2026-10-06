@@ -38,7 +38,7 @@
      comme une image : rien ne déborde et il n'y a jamais besoin de faire défiler. */
   #stage {
     position: absolute; left: 0; top: 0; width: 1366px; height: 720px;
-    display: grid; grid-template-rows: auto 1fr; transform-origin: 0 0;
+    display: grid; grid-template-rows: auto minmax(0, 1fr); transform-origin: 0 0;
   }
   body::after { /* lignes de balayage façon écran holographique */
     content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 5;
@@ -76,12 +76,15 @@
   /* ---------- Grille principale ---------- */
   .hud-grid {
     display: grid; grid-template-columns: minmax(270px, 330px) minmax(380px, 1fr) minmax(270px, 330px);
+    grid-template-rows: minmax(0, 1fr);
     gap: 14px; padding: 12px 14px 14px; min-height: 0;
   }
   .col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
-  .col.side { overflow-y: auto; scrollbar-width: none; }
-  .col > .hud { flex-shrink: 0; } /* un panneau ne s'écrase jamais : la colonne défile si besoin */
-  .col.side::-webkit-scrollbar { display: none; }
+  .col.side { overflow: hidden; }
+  .col > .hud { flex-shrink: 0; } /* un panneau ne s'écrase jamais… */
+  /* …sauf « Aujourd'hui », qui prend la place restante et défile à l'intérieur si la journée est chargée */
+  .col > .hud.grow { flex: 1 1 0; min-height: 90px; display: flex; flex-direction: column; }
+  .grow > div:last-child { overflow-y: auto; min-height: 0; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 
   /* ---------- Panneaux avec coins high-tech ---------- */
   .hud {
@@ -117,6 +120,39 @@
   .wx-day svg { width: 34px; height: 34px; overflow: visible; }
   .wx-day .range { color: var(--cyan); }
   .wx-day .rain { color: var(--muted); font-size: 10px; }
+
+  /* Vent */
+  .wind { display: grid; grid-template-columns: 62px 1fr; gap: 10px; align-items: center; margin-top: 8px; }
+  .wind svg { width: 62px; height: 62px; overflow: visible; }
+  .wind .speed { font-size: 20px; color: var(--cyan); text-shadow: var(--glow); line-height: 1.1; }
+  .wind .speed small { font-size: 11px; color: var(--muted); }
+  .wind .gust { font-size: 11px; color: var(--muted); }
+  .beaufort { display: flex; gap: 2px; margin-top: 4px; }
+  .beaufort i { flex: 1; height: 5px; background: rgba(79, 216, 255, 0.12); }
+  .beaufort i.on { background: var(--cyan); box-shadow: 0 0 4px var(--cyan); }
+  .beaufort i.on.hot { background: var(--warn); box-shadow: 0 0 4px var(--warn); }
+  .beaufort i.on.danger { background: var(--danger); box-shadow: 0 0 4px var(--danger); }
+  .wind .name { font-size: 11px; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.1em; }
+  .wx-day .windd { color: var(--muted); font-size: 10px; }
+
+  /* Musique */
+  .music { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; }
+  .eq { display: flex; align-items: flex-end; gap: 3px; height: 30px; }
+  .eq i { width: 5px; background: var(--cyan); box-shadow: 0 0 4px var(--cyan); height: 20%; }
+  .music.playing .eq i { animation: eq 0.9s ease-in-out infinite alternate; }
+  .music.playing .eq i:nth-child(2) { animation-duration: 0.6s; }
+  .music.playing .eq i:nth-child(3) { animation-duration: 1.1s; }
+  .music.playing .eq i:nth-child(4) { animation-duration: 0.75s; }
+  @keyframes eq { from { height: 15%; } to { height: 100%; } }
+  .track { min-width: 0; }
+  .track .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
+  .track .a { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; color: var(--muted); }
+  .controls { display: flex; gap: 4px; }
+  .controls button {
+    width: 30px; height: 30px; background: var(--panel); border: 1px solid var(--line); color: var(--cyan);
+    cursor: pointer; font-size: 13px; display: grid; place-items: center;
+  }
+  .controls button:hover { border-color: var(--cyan); box-shadow: var(--glow); }
 
   /* Marées */
   .tide-chart { width: 100%; height: auto; max-height: 150px; display: block; overflow: visible; }
@@ -397,6 +433,10 @@
       <div class="hud-title"><span>// Tâches &amp; mails</span><span class="tag mono">TK-04</span></div>
       <div id="taskBody" class="empty">Chargement…</div>
     </section>
+    <section class="hud">
+      <div class="hud-title"><span>// Musique</span><span class="tag mono" id="musicSrc">SPOTIFY</span></div>
+      <div id="musicBody" class="empty">Recherche de Spotify…</div>
+    </section>
   </div>
 </div>
 </div><!-- /stage -->
@@ -627,6 +667,7 @@ const TOOL_LABELS = {
   infos_systeme: "💻 Système", ajouter_note: "📝 Note ajoutée", lire_notes: "📒 Notes",
   effacer_notes: "🗑️ Notes effacées", meteo: "🌦️ Météo", recherche_web: "🔎 Recherche web",
   volume: "🔊 Volume", controle_musique: "🎵 Musique", spotify_rechercher: "🟢 Spotify",
+  lancer_jeu: "🎮 Jeu lancé", lister_jeux: "🎮 Jeux", musique_en_cours: "🎵 Musique en cours",
   minuteur: "⏰ Minuteur", lister_minuteurs: "⏰ Minuteurs", annuler_minuteurs: "⏰ Annulés",
   definir_ville: "📍 Ville enregistrée", retenir_info: "🧠 Retenu", oublier_info: "🧠 Oublié",
   fermer_jarvis: "⏻ Extinction de Jarvis", eteindre_ordinateur: "⏻ Extinction du PC", annuler_extinction: "↺ Extinction annulée",
@@ -1484,6 +1525,39 @@ function wxIcon(code) {
   return `<svg viewBox="0 0 100 100" fill="none" stroke="#4fd8ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
 }
 
+// Boussole : la flèche montre où va le vent (il vient de la direction opposée)
+function windWidget(w) {
+  if (w.vent == null) return "";
+  const to = ((w.vent_deg ?? 0) + 180) % 360;
+  const ticks = [["N", 0], ["E", 90], ["S", 180], ["O", 270]].map(([l, a]) => {
+    const r = (a - 90) * Math.PI / 180;
+    return `<text x="${31 + 25 * Math.cos(r)}" y="${34 + 25 * Math.sin(r)}" fill="#6f9db3" font-size="8" text-anchor="middle">${l}</text>`;
+  }).join("");
+  const segs = Array.from({ length: 12 }, (_, i) => {
+    const on = i < (w.beaufort ?? 0);
+    return `<i class="${on ? "on" : ""} ${on && i >= 8 ? "danger" : on && i >= 5 ? "hot" : ""}"></i>`;
+  }).join("");
+  return `
+    <div class="wind">
+      <svg viewBox="0 0 62 62" class="mono">
+        <circle cx="31" cy="31" r="20" fill="none" stroke="#4fd8ff" stroke-opacity="0.35"/>
+        <circle cx="31" cy="31" r="15" fill="none" stroke="#4fd8ff" stroke-opacity="0.2" stroke-dasharray="2 3"/>
+        ${ticks}
+        <g transform="rotate(${to} 31 31)">
+          <g><path d="M31 15 L36 31 L31 27 L26 31 Z" fill="#4fd8ff" style="filter: drop-shadow(0 0 3px #4fd8ff)"/>
+             <line x1="31" y1="27" x2="31" y2="45" stroke="#4fd8ff" stroke-width="2"/>
+             <animateTransform attributeName="transform" type="rotate" values="-6 31 31;6 31 31;-6 31 31" dur="${Math.max(0.6, 4 - (w.beaufort ?? 0) * 0.3)}s" repeatCount="indefinite"/></g>
+        </g>
+      </svg>
+      <div>
+        <div class="speed mono">${w.vent} <small>KM/H</small> <small>· ${esc(w.vent_dir || "")}</small></div>
+        <div class="gust mono">RAFALES ${w.rafales ?? "—"} KM/H</div>
+        <div class="beaufort">${segs}</div>
+        <div class="name mono">Force ${w.beaufort ?? "?"} · ${esc(w.vent_nom || "")}</div>
+      </div>
+    </div>`;
+}
+
 function renderWeather(block) {
   const body = $("wxBody");
   if (!block.ok) { body.innerHTML = `<span class="empty">Météo indisponible (${esc(block.erreur)}).</span>`; return; }
@@ -1499,13 +1573,15 @@ function renderWeather(block) {
         <div class="wx-desc">${esc(w.desc)}</div>
       </div>
     </div>
-    <div class="wx-meta mono"><span>RESSENTI ${w.ressenti}°</span><span>VENT ${w.vent} KM/H</span><span>HUMIDITÉ ${w.humidite}%</span></div>
+    ${windWidget(w)}
+    <div class="wx-meta mono"><span>RESSENTI ${w.ressenti}°</span><span>HUMIDITÉ ${w.humidite}%</span></div>
     <div class="wx-days">${w.jours.map((d) => `
       <div class="wx-day">
         <div class="mono">${esc(d.label === "Aujourd'hui" ? "AUJ." : d.label === "Demain" ? "DEMAIN" : "APRÈS-DEM.")}</div>
         ${wxIcon(d.code)}
         <div class="range mono">${d.min}° / ${d.max}°</div>
         <div class="rain mono">☂ ${d.pluie}%</div>
+        ${d.vent_max != null ? `<div class="windd mono">💨 ${d.vent_max} km/h</div>` : ""}
       </div>`).join("")}
     </div>`;
 }
@@ -1621,6 +1697,40 @@ function renderTasks(tasks, mails) {
   body.innerHTML = html;
 }
 
+// ---------- Musique (Spotify) ----------
+function renderMusic(m) {
+  const body = $("musicBody");
+  body.className = "";
+  if (m.indisponible) { body.innerHTML = '<span class="empty">Disponible avec Spotify sur Windows.</span>'; return; }
+  if (!m.lance) {
+    body.innerHTML = '<span class="empty">Spotify n\'est pas ouvert. <button type="button" class="link" data-media="ouvrir">Ouvrir Spotify</button></span>';
+    return;
+  }
+  const playing = !!m.lecture;
+  body.innerHTML = `
+    <div class="music ${playing ? "playing" : ""}">
+      <div class="eq"><i></i><i></i><i></i><i></i></div>
+      <div class="track"><div class="t">${playing ? esc(m.titre) : "En pause"}</div><div class="a">${playing ? esc(m.artiste || "") : "Spotify"}</div></div>
+      <div class="controls">
+        <button type="button" data-media="precedent" title="Précédent">⏮</button>
+        <button type="button" data-media="lecture_pause" title="Lecture / pause">${playing ? "⏸" : "▶"}</button>
+        <button type="button" data-media="suivant" title="Suivant">⏭</button>
+      </div>
+    </div>`;
+}
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-media]");
+  if (!btn) return;
+  try {
+    const m = await (await fetch("/api/media", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: btn.dataset.media }) })).json();
+    renderMusic(m);
+  } catch (err) {}
+});
+async function loadMedia() {
+  try { renderMusic(await (await fetch("/api/media")).json()); } catch (e) {}
+}
+
 // ---------- Chargement ----------
 async function loadDashboard(force) {
   try {
@@ -1644,6 +1754,7 @@ async function loadSystem() {
 fetch("/api/info").then((r) => r.json()).then((i) => { $("hubBrain").textContent = i.model; }).catch(() => {});
 loadDashboard(); setInterval(() => loadDashboard(), 10 * 60 * 1000);
 loadSystem(); setInterval(loadSystem, 3000);
+loadMedia(); setInterval(loadMedia, 3000);
 // Chaque minute, le repère « maintenant » des marées et de la journée avance.
 setInterval(() => {
   const d = window.lastDash;

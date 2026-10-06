@@ -11,7 +11,7 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
-from . import brief, config, powers, pronote, systeme
+from . import brief, config, jeux, musique, powers, pronote, systeme
 
 NOTES_FILE = Path.home() / ".jarvis_notes.json"
 
@@ -68,7 +68,8 @@ TOOLS = [
     {
         "name": "meteo",
         "description": (
-            "Donne la météo actuelle et les prévisions pour aujourd'hui, demain et après-demain. "
+            "Donne la météo actuelle et les prévisions pour aujourd'hui, demain et après-demain, "
+            "y compris la force et la direction du vent et les rafales. "
             "Laisse 'ville' vide pour utiliser la ville de l'utilisateur."
         ),
         "input_schema": _schema({"ville": {"type": "string", "description": "ex. Paris (facultatif)"}}, []),
@@ -174,6 +175,25 @@ def effacer_notes() -> str:
     return "Toutes les notes ont été supprimées."
 
 
+BEAUFORT = [  # (vitesse max en km/h, force, nom du vent)
+    (1, 0, "calme"), (5, 1, "très légère brise"), (11, 2, "légère brise"), (19, 3, "petite brise"),
+    (28, 4, "jolie brise"), (38, 5, "bonne brise"), (49, 6, "vent frais"), (61, 7, "grand frais"),
+    (74, 8, "coup de vent"), (88, 9, "fort coup de vent"), (102, 10, "tempête"), (117, 11, "violente tempête"),
+]
+
+
+def beaufort(kmh: float) -> tuple[int, str]:
+    for limit, force, name in BEAUFORT:
+        if kmh <= limit:
+            return force, name
+    return 12, "ouragan"
+
+
+def _wind_dir_fr(point: str) -> str:
+    """« WNW » (anglais) → « ONO » (français)."""
+    return point.upper().replace("W", "O")
+
+
 def weather_data(ville: str = "") -> dict:
     """Météo structurée (pour le tableau de bord et pour les réponses de Jarvis)."""
     ville = (ville or "").strip() or config.load()["ville"]
@@ -194,11 +214,24 @@ def weather_data(ville: str = "") -> dict:
             "label": label, "date": day["date"], "desc": describe(midday), "code": int(midday.get("weatherCode", 0)),
             "min": int(day["mintempC"]), "max": int(day["maxtempC"]), "pluie": int(midday.get("chanceofrain", 0) or 0),
         })
+    for d, day in zip(days, data["weather"]):
+        d["vent_max"] = max(int(h.get("windspeedKmph", 0) or 0) for h in day["hourly"])
+        d["rafales_max"] = max(int(h.get("WindGustKmph", 0) or 0) for h in day["hourly"])
+
+    # Rafales : prévision du créneau de 3 h en cours
+    import datetime as _dt
+
+    hourly_today = data["weather"][0]["hourly"]
+    current_slot = hourly_today[min(_dt.datetime.now().hour // 3, len(hourly_today) - 1)]
+    wind = int(now.get("windspeedKmph", 0) or 0)
+    force, wind_name = beaufort(wind)
     return {
         "ville": ville,
         "temp": int(now["temp_C"]), "ressenti": int(now["FeelsLikeC"]), "desc": describe(now),
         "code": int(now.get("weatherCode", 0)), "humidite": int(now.get("humidity", 0) or 0),
-        "vent": int(now.get("windspeedKmph", 0) or 0), "jours": days,
+        "vent": wind, "rafales": max(wind, int(current_slot.get("WindGustKmph", 0) or 0)),
+        "vent_dir": _wind_dir_fr(now.get("winddir16Point", "") or ""), "vent_deg": int(now.get("winddirDegree", 0) or 0),
+        "beaufort": force, "vent_nom": wind_name, "jours": days,
     }
 
 
@@ -210,10 +243,15 @@ def meteo(ville: str = "") -> str:
             "Ville inconnue. Demande à l'utilisateur quelle est sa ville, "
             "puis enregistre-la avec definir_ville."
         )
-    lines = [f"Maintenant à {w['ville']} : {w['desc']}, {w['temp']}°C (ressenti {w['ressenti']}°C)."]
+    lines = [
+        f"Maintenant à {w['ville']} : {w['desc']}, {w['temp']}°C (ressenti {w['ressenti']}°C). "
+        f"Vent {w['vent_nom']} (force {w['beaufort']} Beaufort) : {w['vent']} km/h venant du {w['vent_dir']}, "
+        f"rafales jusqu'à {w['rafales']} km/h."
+    ]
     for d in w["jours"]:
         lines.append(
-            f"{d['label']} ({d['date']}) : {d['desc']}, de {d['min']}°C à {d['max']}°C, risque de pluie {d['pluie']} %."
+            f"{d['label']} ({d['date']}) : {d['desc']}, de {d['min']}°C à {d['max']}°C, risque de pluie {d['pluie']} %, "
+            f"vent jusqu'à {d['vent_max']} km/h (rafales {d['rafales_max']} km/h)."
         )
     return "\n".join(lines)
 
@@ -265,11 +303,13 @@ HANDLERS = {
     "effacer_notes": effacer_notes,
 }
 
-TOOLS += powers.TOOLS + brief.TOOLS + pronote.TOOLS + systeme.TOOLS
+TOOLS += powers.TOOLS + brief.TOOLS + pronote.TOOLS + systeme.TOOLS + jeux.TOOLS + musique.TOOLS
 HANDLERS.update(powers.HANDLERS)
 HANDLERS.update(brief.HANDLERS)
 HANDLERS.update(pronote.HANDLERS)
 HANDLERS.update(systeme.HANDLERS)
+HANDLERS.update(jeux.HANDLERS)
+HANDLERS.update(musique.HANDLERS)
 
 
 def run_tool(name: str, args: dict) -> tuple[str, bool]:

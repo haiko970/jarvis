@@ -7,6 +7,7 @@ import shutil
 import socket
 import subprocess
 import threading
+import time
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -15,7 +16,7 @@ import httpx
 import ollama
 
 from . import brief as brief_module
-from . import config, dashboard, elevenlabs, pronote, systeme
+from . import config, dashboard, elevenlabs, musique, powers, pronote, systeme
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -113,6 +114,8 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 self._send(200, (PAGE.parent / "jsQR.js").read_bytes(), "text/javascript; charset=utf-8")
             elif self.path.startswith("/api/dashboard"):
                 self._json(dashboard.collect(force="force=1" in self.path))
+            elif self.path == "/api/media":
+                self._json(musique.now_playing())
             elif self.path == "/api/system":
                 self._json(dashboard.system())
             elif self.path == "/api/info":
@@ -223,6 +226,18 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                     config.set_secret("pronote_mdp", data["mot_de_passe"])
                 ok, message = pronote.test()
                 self._json({"ok": ok, "message": message})
+                return
+
+            if self.path == "/api/media":
+                action = json.loads(raw or b"{}").get("action", "")
+                if action == "ouvrir":
+                    from .tools import ouvrir_application
+
+                    ouvrir_application("spotify")
+                elif action in ("lecture_pause", "suivant", "precedent"):
+                    powers.controle_musique(action)
+                time.sleep(0.6)  # le temps que Spotify change de morceau
+                self._json(musique.now_playing())
                 return
 
             if self.path == "/api/brief":
