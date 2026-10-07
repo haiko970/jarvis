@@ -11,7 +11,7 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
-from . import brief, config, jeux, musique, powers, pronote, systeme
+from . import brief, config, jeux, musique, powers, pronote, systeme, temps_jeu, vacances
 
 NOTES_FILE = Path.home() / ".jarvis_notes.json"
 
@@ -303,13 +303,15 @@ HANDLERS = {
     "effacer_notes": effacer_notes,
 }
 
-TOOLS += powers.TOOLS + brief.TOOLS + pronote.TOOLS + systeme.TOOLS + jeux.TOOLS + musique.TOOLS
+TOOLS += powers.TOOLS + brief.TOOLS + pronote.TOOLS + systeme.TOOLS + jeux.TOOLS + musique.TOOLS + temps_jeu.TOOLS + vacances.TOOLS
 HANDLERS.update(powers.HANDLERS)
 HANDLERS.update(brief.HANDLERS)
 HANDLERS.update(pronote.HANDLERS)
 HANDLERS.update(systeme.HANDLERS)
 HANDLERS.update(jeux.HANDLERS)
 HANDLERS.update(musique.HANDLERS)
+HANDLERS.update(temps_jeu.HANDLERS)
+HANDLERS.update(vacances.HANDLERS)
 
 
 def run_tool(name: str, args: dict) -> tuple[str, bool]:

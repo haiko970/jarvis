@@ -21,7 +21,10 @@ Il peut agir sur ton PC :
 - 🔊 régler le volume (« monte le son », « mets le volume à 30 », « coupe le son »)
 - 🎵 contrôler la musique et les vidéos (pause, suivant, précédent), chercher sur Spotify et afficher
   le morceau en cours sur le tableau de bord
-- 🎮 lancer tes jeux Steam et Epic Games à la voix (« lance Rocket League », « lance GTA »)
+- 🎮 lancer tes jeux Steam et Epic Games à la voix (« lance Rocket League », « lance GTA ») et compter
+  ton temps de jeu (graphique des 7 derniers jours)
+- 🏖️ afficher le compte à rebours des vacances d'été : un point par jour de l'année scolaire
+- 🔄 se mettre à jour tout seul (proposé au démarrage, ou ⚙️ → « Mises à jour »)
 - ⏰ programmer des minuteurs et des rappels (« rappelle-moi dans 10 minutes de sortir les pâtes »)
 - 👂 se réveiller quand tu dis « Jarvis » (à activer en bas de la fenêtre)
 - ⏻ se fermer (« Jarvis, ferme-toi »), éteindre ou redémarrer le PC (« ferme mon ordi » : extinction
@@ -120,6 +123,10 @@ jarvis/
 ├── musique.py    # morceau en cours sur Spotify
 ├── jeux.py       # jeux Steam et Epic Games
 ├── systeme.py    # fermer Jarvis, éteindre ou redémarrer le PC
+├── temps_jeu.py  # statistiques de temps de jeu
+├── vacances.py   # compte à rebours des vacances d'été
+├── maj.py        # mise à jour automatique depuis GitHub
+├── version.json  # numéro de version (à augmenter à chaque nouveauté)
 ├── brief.py      # tâches, mails, agenda, brief du jour, démarrage automatique
 ├── pronote.py    # emploi du temps, devoirs et notes Pronote
 ├── elevenlabs.py # voix ElevenLabs (option)

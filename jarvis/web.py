@@ -16,7 +16,7 @@ import httpx
 import ollama
 
 from . import brief as brief_module
-from . import config, dashboard, elevenlabs, musique, powers, pronote, systeme
+from . import config, dashboard, elevenlabs, maj, musique, powers, pronote, systeme
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -84,6 +84,20 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
     lock = threading.Lock()  # une seule question à la fois pour le cerveau
     state = {"shutdown_timer": None}
 
+    def schedule_stop(delay: float) -> None:
+        """Ferme la fenêtre de Jarvis puis arrête le serveur après `delay` secondes."""
+        if state["shutdown_timer"]:
+            state["shutdown_timer"].cancel()
+
+        def stop() -> None:
+            try:
+                close_app_window()
+            finally:
+                server.shutdown()
+
+        state["shutdown_timer"] = threading.Timer(delay, stop)
+        state["shutdown_timer"].start()
+
     def cancel_shutdown() -> None:
         if systeme.STATE["quit"]:
             return  # « ferme-toi » a été demandé : plus rien n'annule l'arrêt
@@ -116,6 +130,8 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 self._json(dashboard.collect(force="force=1" in self.path))
             elif self.path == "/api/media":
                 self._json(musique.now_playing())
+            elif self.path.startswith("/api/update"):
+                self._json(maj.check(force="force=1" in self.path))
             elif self.path == "/api/system":
                 self._json(dashboard.system())
             elif self.path == "/api/info":
@@ -240,6 +256,15 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 self._json(musique.now_playing())
                 return
 
+            if self.path == "/api/update":
+                ok, message = maj.install()
+                if ok:  # on redémarre sur la nouvelle version
+                    systeme.STATE["quit"] = True
+                    systeme.STATE["restart"] = True
+                    schedule_stop(4)
+                self._json({"ok": ok, "message": message})
+                return
+
             if self.path == "/api/brief":
                 self._stream_answer("", collect_brief=True)
                 return
@@ -299,16 +324,7 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 if systeme.STATE["quit"]:
                     # « Ferme-toi » : la page dit au revoir, ferme sa fenêtre, puis Jarvis s'arrête.
                     emit({"type": "action", "action": "quit"})
-                    if state["shutdown_timer"]:
-                        state["shutdown_timer"].cancel()
-                    def stop() -> None:
-                        try:
-                            close_app_window()
-                        finally:
-                            server.shutdown()
-
-                    state["shutdown_timer"] = threading.Timer(9, stop)
-                    state["shutdown_timer"].start()
+                    schedule_stop(9)
                 emit({"type": "done"})
 
             try:

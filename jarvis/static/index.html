@@ -164,20 +164,42 @@
   .tide-list .haute { color: var(--cyan); border-color: var(--line-strong); }
 
   /* Centre : réacteur + discussion */
-  .center { display: grid; grid-template-rows: auto 1fr auto; gap: 10px; min-height: 0; }
+  .center { display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 10px; min-height: 0; }
+  .center-row { display: grid; grid-template-columns: 1.55fr 1fr; gap: 12px; }
+
+  /* Compte à rebours des vacances : un point par jour */
+  .countdown-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .countdown-head .big { font-size: 24px; font-weight: 300; color: var(--cyan); text-shadow: var(--glow); line-height: 1; }
+  .countdown-head .sub { font-size: 11px; color: var(--muted); text-align: right; }
+  .dots { display: flex; flex-wrap: wrap; gap: 3px; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; border: 1px solid rgba(79, 216, 255, 0.35); }
+  .dots i.we { border-color: rgba(79, 216, 255, 0.18); }
+  .dots i.done { background: #eaf8ff; border-color: #eaf8ff; box-shadow: 0 0 3px rgba(234, 248, 255, 0.6); }
+  .dots i.today { background: var(--ok); border-color: var(--ok); box-shadow: 0 0 6px var(--ok); animation: blink 1.4s infinite; }
+
+  /* Statistiques de jeu */
+  .play-bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; align-items: end; height: 54px; }
+  .play-bars div { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; }
+  .play-bars b { width: 100%; background: linear-gradient(180deg, var(--cyan), rgba(79, 216, 255, 0.25)); min-height: 2px; box-shadow: 0 0 4px rgba(79, 216, 255, 0.5); }
+  .play-bars div.today b { background: linear-gradient(180deg, var(--ok), rgba(93, 255, 180, 0.25)); }
+  .play-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 9px; color: var(--muted); margin-top: 2px; }
+  .play-top { font-size: 12px; margin-top: 6px; display: flex; flex-direction: column; gap: 1px; }
+  .play-top div { display: flex; justify-content: space-between; gap: 8px; }
+  .play-top span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .play-top span:last-child { color: var(--cyan); }
   .hub { display: flex; justify-content: center; align-items: center; gap: 22px; }
-  .hub-side .gauge svg { width: 70px; height: 70px; }
+  .hub-side .gauge svg { width: 60px; height: 60px; }
   .hub-side { font-size: 10px; letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; display: flex; flex-direction: column; gap: 6px; }
   .hub-side.left { text-align: right; }
   .hub-side .gauge { text-align: center; }
   .hub-side b { display: block; color: var(--cyan); font-size: 13px; letter-spacing: 0.08em; font-weight: 500; }
-  .reactor { width: 200px; height: 200px; position: relative; cursor: pointer; flex-shrink: 0; }
+  .reactor { width: 172px; height: 172px; position: relative; cursor: pointer; flex-shrink: 0; }
   .reactor svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .reactor .spin { transform-origin: 100px 100px; animation: spin 24s linear infinite; }
   .reactor .spin.rev { animation-duration: 14s; animation-direction: reverse; }
   .reactor .spin.fast { animation-duration: 7s; }
   .reactor .core {
-    position: absolute; inset: 70px; border-radius: 50%;
+    position: absolute; inset: 60px; border-radius: 50%;
     background: radial-gradient(circle, #ffffff 0%, var(--accent) 40%, rgba(79, 216, 255, 0) 72%);
     animation: breathe 3.2s ease-in-out infinite;
   }
@@ -297,7 +319,8 @@
   .field .row { display: flex; gap: 8px; }
   [hidden] { display: none !important; }
   .panel a { color: var(--cyan); }
-  .panel input[type=text], .panel input[type=password], .panel select {
+  .panel input[type=date] { color-scheme: dark; }
+  .panel input[type=text], .panel input[type=password], .panel input[type=date], .panel select {
     width: 100%; min-width: 0; background: var(--panel); color: var(--text); border: 1px solid var(--line);
     border-radius: 10px; padding: 10px 12px; font: inherit; outline: none;
   }
@@ -397,6 +420,17 @@
         <div class="core"></div>
       </div>
       <div class="hub-side mono" id="gaugesRight"></div>
+    </div>
+
+    <div class="center-row">
+      <section class="hud">
+        <div class="hud-title"><span>// Vacances d'été</span><span class="tag mono" id="vacTag">CD-06</span></div>
+        <div id="vacBody" class="empty">Chargement…</div>
+      </section>
+      <section class="hud">
+        <div class="hud-title"><span>// Jeux</span><span class="tag mono" id="playTag">GM-07</span></div>
+        <div id="playBody" class="empty">Chargement…</div>
+      </section>
     </div>
 
     <section class="hud chat-box">
@@ -647,6 +681,25 @@
   </section>
 
   <section>
+    <h3>🏖️ Compte à rebours</h3>
+    <div class="field">
+      <label for="rentree">Date de la rentrée</label>
+      <input type="date" id="rentree">
+    </div>
+    <div class="field">
+      <label for="vacancesEte">Début des vacances d'été</label>
+      <input type="date" id="vacancesEte">
+      <p class="hint">Laisse vide pour le calendrier habituel (rentrée le 1er septembre, vacances le premier samedi de juillet).</p>
+    </div>
+  </section>
+
+  <section>
+    <h3>🔄 Mises à jour</h3>
+    <p class="hint" id="versionTxt">Version installée : …</p>
+    <p><button class="btn" id="checkUpdate" type="button">Vérifier maintenant</button> <span class="hint" id="updateStatus"></span></p>
+  </section>
+
+  <section>
     <h3>👂 Réveil à la voix</h3>
     <label class="toggle">
       <span>Jarvis écoute en permanence et répond quand tu dis « Jarvis »<br>
@@ -667,6 +720,7 @@ const TOOL_LABELS = {
   infos_systeme: "💻 Système", ajouter_note: "📝 Note ajoutée", lire_notes: "📒 Notes",
   effacer_notes: "🗑️ Notes effacées", meteo: "🌦️ Météo", recherche_web: "🔎 Recherche web",
   volume: "🔊 Volume", controle_musique: "🎵 Musique", spotify_rechercher: "🟢 Spotify",
+  temps_de_jeu: "🎮 Temps de jeu", jours_avant_vacances: "🏖️ Vacances",
   lancer_jeu: "🎮 Jeu lancé", lister_jeux: "🎮 Jeux", musique_en_cours: "🎵 Musique en cours",
   minuteur: "⏰ Minuteur", lister_minuteurs: "⏰ Minuteurs", annuler_minuteurs: "⏰ Annulés",
   definir_ville: "📍 Ville enregistrée", retenir_info: "🧠 Retenu", oublier_info: "🧠 Oublié",
@@ -1198,6 +1252,8 @@ function fillBriefSettings(data) {
   $("mailStatus").textContent = data.mail_ok ? "✅ Boîte mail connectée." : "";
   $("agendaIcs").value = settings.agenda_ics || "";
   $("mareeLieu").value = settings.maree_lieu || "";
+  $("rentree").value = settings.rentree || "";
+  $("vacancesEte").value = settings.vacances_ete || "";
   const entSel = $("pronoteEnt");
   if (!entSel.options.length) for (const [k, label] of Object.entries(data.pronote_ents || {})) entSel.add(new Option(label, k));
   entSel.value = settings.pronote_ent || "qrcode";
@@ -1315,6 +1371,13 @@ $("pronoteSave").onclick = async () => {
     $("pronoteStatus").textContent = (res.ok ? "✅ " : "❌ ") + res.message;
     if (res.ok) { $("pronotePassword").value = ""; $("pronotePassword").placeholder = "•••••••• (enregistré)"; }
   } catch (e) { $("pronoteStatus").textContent = "❌ Jarvis ne répond plus."; }
+};
+$("rentree").onchange = () => saveSettings({ rentree: $("rentree").value });
+$("vacancesEte").onchange = () => saveSettings({ vacances_ete: $("vacancesEte").value });
+$("checkUpdate").onclick = async () => {
+  $("updateStatus").textContent = "⏳ Vérification…";
+  const u = await checkUpdate(true);
+  $("updateStatus").textContent = !u ? "❌ Impossible de vérifier." : u.erreur ? "❌ Pas de connexion à GitHub." : u.maj ? "Nouvelle version proposée dans la discussion." : "✅ Jarvis est à jour.";
 };
 $("mareeLieu").onchange = () => saveSettings({ maree_lieu: $("mareeLieu").value.trim() });
 $("agendaIcs").onchange = () => saveSettings({ agenda_ics: $("agendaIcs").value.trim() });
@@ -1697,6 +1760,79 @@ function renderTasks(tasks, mails) {
   body.innerHTML = html;
 }
 
+// ---------- Compte à rebours des vacances ----------
+function renderVacances(block) {
+  const body = $("vacBody");
+  if (!block || !block.ok) { body.innerHTML = '<span class="empty">Indisponible.</span>'; return; }
+  const c = block.data;
+  const start = new Date(c.rentree + "T12:00"), end = new Date(c.vacances + "T12:00");
+  const today = new Date(); today.setHours(12, 0, 0, 0);
+  let dots = "";
+  for (let i = 0; i < c.total; i++) {
+    const d = new Date(start.getTime() + i * 86400000);
+    const cls = d < today ? "done" : d.toDateString() === today.toDateString() ? "today" : (d.getDay() % 6 === 0 ? "we" : "");
+    dots += `<i class="${cls}" title="${d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}"></i>`;
+  }
+  const left = Math.max(0, Math.round((end - today) / 86400000));
+  const pct = Math.round(100 * Math.min(c.total, Math.max(0, (today - start) / 86400000)) / c.total);
+  $("vacTag").textContent = end.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }).toUpperCase();
+  body.className = "";
+  body.innerHTML = c.en_vacances
+    ? '<div class="countdown-head"><span class="big mono">🏖️ C\'EST LES VACANCES !</span></div>'
+    : `<div class="countdown-head"><span class="big mono">J-${left}</span>
+        <span class="sub mono">${pct}% DE L'ANNÉE PASSÉE<br>${Math.floor(left / 7)} SEMAINES ${left % 7} JOURS</span></div>
+       <div class="dots">${dots}</div>`;
+}
+
+// ---------- Statistiques de jeu ----------
+const fmtMin = (m) => (m >= 60 ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")}` : `${m} min`);
+function renderJeux(block) {
+  const body = $("playBody");
+  if (!block || !block.ok) { body.innerHTML = '<span class="empty">Indisponible.</span>'; return; }
+  const g = block.data;
+  $("playTag").textContent = `7 J · ${fmtMin(g.total)}`.toUpperCase();
+  const max = Math.max(60, ...g.jours.map((j) => j.minutes));
+  const letters = ["D", "L", "M", "M", "J", "V", "S"];
+  body.className = "";
+  body.innerHTML = `
+    <div class="play-bars">${g.jours.map((j, i) => `<div class="${i === g.jours.length - 1 ? "today" : ""}" title="${fmtMin(j.minutes)}"><b style="height:${Math.round(100 * j.minutes / max)}%"></b></div>`).join("")}</div>
+    <div class="play-days mono">${g.jours.map((j) => `<span>${letters[new Date(j.date + "T12:00").getDay()]}</span>`).join("")}</div>
+    <div class="play-top">${g.jeux.length ? g.jeux.slice(0, 2).map((x) => `<div><span>${esc(x.nom)}</span><span class="mono">${fmtMin(x.minutes)}</span></div>`).join("") : '<span class="empty">Aucune partie cette semaine 🎮</span>'}</div>`;
+}
+
+// ---------- Mise à jour automatique ----------
+async function checkUpdate(force) {
+  try {
+    const u = await (await fetch("/api/update" + (force ? "?force=1" : ""))).json();
+    $("versionTxt") && ($("versionTxt").textContent = `Version installée : ${u.installee}` + (u.disponible ? ` · dernière : ${u.disponible}` : ""));
+    if (!u.maj) return u;
+    const box = addMessage("", "jarvis");
+    box.innerHTML = `🔄 <b>Une nouvelle version de Jarvis est disponible</b> (${esc(u.disponible)}).<br>${esc(u.nouveautes)}<br>
+      <button class="btn" type="button" data-update="go">Installer maintenant</button> <button class="btn" type="button" data-update="later">Plus tard</button>`;
+    scrollDown();
+    return u;
+  } catch (e) { return null; }
+}
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-update]");
+  if (!btn) return;
+  const box = btn.closest(".msg") || addMessage("", "jarvis");
+  if (btn.dataset.update === "later") { box.textContent = "D'accord, je vous le reproposerai au prochain démarrage."; return; }
+  box.textContent = "⏳ Téléchargement et installation de la mise à jour…";
+  try {
+    const res = await (await fetch("/api/update", { method: "POST" })).json();
+    if (!res.ok) { box.textContent = "❌ " + res.message; return; }
+    box.textContent = "✅ " + res.message + " Redémarrage…";
+    const screen = document.createElement("div");
+    screen.style.cssText = "position:fixed;inset:0;z-index:50;background:#02070d;display:grid;place-items:center;" +
+      "color:#4fd8ff;font:300 20px Bahnschrift,Segoe UI,sans-serif;letter-spacing:.35em;text-shadow:0 0 12px #4fd8ff";
+    screen.textContent = "MISE À JOUR INSTALLÉE — REDÉMARRAGE…";
+    document.body.appendChild(screen);
+    setTimeout(() => window.close(), 2000);
+  } catch (err) { box.textContent = "❌ Jarvis ne répond plus."; }
+});
+setTimeout(() => checkUpdate(false), 4000);
+
 // ---------- Musique (Spotify) ----------
 function renderMusic(m) {
   const body = $("musicBody");
@@ -1740,6 +1876,8 @@ async function loadDashboard(force) {
     renderTides(d.marees);
     renderDay(d.journee, d.devoirs);
     renderTasks(d.taches, d.mails);
+    renderVacances(d.vacances);
+    renderJeux(d.jeux);
     $("hubMaj").textContent = d.maj;
   } catch (e) { /* Jarvis est peut-être en train de démarrer : on réessaiera */ }
 }
@@ -1758,7 +1896,7 @@ loadMedia(); setInterval(loadMedia, 3000);
 // Chaque minute, le repère « maintenant » des marées et de la journée avance.
 setInterval(() => {
   const d = window.lastDash;
-  if (d) { renderTides(d.marees); renderDay(d.journee, d.devoirs); }
+  if (d) { renderTides(d.marees); renderDay(d.journee, d.devoirs); renderVacances(d.vacances); }
 }, 60 * 1000);
 // Après avoir changé les réglages (ville, marées, Pronote…), on rafraîchit tout.
 $("closeSettings").addEventListener("click", () => loadDashboard(true));

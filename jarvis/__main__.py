@@ -86,6 +86,10 @@ def main() -> None:
             sys.exit(1)
 
     threading.Thread(target=setup_autostart, daemon=True).start()
+    # Statistiques de jeu : on note en arrière-plan les jeux qui tournent
+    from . import temps_jeu
+
+    threading.Thread(target=temps_jeu.tracker_loop, daemon=True).start()
 
     # Pendant que la fenêtre s'ouvre, le cerveau se réveille et lit ses instructions.
     threading.Thread(target=brain.warm_up, daemon=True).start()
@@ -94,6 +98,10 @@ def main() -> None:
         from .web import serve
 
         serve(brain, with_brief=args.brief)
+        if systeme.STATE.get("restart"):  # une mise à jour vient d'être installée
+            from . import maj
+
+            maj.restart()
         return
 
     def print_events() -> None:  # les rappels qui sonnent pendant qu'on discute

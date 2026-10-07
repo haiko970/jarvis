@@ -70,8 +70,12 @@ def steam_games() -> list[dict]:
         for manifest in glob.glob(str(library / "steamapps" / "appmanifest_*.acf")):
             text = Path(manifest).read_text(encoding="utf-8", errors="replace")
             appid, name = re.search(r'"appid"\s+"(\d+)"', text), re.search(r'"name"\s+"([^"]+)"', text)
+            installdir = re.search(r'"installdir"\s+"([^"]+)"', text)
             if appid and name and not NOT_GAMES.search(name[1]):
-                games.append({"nom": name[1], "source": "Steam", "uri": f"steam://rungameid/{appid[1]}"})
+                games.append({
+                    "nom": name[1], "source": "Steam", "uri": f"steam://rungameid/{appid[1]}",
+                    "dossier": str(library / "steamapps" / "common" / installdir[1]) if installdir else "",
+                })
     return games
 
 
@@ -89,6 +93,7 @@ def epic_games() -> list[dict]:
         games.append({
             "nom": data["DisplayName"], "source": "Epic Games",
             "uri": f"com.epicgames.launcher://apps/{ids}?action=launch&silent=true",
+            "dossier": data.get("InstallLocation", ""),
         })
     return games
 

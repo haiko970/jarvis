@@ -6,7 +6,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import brief, config, pronote
+from . import brief, config, pronote, temps_jeu, vacances
 
 CACHE_SECONDS = 600  # les infos d'internet sont rafraîchies toutes les 10 minutes
 _cache: dict = {"time": 0.0, "data": None}
@@ -88,6 +88,8 @@ def collect(force: bool = False) -> dict:
             "devoirs": _safe(_homework),
             "taches": _safe(_tasks),
             "mails": _safe(_mails),
+            "vacances": _safe(vacances.countdown),
+            "jeux": _safe(lambda: temps_jeu.summary(7)),
             "maj": datetime.datetime.now().strftime("%H:%M"),
         }
         _cache.update(time=time.time(), data=data)
