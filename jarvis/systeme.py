@@ -7,7 +7,7 @@ import subprocess
 SHUTDOWN_DELAY = 30  # secondes laissées pour enregistrer son travail ou dire « annule »
 
 # Mis à True quand Jarvis doit se fermer après sa réponse (lu par l'interface).
-STATE = {"quit": False, "restart": False}
+STATE = {"quit": False, "restart": False, "theme": None}
 
 
 def _schema(properties: dict, required: list[str]) -> dict:

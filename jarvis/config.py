@@ -25,6 +25,7 @@ DEFAULTS = {
     "mail_script_cle": "",  # clé secrète partagée entre Jarvis et le script
     "agenda_ics": "",
     "maree_lieu": "",
+    "theme": "jarvis",  # couleurs de l'interface
     "rentree": "",  # date de la rentrée (vide = 1er septembre)
     "vacances_ete": "",  # début des vacances d'été (vide = premier samedi de juillet)
     "demarrage_auto_regle": False,  # devient True après la première activation automatique

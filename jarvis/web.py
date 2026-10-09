@@ -16,7 +16,7 @@ import httpx
 import ollama
 
 from . import brief as brief_module
-from . import config, dashboard, elevenlabs, maj, musique, powers, pronote, systeme
+from . import config, dashboard, elevenlabs, maj, musique, powers, pronote, systeme, theme
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -303,7 +303,10 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
 
             text = json.loads(raw or b"{}").get("text", "").strip()
             command = systeme.quick_command(text)
-            if command:
+            couleur = None if command else theme.quick_theme(text)
+            if couleur:
+                self._stream_answer("", quick="theme:" + couleur)
+            elif command:
                 self._stream_answer("", quick=command)
             else:
                 self._stream_answer(text)
@@ -321,6 +324,9 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 self.wfile.flush()
 
             def finish() -> None:
+                if systeme.STATE.get("theme"):  # « mets le thème Iron Man » : la page change de couleur
+                    emit({"type": "action", "action": "theme", "theme": systeme.STATE["theme"]})
+                    systeme.STATE["theme"] = None
                 if systeme.STATE["quit"]:
                     # « Ferme-toi » : la page dit au revoir, ferme sa fenêtre, puis Jarvis s'arrête.
                     emit({"type": "action", "action": "quit"})
@@ -328,6 +334,10 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 emit({"type": "done"})
 
             try:
+                if quick and quick.startswith("theme:"):
+                    emit({"type": "tool", "name": "changer_theme", "args": {}})
+                    emit({"type": "text", "text": theme.run_quick(quick[6:])})
+                    quick, text = None, ""
                 if quick:
                     # Commande système reconnue directement (fermer Jarvis, éteindre le PC…)
                     tool = {"annuler": "annuler_extinction", "fermer_jarvis": "fermer_jarvis"}.get(quick, "eteindre_ordinateur")

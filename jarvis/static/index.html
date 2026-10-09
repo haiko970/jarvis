@@ -4,31 +4,64 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>J.A.R.V.I.S.</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23050b14' stroke='%234fd8ff' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%234fd8ff'/%3E%3C/svg%3E">
+<link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23050b14' stroke='%234fd8ff' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%234fd8ff'/%3E%3C/svg%3E">
 <style>
+  /* ---------- Thèmes de couleur ---------- */
   :root {
+    --c-rgb: 79, 216, 255;      /* couleur principale (traits, textes lumineux) */
+    --ok-rgb: 93, 255, 180;     /* couleur secondaire (aujourd'hui, « maintenant »…) */
     --bg: #02070d;
     --panel: rgba(8, 26, 40, 0.62);
     --panel-solid: #061523;
-    --line: rgba(80, 200, 255, 0.24);
-    --line-strong: rgba(80, 200, 255, 0.55);
-    --cyan: #4fd8ff;
-    --cyan-soft: rgba(79, 216, 255, 0.13);
-    --glow: 0 0 10px rgba(79, 216, 255, 0.55);
     --text: #dff6ff;
     --muted: #6f9db3;
     --user: #0f3048;
+    --done: #eaf8ff;
+    --hex: none;
+    --cyan: rgb(var(--c-rgb));
+    --ok: rgb(var(--ok-rgb));
+    --cyan-soft: rgba(var(--c-rgb), 0.13);
+    --glow: 0 0 10px rgba(var(--c-rgb), 0.55);
+    --line: rgba(var(--c-rgb), 0.24);
+    --line-strong: rgba(var(--c-rgb), 0.55);
     --danger: #ff5f6d;
     --warn: #ffc861;
-    --ok: #5dffb4;
     --accent: var(--cyan);
   }
+  :root[data-theme="iron"] {   /* Iron Man : or et rouge */
+    --c-rgb: 255, 196, 72; --ok-rgb: 255, 76, 60;
+    --bg: #0b0303; --panel: rgba(44, 10, 8, 0.62); --panel-solid: #1a0705;
+    --text: #fff1d9; --muted: #c08f6a; --user: #3d140a; --done: #fff4dc; --accent: #ff5a3c;
+  }
+  :root[data-theme="hulk"] {   /* Hulk : vert et violet */
+    --c-rgb: 98, 255, 122; --ok-rgb: 196, 128, 255;
+    --bg: #020a04; --panel: rgba(8, 38, 16, 0.62); --panel-solid: #06180a;
+    --text: #e3ffe7; --muted: #73b383; --user: #10391b; --done: #eefff0;
+  }
+  :root[data-theme="thanos"] { /* Thanos : violet et or */
+    --c-rgb: 200, 128, 255; --ok-rgb: 255, 206, 96;
+    --bg: #07030c; --panel: rgba(32, 12, 50, 0.62); --panel-solid: #13081e;
+    --text: #f4e8ff; --muted: #9e83b8; --user: #2e1548; --done: #fbf3ff;
+  }
+  :root[data-theme="furtif"] { /* Furtif : blanc argenté et bleu */
+    --c-rgb: 222, 232, 240; --ok-rgb: 79, 216, 255;
+    --bg: #050607; --panel: rgba(30, 34, 38, 0.6); --panel-solid: #111417;
+    --text: #f6f9fb; --muted: #8b959d; --user: #23292e; --done: #ffffff;
+  }
+  .themes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .themes button {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text);
+    padding: 7px 2px 5px; cursor: pointer; font: inherit; font-size: 11px; display: grid; justify-items: center; gap: 4px;
+  }
+  .themes button i { width: 22px; height: 22px; border-radius: 50%; display: block; }
+  .themes button.on { border-color: var(--cyan); box-shadow: var(--glow); }
+  svg { color: var(--cyan); } /* les dessins utilisent « currentColor » = la couleur du thème */
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body {
     background:
-      radial-gradient(ellipse at 50% 38%, rgba(30, 140, 200, 0.18), transparent 60%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='48' viewBox='0 0 56 48'%3E%3Cpath d='M14 1 L42 1 L55 24 L42 47 L14 47 L1 24 Z' fill='none' stroke='%234fd8ff' stroke-opacity='0.05'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse at 50% 38%, rgba(var(--c-rgb), 0.13), transparent 60%),
+      var(--hex),
       var(--bg);
     color: var(--text);
     font: 14px/1.45 "Segoe UI", "Bahnschrift", system-ui, -apple-system, sans-serif;
@@ -42,7 +75,7 @@
   }
   body::after { /* lignes de balayage façon écran holographique */
     content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 5;
-    background: repeating-linear-gradient(0deg, rgba(79, 216, 255, 0.025) 0 1px, transparent 1px 3px);
+    background: repeating-linear-gradient(0deg, rgba(var(--c-rgb), 0.025) 0 1px, transparent 1px 3px);
   }
   .mono { font-family: "Bahnschrift", "Consolas", "Segoe UI", monospace; letter-spacing: 0.06em; }
   .glow { color: var(--cyan); text-shadow: var(--glow); }
@@ -51,7 +84,7 @@
   .topbar {
     display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
     padding: 8px 16px 4px; border-bottom: 1px solid var(--line); position: relative;
-    background: linear-gradient(180deg, rgba(79, 216, 255, 0.06), transparent);
+    background: linear-gradient(180deg, rgba(var(--c-rgb), 0.06), transparent);
   }
   .brand { display: flex; align-items: center; gap: 12px; }
   .brand-logo { width: 34px; height: 34px; }
@@ -110,13 +143,13 @@
 
   /* Météo */
   .wx-now { display: grid; grid-template-columns: 96px 1fr; gap: 10px; align-items: center; }
-  .wx-icon svg { width: 96px; height: 96px; overflow: visible; filter: drop-shadow(0 0 6px rgba(79, 216, 255, 0.6)); }
+  .wx-icon svg { width: 96px; height: 96px; overflow: visible; filter: drop-shadow(0 0 6px rgba(var(--c-rgb), 0.6)); }
   .wx-temp { font-size: 46px; font-weight: 200; line-height: 1; color: var(--cyan); text-shadow: var(--glow); }
   .wx-temp sup { font-size: 20px; }
   .wx-desc { font-size: 13px; text-transform: capitalize; }
   .wx-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 11px; color: var(--muted); margin-top: 8px; }
   .wx-days { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
-  .wx-day { border: 1px solid var(--line); padding: 6px 4px; text-align: center; font-size: 11px; background: rgba(79, 216, 255, 0.04); }
+  .wx-day { border: 1px solid var(--line); padding: 6px 4px; text-align: center; font-size: 11px; background: rgba(var(--c-rgb), 0.04); }
   .wx-day svg { width: 34px; height: 34px; overflow: visible; }
   .wx-day .range { color: var(--cyan); }
   .wx-day .rain { color: var(--muted); font-size: 10px; }
@@ -128,7 +161,7 @@
   .wind .speed small { font-size: 11px; color: var(--muted); }
   .wind .gust { font-size: 11px; color: var(--muted); }
   .beaufort { display: flex; gap: 2px; margin-top: 4px; }
-  .beaufort i { flex: 1; height: 5px; background: rgba(79, 216, 255, 0.12); }
+  .beaufort i { flex: 1; height: 5px; background: rgba(var(--c-rgb), 0.12); }
   .beaufort i.on { background: var(--cyan); box-shadow: 0 0 4px var(--cyan); }
   .beaufort i.on.hot { background: var(--warn); box-shadow: 0 0 4px var(--warn); }
   .beaufort i.on.danger { background: var(--danger); box-shadow: 0 0 4px var(--danger); }
@@ -172,16 +205,16 @@
   .countdown-head .big { font-size: 24px; font-weight: 300; color: var(--cyan); text-shadow: var(--glow); line-height: 1; }
   .countdown-head .sub { font-size: 11px; color: var(--muted); text-align: right; }
   .dots { display: flex; flex-wrap: wrap; gap: 3px; }
-  .dots i { width: 6px; height: 6px; border-radius: 50%; border: 1px solid rgba(79, 216, 255, 0.35); }
-  .dots i.we { border-color: rgba(79, 216, 255, 0.18); }
-  .dots i.done { background: #eaf8ff; border-color: #eaf8ff; box-shadow: 0 0 3px rgba(234, 248, 255, 0.6); }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; border: 1px solid rgba(var(--c-rgb), 0.35); }
+  .dots i.we { border-color: rgba(var(--c-rgb), 0.18); }
+  .dots i.done { background: var(--done); border-color: var(--done); box-shadow: 0 0 3px var(--done); }
   .dots i.today { background: var(--ok); border-color: var(--ok); box-shadow: 0 0 6px var(--ok); animation: blink 1.4s infinite; }
 
   /* Statistiques de jeu */
   .play-bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; align-items: end; height: 54px; }
   .play-bars div { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; }
-  .play-bars b { width: 100%; background: linear-gradient(180deg, var(--cyan), rgba(79, 216, 255, 0.25)); min-height: 2px; box-shadow: 0 0 4px rgba(79, 216, 255, 0.5); }
-  .play-bars div.today b { background: linear-gradient(180deg, var(--ok), rgba(93, 255, 180, 0.25)); }
+  .play-bars b { width: 100%; background: linear-gradient(180deg, var(--cyan), rgba(var(--c-rgb), 0.25)); min-height: 2px; box-shadow: 0 0 4px rgba(var(--c-rgb), 0.5); }
+  .play-bars div.today b { background: linear-gradient(180deg, var(--ok), rgba(var(--ok-rgb), 0.25)); }
   .play-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 9px; color: var(--muted); margin-top: 2px; }
   .play-top { font-size: 12px; margin-top: 6px; display: flex; flex-direction: column; gap: 1px; }
   .play-top div { display: flex; justify-content: space-between; gap: 8px; }
@@ -200,7 +233,7 @@
   .reactor .spin.fast { animation-duration: 7s; }
   .reactor .core {
     position: absolute; inset: 60px; border-radius: 50%;
-    background: radial-gradient(circle, #ffffff 0%, var(--accent) 40%, rgba(79, 216, 255, 0) 72%);
+    background: radial-gradient(circle, #ffffff 0%, var(--accent) 40%, rgba(var(--c-rgb), 0) 72%);
     animation: breathe 3.2s ease-in-out infinite;
   }
   .reactor:hover .core { filter: brightness(1.25); }
@@ -209,7 +242,7 @@
   body.thinking .reactor .core { animation-duration: 0.8s; }
   body.listening { --accent: var(--danger); }
   body.listening .reactor .core { animation-duration: 0.9s; }
-  body.listening .reactor svg { filter: hue-rotate(160deg) saturate(1.6); }
+  body.listening .reactor { color: var(--danger); }
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes breathe { 0%, 100% { transform: scale(0.86); opacity: 0.8; } 50% { transform: scale(1.06); opacity: 1; } }
 
@@ -220,10 +253,10 @@
   }
   .msg { max-width: 88%; padding: 9px 13px; white-space: pre-wrap; word-wrap: break-word; animation: pop 0.18s ease-out; }
   .msg.jarvis {
-    align-self: flex-start; background: rgba(79, 216, 255, 0.07); border: 1px solid var(--line);
+    align-self: flex-start; background: rgba(var(--c-rgb), 0.07); border: 1px solid var(--line);
     border-left: 3px solid var(--cyan);
   }
-  .msg.user { align-self: flex-end; background: var(--user); border: 1px solid rgba(79, 216, 255, 0.3); border-right: 3px solid var(--muted); }
+  .msg.user { align-self: flex-end; background: var(--user); border: 1px solid rgba(var(--c-rgb), 0.3); border-right: 3px solid var(--muted); }
   .msg.error { border-color: rgba(255, 95, 109, 0.55); }
   .msg.reminder { border-color: var(--warn); box-shadow: 0 0 14px rgba(255, 200, 97, 0.25); }
   .tools { align-self: flex-start; display: flex; flex-wrap: wrap; gap: 6px; }
@@ -293,7 +326,7 @@
   .gauge svg { width: 64px; height: 64px; }
   .gauge .lbl { font-size: 9px; letter-spacing: 0.16em; color: var(--muted); }
   .power { margin-top: 8px; font-size: 10px; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
-  .power .bar-line { height: 4px; background: rgba(79, 216, 255, 0.12); margin-top: 4px; }
+  .power .bar-line { height: 4px; background: rgba(var(--c-rgb), 0.12); margin-top: 4px; }
   .power .bar-line i { display: block; height: 100%; background: var(--cyan); box-shadow: var(--glow); width: 0; transition: width 0.6s; }
 
 
@@ -303,7 +336,7 @@
   .overlay.open { display: block; }
   .panel {
     position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100%); z-index: 11;
-    background: #07121f; border-left: 1px solid var(--line); padding: 18px 16px 24px;
+    background: var(--panel-solid); border-left: 1px solid var(--line); padding: 18px 16px 24px;
     overflow-y: auto; transform: translateX(100%); transition: transform 0.22s ease-out;
   }
   .panel.open { transform: none; }
@@ -324,7 +357,7 @@
     width: 100%; min-width: 0; background: var(--panel); color: var(--text); border: 1px solid var(--line);
     border-radius: 10px; padding: 10px 12px; font: inherit; outline: none;
   }
-  .panel select option { background: #07121f; }
+  .panel select option { background: var(--panel-solid); }
   .panel input:focus, .panel select:focus { border-color: var(--cyan); }
   .panel input[type=range] { width: 100%; accent-color: var(--cyan); }
   .btn {
@@ -366,9 +399,9 @@
 <header class="topbar">
   <div class="brand">
     <svg class="brand-logo" viewBox="0 0 40 40" aria-hidden="true">
-      <circle cx="20" cy="20" r="17" fill="none" stroke="#4fd8ff" stroke-width="2"/>
-      <circle cx="20" cy="20" r="11" fill="none" stroke="#4fd8ff" stroke-width="1.5" stroke-dasharray="4 3"/>
-      <circle cx="20" cy="20" r="5" fill="#bff3ff"/>
+      <circle cx="20" cy="20" r="17" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="20" cy="20" r="11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <circle cx="20" cy="20" r="5" style="fill: var(--done)"/>
     </svg>
     <div>
       <h1>J.A.R.V.I.S.</h1>
@@ -408,7 +441,7 @@
           <defs>
             <filter id="neon"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
           </defs>
-          <g filter="url(#neon)" fill="none" stroke="#4fd8ff">
+          <g filter="url(#neon)" fill="none" stroke="currentColor">
             <circle cx="100" cy="100" r="96" stroke-opacity="0.35"/>
             <g class="spin"><circle cx="100" cy="100" r="90" stroke-width="5" stroke-dasharray="2 7" stroke-opacity="0.8"/></g>
             <g class="spin rev"><circle cx="100" cy="100" r="78" stroke-width="2" stroke-dasharray="60 18 8 18"/></g>
@@ -478,6 +511,12 @@
 <div class="overlay" id="overlay"></div>
 <aside class="panel" id="panel" aria-label="Réglages">
   <h2>RÉGLAGES <span class="saved" id="saved">✓ Enregistré</span><button id="closeSettings" aria-label="Fermer">✕</button></h2>
+
+  <section>
+    <h3>🎨 Thème de couleur</h3>
+    <div class="themes" id="themes"></div>
+    <p class="hint">Tu peux aussi dire : « Jarvis, mets le thème Iron Man ».</p>
+  </section>
 
   <section>
     <h3>🎙️ Sa voix</h3>
@@ -723,12 +762,40 @@ const TOOL_LABELS = {
   temps_de_jeu: "🎮 Temps de jeu", jours_avant_vacances: "🏖️ Vacances",
   lancer_jeu: "🎮 Jeu lancé", lister_jeux: "🎮 Jeux", musique_en_cours: "🎵 Musique en cours",
   minuteur: "⏰ Minuteur", lister_minuteurs: "⏰ Minuteurs", annuler_minuteurs: "⏰ Annulés",
-  definir_ville: "📍 Ville enregistrée", retenir_info: "🧠 Retenu", oublier_info: "🧠 Oublié",
+  definir_ville: "📍 Ville enregistrée", changer_theme: "🎨 Thème", retenir_info: "🧠 Retenu", oublier_info: "🧠 Oublié",
   fermer_jarvis: "⏻ Extinction de Jarvis", eteindre_ordinateur: "⏻ Extinction du PC", annuler_extinction: "↺ Extinction annulée",
   ajouter_tache: "✅ Tâche ajoutée", lister_taches: "📋 Tâches", terminer_tache: "✔️ Tâche faite",
   lire_mails: "📧 Mails", agenda: "📅 Agenda", marees: "🌊 Marées",
   emploi_du_temps: "🎓 Emploi du temps", devoirs: "📚 Devoirs", notes: "📊 Notes", brief_du_jour: "☀️ Brief du jour",
 };
+
+// ---------- Thèmes de couleur ----------
+const THEMES = {
+  jarvis: { nom: "J.A.R.V.I.S.", c: "79,216,255", ok: "93,255,180" },
+  iron: { nom: "Iron Man", c: "255,196,72", ok: "255,76,60" },
+  hulk: { nom: "Hulk", c: "98,255,122", ok: "196,128,255" },
+  thanos: { nom: "Thanos", c: "200,128,255", ok: "255,206,96" },
+  furtif: { nom: "Furtif", c: "222,232,240", ok: "79,216,255" },
+};
+function applyTheme(name) {
+  if (!THEMES[name]) name = "jarvis";
+  const t = THEMES[name], hexa = "%23" + t.c.split(",").map((n) => (+n).toString(16).padStart(2, "0")).join("");
+  const root = document.documentElement;
+  if (name === "jarvis") delete root.dataset.theme; else root.dataset.theme = name;
+  // Fond en nid d'abeille et petite icône de l'onglet, à la couleur du thème
+  root.style.setProperty("--hex", `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='48' viewBox='0 0 56 48'%3E%3Cpath d='M14 1 L42 1 L55 24 L42 47 L14 47 L1 24 Z' fill='none' stroke='${hexa}' stroke-opacity='0.05'/%3E%3C/svg%3E")`);
+  $("favicon").href = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23050b14' stroke='${hexa}' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='6' fill='${hexa}'/%3E%3C/svg%3E`;
+  document.querySelectorAll("#themes button").forEach((b) => b.classList.toggle("on", b.dataset.theme === name));
+  try { localStorage.setItem("jarvis_theme", name); } catch (e) {}
+}
+for (const [key, t] of Object.entries(THEMES)) {
+  const b = document.createElement("button");
+  b.type = "button"; b.dataset.theme = key;
+  b.innerHTML = `<i style="background: linear-gradient(135deg, rgb(${t.c}) 55%, rgb(${t.ok}) 55%); box-shadow: 0 0 8px rgb(${t.c})"></i>${t.nom}`;
+  b.onclick = () => { applyTheme(key); saveSettings({ theme: key }); };
+  $("themes").appendChild(b);
+}
+try { applyTheme(localStorage.getItem("jarvis_theme") || "jarvis"); } catch (e) { applyTheme("jarvis"); }
 
 let settings = { voix: "", vitesse: 1, hauteur: 1, prenom: "", personnalite: "majordome", ecoute_permanente: false };
 let busy = false, speaking = false, manualListening = false;
@@ -821,6 +888,7 @@ async function loadSettings() {
     const data = await (await fetch("/api/settings")).json();
     settings = data.settings;
     window.briefData = data;
+    applyTheme(settings.theme);
     const sel = $("personnalite");
     sel.innerHTML = "";
     for (const [key, label] of Object.entries(data.personnalites)) sel.add(new Option(label, key));
@@ -1112,8 +1180,8 @@ let quitAfterSpeech = false;
 async function shutdownJarvis() {
   for (let i = 0; i < 40 && speaking; i++) await new Promise((r) => setTimeout(r, 250));
   const screen = document.createElement("div");
-  screen.style.cssText = "position:fixed;inset:0;z-index:50;background:#02070d;display:grid;place-items:center;" +
-    "color:#4fd8ff;font:300 22px Bahnschrift,Segoe UI,sans-serif;letter-spacing:.4em;text-shadow:0 0 12px #4fd8ff;transition:opacity 1s";
+  screen.style.cssText = "position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;" +
+    "color:var(--cyan);font:300 22px Bahnschrift,Segoe UI,sans-serif;letter-spacing:.4em;text-shadow:0 0 12px var(--cyan);transition:opacity 1s";
   screen.textContent = "J.A.R.V.I.S. — HORS LIGNE";
   document.body.appendChild(screen);
   setTimeout(() => window.close(), 1200);
@@ -1178,6 +1246,9 @@ async function streamReply(url, payload) {
           scrollDown();
           setStatus("Réponse en cours…", "thinking");
           speakFinishedSentences(false);
+        } else if (ev.type === "action" && ev.action === "theme") {
+          applyTheme(ev.theme);
+          settings.theme = ev.theme;
         } else if (ev.type === "action" && ev.action === "quit") {
           quitAfterSpeech = true;
         } else if (ev.type === "error") {
@@ -1578,14 +1649,14 @@ function drops(char) {
 function wxIcon(code) {
   const k = wxKind(code);
   let inner = "";
-  if (k === "sun") inner = `<circle cx="50" cy="50" r="15"/><circle cx="50" cy="50" r="8" fill="#4fd8ff" fill-opacity="0.35"/>${sunRays(50, 50, 22, 31, 12)}<circle cx="50" cy="50" r="40" stroke-dasharray="3 6" stroke-opacity="0.5"/>`;
+  if (k === "sun") inner = `<circle cx="50" cy="50" r="15"/><circle cx="50" cy="50" r="8" fill="currentColor" fill-opacity="0.35"/>${sunRays(50, 50, 22, 31, 12)}<circle cx="50" cy="50" r="40" stroke-dasharray="3 6" stroke-opacity="0.5"/>`;
   else if (k === "partly") inner = `<circle cx="36" cy="36" r="11"/>${sunRays(36, 36, 16, 22, 10)}<g transform="translate(8 8)">${CLOUD}</g>`;
   else if (k === "cloud") inner = `<g transform="translate(-8 -6) scale(0.8)" stroke-opacity="0.5">${CLOUD}</g><g transform="translate(6 6)">${CLOUD}</g>`;
   else if (k === "rain") inner = `<g transform="translate(0 -8)">${CLOUD}</g>${drops("line")}`;
   else if (k === "snow") inner = `<g transform="translate(0 -8)">${CLOUD}</g>${drops("flake")}`;
-  else if (k === "storm") inner = `<g transform="translate(0 -10)">${CLOUD}</g><path d="M52 64 L43 80 H52 L47 94 L63 74 H54 L58 64 Z" fill="#4fd8ff" fill-opacity="0.4"><animate attributeName="opacity" values="1;0.2;1;1;0.3;1" dur="2.4s" repeatCount="indefinite"/></path>`;
+  else if (k === "storm") inner = `<g transform="translate(0 -10)">${CLOUD}</g><path d="M52 64 L43 80 H52 L47 94 L63 74 H54 L58 64 Z" fill="currentColor" fill-opacity="0.4"><animate attributeName="opacity" values="1;0.2;1;1;0.3;1" dur="2.4s" repeatCount="indefinite"/></path>`;
   else inner = [34, 46, 58, 70].map((y, i) => `<line x1="${18 + i * 4}" y1="${y}" x2="${82 - i * 3}" y2="${y}" stroke-dasharray="14 6"><animate attributeName="stroke-dashoffset" values="0;40" dur="${3 + i}s" repeatCount="indefinite"/></line>`).join("");
-  return `<svg viewBox="0 0 100 100" fill="none" stroke="#4fd8ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+  return `<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
 }
 
 // Boussole : la flèche montre où va le vent (il vient de la direction opposée)
@@ -1594,7 +1665,7 @@ function windWidget(w) {
   const to = ((w.vent_deg ?? 0) + 180) % 360;
   const ticks = [["N", 0], ["E", 90], ["S", 180], ["O", 270]].map(([l, a]) => {
     const r = (a - 90) * Math.PI / 180;
-    return `<text x="${31 + 25 * Math.cos(r)}" y="${34 + 25 * Math.sin(r)}" fill="#6f9db3" font-size="8" text-anchor="middle">${l}</text>`;
+    return `<text x="${31 + 25 * Math.cos(r)}" y="${34 + 25 * Math.sin(r)}" style="fill: var(--muted)" font-size="8" text-anchor="middle">${l}</text>`;
   }).join("");
   const segs = Array.from({ length: 12 }, (_, i) => {
     const on = i < (w.beaufort ?? 0);
@@ -1603,12 +1674,12 @@ function windWidget(w) {
   return `
     <div class="wind">
       <svg viewBox="0 0 62 62" class="mono">
-        <circle cx="31" cy="31" r="20" fill="none" stroke="#4fd8ff" stroke-opacity="0.35"/>
-        <circle cx="31" cy="31" r="15" fill="none" stroke="#4fd8ff" stroke-opacity="0.2" stroke-dasharray="2 3"/>
+        <circle cx="31" cy="31" r="20" fill="none" stroke="currentColor" stroke-opacity="0.35"/>
+        <circle cx="31" cy="31" r="15" fill="none" stroke="currentColor" stroke-opacity="0.2" stroke-dasharray="2 3"/>
         ${ticks}
         <g transform="rotate(${to} 31 31)">
-          <g><path d="M31 15 L36 31 L31 27 L26 31 Z" fill="#4fd8ff" style="filter: drop-shadow(0 0 3px #4fd8ff)"/>
-             <line x1="31" y1="27" x2="31" y2="45" stroke="#4fd8ff" stroke-width="2"/>
+          <g><path d="M31 15 L36 31 L31 27 L26 31 Z" fill="currentColor" style="filter: drop-shadow(0 0 3px currentColor)"/>
+             <line x1="31" y1="27" x2="31" y2="45" stroke="currentColor" stroke-width="2"/>
              <animateTransform attributeName="transform" type="rotate" values="-6 31 31;6 31 31;-6 31 31" dur="${Math.max(0.6, 4 - (w.beaufort ?? 0) * 0.3)}s" repeatCount="indefinite"/></g>
         </g>
       </svg>
@@ -1678,20 +1749,20 @@ function renderTides(block) {
   const pct = Math.round(((level - lo) / (hi - lo || 1)) * 100);
   const next = t.extremes.find((e) => e.type === "haute" && e.minutes > now);
   const wait = next ? next.minutes - now : null;
-  const grid = [0, 6, 12, 18, 24].map((hh) => `<line x1="${x(hh * 60)}" y1="${top - 6}" x2="${x(hh * 60)}" y2="${bottom}" stroke="#4fd8ff" stroke-opacity="0.12"/><text x="${x(hh * 60)}" y="${H - 4}" fill="#6f9db3" font-size="9" text-anchor="middle">${String(hh).padStart(2, "0")}h</text>`).join("");
+  const grid = [0, 6, 12, 18, 24].map((hh) => `<line x1="${x(hh * 60)}" y1="${top - 6}" x2="${x(hh * 60)}" y2="${bottom}" stroke="currentColor" stroke-opacity="0.12"/><text x="${x(hh * 60)}" y="${H - 4}" style="fill: var(--muted)" font-size="9" text-anchor="middle">${String(hh).padStart(2, "0")}h</text>`).join("");
   const marks = t.extremes.map((e) => {
     const yy = e.type === "haute" ? top - 4 : y(e.hauteur) - 8;
-    return `<circle cx="${x(e.minutes)}" cy="${y(e.hauteur)}" r="3.5" fill="${e.type === "haute" ? "#4fd8ff" : "#02070d"}" stroke="#4fd8ff"/>
-            <text x="${x(e.minutes)}" y="${yy}" fill="${e.type === "haute" ? "#4fd8ff" : "#6f9db3"}" font-size="9" text-anchor="middle">${e.type === "haute" ? "PM" : "BM"} ${e.heure}</text>`;
+    return `<circle cx="${x(e.minutes)}" cy="${y(e.hauteur)}" r="3.5" style="fill: ${e.type === "haute" ? "currentColor" : "var(--bg)"}" stroke="currentColor"/>
+            <text x="${x(e.minutes)}" y="${yy}" style="fill: ${e.type === "haute" ? "currentColor" : "var(--muted)"}" font-size="9" text-anchor="middle">${e.type === "haute" ? "PM" : "BM"} ${e.heure}</text>`;
   }).join("");
   body.innerHTML = `
     <svg class="tide-chart mono" viewBox="0 0 ${W} ${H}">
-      <defs><linearGradient id="tideFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4fd8ff" stop-opacity="0.45"/><stop offset="1" stop-color="#4fd8ff" stop-opacity="0"/></linearGradient></defs>
+      <defs><linearGradient id="tideFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity="0.45"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>
       ${grid}
       <path d="${line} L${pts[pts.length - 1][0]},${bottom} L${pts[0][0]},${bottom} Z" fill="url(#tideFill)"/>
-      <path d="${line}" fill="none" stroke="#4fd8ff" stroke-width="2" style="filter: drop-shadow(0 0 4px #4fd8ff)"/>
-      <line x1="${x(now)}" y1="${top - 8}" x2="${x(now)}" y2="${bottom}" stroke="#5dffb4" stroke-dasharray="3 3"/>
-      <circle cx="${x(now)}" cy="${y(level)}" r="4" fill="#5dffb4"><animate attributeName="r" values="3;6;3" dur="2s" repeatCount="indefinite"/></circle>
+      <path d="${line}" fill="none" stroke="currentColor" stroke-width="2" style="filter: drop-shadow(0 0 4px currentColor)"/>
+      <line x1="${x(now)}" y1="${top - 8}" x2="${x(now)}" y2="${bottom}" style="stroke: var(--ok)" stroke-dasharray="3 3"/>
+      <circle cx="${x(now)}" cy="${y(level)}" r="4" style="fill: var(--ok)"><animate attributeName="r" values="3;6;3" dur="2s" repeatCount="indefinite"/></circle>
       ${marks}
     </svg>
     <div class="tide-next">
@@ -1731,13 +1802,13 @@ function renderDay(day, homework) {
 // ---------- Tâches et mails ----------
 function ring(value, label, max = 100, text) {
   const r = 26, c = 2 * Math.PI * r, v = value == null ? 0 : Math.max(0, Math.min(1, value / max));
-  const color = value != null && max === 100 && value > 85 ? "#ff5f6d" : "#4fd8ff";
+  const color = value != null && max === 100 && value > 85 ? "#ff5f6d" : "currentColor";
   return `<div class="gauge"><svg viewBox="0 0 64 64">
-      <circle cx="32" cy="32" r="${r}" fill="none" stroke="#4fd8ff" stroke-opacity="0.12" stroke-width="5"/>
+      <circle cx="32" cy="32" r="${r}" fill="none" stroke="currentColor" stroke-opacity="0.12" stroke-width="5"/>
       <circle cx="32" cy="32" r="${r}" fill="none" stroke="${color}" stroke-width="5" stroke-dasharray="${c * v} ${c}"
         transform="rotate(-90 32 32)" style="filter: drop-shadow(0 0 3px ${color}); transition: stroke-dasharray .6s"/>
-      <circle cx="32" cy="32" r="19" fill="none" stroke="#4fd8ff" stroke-opacity="0.3" stroke-dasharray="2 3"/>
-      <text x="32" y="36" text-anchor="middle" fill="#dff6ff" font-size="12" font-family="Bahnschrift, Segoe UI">${text ?? (value == null ? "—" : value + "%")}</text>
+      <circle cx="32" cy="32" r="19" fill="none" stroke="currentColor" stroke-opacity="0.3" stroke-dasharray="2 3"/>
+      <text x="32" y="36" text-anchor="middle" style="fill: var(--text)" font-size="12" font-family="Bahnschrift, Segoe UI">${text ?? (value == null ? "—" : value + "%")}</text>
     </svg><div class="lbl mono">${label}</div></div>`;
 }
 function renderTasks(tasks, mails) {
@@ -1824,8 +1895,8 @@ document.addEventListener("click", async (e) => {
     if (!res.ok) { box.textContent = "❌ " + res.message; return; }
     box.textContent = "✅ " + res.message + " Redémarrage…";
     const screen = document.createElement("div");
-    screen.style.cssText = "position:fixed;inset:0;z-index:50;background:#02070d;display:grid;place-items:center;" +
-      "color:#4fd8ff;font:300 20px Bahnschrift,Segoe UI,sans-serif;letter-spacing:.35em;text-shadow:0 0 12px #4fd8ff";
+    screen.style.cssText = "position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;" +
+      "color:var(--cyan);font:300 20px Bahnschrift,Segoe UI,sans-serif;letter-spacing:.35em;text-shadow:0 0 12px var(--cyan)";
     screen.textContent = "MISE À JOUR INSTALLÉE — REDÉMARRAGE…";
     document.body.appendChild(screen);
     setTimeout(() => window.close(), 2000);
