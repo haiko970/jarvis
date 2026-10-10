@@ -16,7 +16,8 @@ import httpx
 import ollama
 
 from . import brief as brief_module
-from . import config, dashboard, elevenlabs, maj, musique, powers, pronote, systeme, theme
+from . import config, dashboard, elevenlabs, maj, musique, powers, pronote, sentinelle, systeme, theme
+from . import foot
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -143,6 +144,7 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 settings.pop("elevenlabs_cle_secours", None)
                 settings.pop("pronote_mdp_secours", None)
                 settings.pop("pronote_jeton_secours", None)
+                settings.pop("sentinelle_code_secours", None)
                 self._json({
                     "settings": settings,
                     "mail_services": {k: v[0] for k, v in brief_module.MAIL_SERVICES.items()},
@@ -158,6 +160,21 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 })
             elif self.path == "/api/script":
                 self._json({"code": brief_module.google_script()})
+            elif self.path == "/api/sentinelle":
+                self._json(sentinelle.status())
+            elif self.path.startswith("/api/sentinelle/photo?n="):
+                photo = sentinelle.photo_path(self.path.split("=", 1)[1])
+                if photo:
+                    self._send(200, photo.read_bytes(), "image/jpeg")
+                else:
+                    self._send(404, b"", "text/plain")
+            elif self.path == "/api/sentinelle/rapport":
+                self._json({"rapport": [i for i in sentinelle._load_report() if not i.get("vu")]})
+            elif self.path == "/api/foot":
+                try:
+                    self._json({"ok": True, "data": foot.team_data() if config.load()["equipe"] else None})
+                except Exception as e:
+                    self._json({"ok": False, "erreur": str(e)})
             elif self.path == "/api/events":
                 events = []
                 while not EVENTS.empty():
@@ -172,6 +189,7 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
 
             if self.path == "/api/bye":
                 # La fenêtre a été fermée : on s'arrête, sauf si elle revient (simple rechargement).
+                sentinelle.page_closed()  # fermée pendant la surveillance : le PC se verrouille
                 cancel_shutdown()
                 state["shutdown_timer"] = threading.Timer(3, server.shutdown)
                 state["shutdown_timer"].start()
@@ -185,7 +203,11 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 changes.pop("elevenlabs_cle_secours", None)
                 changes.pop("pronote_mdp_secours", None)
                 changes.pop("pronote_jeton_secours", None)
+                changes.pop("sentinelle_code_secours", None)
                 before = config.load()
+                if "equipe" in changes and changes["equipe"].strip() != before["equipe"]:
+                    # Nouvelle équipe : on la cherchera de nouveau sur ESPN
+                    changes.update(equipe=changes["equipe"].strip(), equipe_id="", equipe_ligue="", equipe_nom="", equipe_logo="")
                 after = config.save(changes)
                 with lock:
                     if before["personnalite"] != after["personnalite"]:
@@ -291,6 +313,34 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 self._json({"ok": ok, "message": message})
                 return
 
+            if self.path == "/api/sentinelle":
+                data = json.loads(raw or b"{}")
+                action = data.get("action")
+                if action == "activer":
+                    ok, message = sentinelle.activer()
+                    self._json({"ok": ok, "message": message})
+                elif action == "annuler":
+                    self._json({"ok": sentinelle.annuler_depart()})
+                elif action == "code":
+                    ok, message = sentinelle.set_code(str(data.get("code", "")))
+                    self._json({"ok": ok, "message": message})
+                elif action == "desarmer":
+                    self._json(sentinelle.desarmer(str(data.get("code", ""))))
+                elif action == "activite":
+                    sentinelle.activite()
+                    self._json({"ok": True})
+                elif action == "photo":
+                    self._json({"ok": bool(sentinelle.save_photo(data.get("image", "")))})
+                elif action == "vu":
+                    items = sentinelle._load_report()
+                    for i in items:
+                        i["vu"] = True
+                    sentinelle._save_report(items)
+                    self._json({"ok": True})
+                else:
+                    self._json({"ok": False}, 400)
+                return
+
             if self.path == "/api/reset":
                 with lock:
                     brain.reset()
@@ -304,7 +354,9 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
             text = json.loads(raw or b"{}").get("text", "").strip()
             command = systeme.quick_command(text)
             couleur = None if command else theme.quick_theme(text)
-            if couleur:
+            if not command and sentinelle.quick(text):
+                self._stream_answer("", quick="sentinelle")
+            elif couleur:
                 self._stream_answer("", quick="theme:" + couleur)
             elif command:
                 self._stream_answer("", quick=command)
@@ -334,6 +386,10 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 emit({"type": "done"})
 
             try:
+                if quick == "sentinelle":
+                    emit({"type": "tool", "name": "activer_sentinelle", "args": {}})
+                    emit({"type": "text", "text": sentinelle.activer_sentinelle()})
+                    quick, text = None, ""
                 if quick and quick.startswith("theme:"):
                     emit({"type": "tool", "name": "changer_theme", "args": {}})
                     emit({"type": "text", "text": theme.run_quick(quick[6:])})

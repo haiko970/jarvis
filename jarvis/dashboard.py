@@ -6,7 +6,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import brief, config, pronote, temps_jeu, vacances
+from . import brief, ciel, config, foot, pronote, temps_jeu, vacances
 
 CACHE_SECONDS = 600  # les infos d'internet sont rafraîchies toutes les 10 minutes
 _cache: dict = {"time": 0.0, "data": None}
@@ -90,6 +90,8 @@ def collect(force: bool = False) -> dict:
             "mails": _safe(_mails),
             "vacances": _safe(vacances.countdown),
             "jeux": _safe(lambda: temps_jeu.summary(7)),
+            "ciel": _safe(lambda: ciel.sky_data() if s["ville"] else None),
+            "foot": _safe(lambda: foot.team_data() if s["equipe"] else None),
             "maj": datetime.datetime.now().strftime("%H:%M"),
         }
         _cache.update(time=time.time(), data=data)

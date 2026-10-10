@@ -6,3 +6,4 @@ icalendar>=6
 recurring-ical-events>=3
 pronotepy>=2.15
 psutil>=5.9
+sgp4>=2.23

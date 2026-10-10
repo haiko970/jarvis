@@ -12,6 +12,7 @@ import webbrowser
 from pathlib import Path
 
 from . import brief, config, jeux, musique, powers, pronote, systeme, temps_jeu, theme, vacances
+from . import ciel, foot, sentinelle
 
 NOTES_FILE = Path.home() / ".jarvis_notes.json"
 
@@ -304,6 +305,7 @@ HANDLERS = {
 }
 
 TOOLS += powers.TOOLS + brief.TOOLS + pronote.TOOLS + systeme.TOOLS + jeux.TOOLS + musique.TOOLS + temps_jeu.TOOLS + vacances.TOOLS + theme.TOOLS
+TOOLS += ciel.TOOLS + foot.TOOLS + sentinelle.TOOLS
 HANDLERS.update(powers.HANDLERS)
 HANDLERS.update(brief.HANDLERS)
 HANDLERS.update(pronote.HANDLERS)
@@ -313,6 +315,9 @@ HANDLERS.update(musique.HANDLERS)
 HANDLERS.update(temps_jeu.HANDLERS)
 HANDLERS.update(vacances.HANDLERS)
 HANDLERS.update(theme.HANDLERS)
+HANDLERS.update(ciel.HANDLERS)
+HANDLERS.update(foot.HANDLERS)
+HANDLERS.update(sentinelle.HANDLERS)
 
 
 def run_tool(name: str, args: dict) -> tuple[str, bool]:

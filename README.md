@@ -26,6 +26,10 @@ Il peut agir sur ton PC :
 - 🏖️ afficher le compte à rebours des vacances d'été : un point par jour de l'année scolaire
 - 🎨 changer les couleurs de l'interface : J.A.R.V.I.S. (bleu), Iron Man (rouge et or), Hulk (vert),
   Thanos (violet) ou Furtif (blanc) — dans ⚙️ Réglages ou en disant « Jarvis, mets le thème Iron Man »
+- 🛡️ surveiller le PC quand tu pars (« Jarvis, surveille le PC ») : si quelqu'un touche à la souris ou au
+  clavier sans taper ton code secret, « Accès non autorisé », photo avec la webcam et PC verrouillé
+- ⚽ donner le score de ton équipe de foot (en direct pendant les matchs), son dernier résultat et son prochain match
+- 🌙 décrire le ciel : phase de la lune, lever et coucher du soleil, et quand voir passer la Station spatiale
 - 🔄 se mettre à jour tout seul (proposé au démarrage, ou ⚙️ → « Mises à jour »)
 - ⏰ programmer des minuteurs et des rappels (« rappelle-moi dans 10 minutes de sortir les pâtes »)
 - 👂 se réveiller quand tu dis « Jarvis » (à activer en bas de la fenêtre)
@@ -128,6 +132,9 @@ jarvis/
 ├── temps_jeu.py  # statistiques de temps de jeu
 ├── vacances.py   # compte à rebours des vacances d'été
 ├── theme.py      # thèmes de couleur de l'interface
+├── sentinelle.py # mode sentinelle (surveillance du PC)
+├── foot.py       # scores de l'équipe préférée (ESPN)
+├── ciel.py       # lune, soleil et passages de l'ISS
 ├── maj.py        # mise à jour automatique depuis GitHub
 ├── version.json  # numéro de version (à augmenter à chaque nouveauté)
 ├── brief.py      # tâches, mails, agenda, brief du jour, démarrage automatique

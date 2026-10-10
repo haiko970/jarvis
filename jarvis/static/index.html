@@ -226,6 +226,64 @@
   .hub-side.left { text-align: right; }
   .hub-side .gauge { text-align: center; }
   .hub-side b { display: block; color: var(--cyan); font-size: 13px; letter-spacing: 0.08em; font-weight: 500; }
+  /* Ciel et foot, de chaque côté du réacteur */
+  .hub-card {
+    width: 138px; align-self: stretch; margin: 8px 0; padding: 8px 10px; font-size: 11.5px; line-height: 1.35;
+    border: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; gap: 5px;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    animation: boot 0.6s ease-out both; overflow: hidden;
+  }
+  .hub-card.left { margin-right: auto; }
+  .hub-card.right { margin-left: auto; }
+  .hub-card .t { font-size: 9.5px; letter-spacing: 0.2em; color: var(--cyan); text-transform: uppercase; display: flex; justify-content: space-between; }
+  .hub-card .t span { color: var(--muted); letter-spacing: 0.08em; }
+  .hub-card .muted { color: var(--muted); }
+  .hub-card .big { color: var(--cyan); font-size: 13px; text-shadow: var(--glow); }
+  .moon-row { display: flex; align-items: center; gap: 8px; }
+  .moon-row svg { width: 34px; height: 34px; flex-shrink: 0; filter: drop-shadow(0 0 4px currentColor); }
+  .match { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; text-align: center; gap: 2px; }
+  .match > div { min-width: 0; }
+  .match img { width: 24px; height: 24px; object-fit: contain; display: block; margin: 0 auto 1px; }
+  .match .n { font-size: 9.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .match .sc { font-size: 17px; color: var(--text); padding: 0 4px; white-space: nowrap; }
+  .res { display: inline-block; padding: 0 5px; border: 1px solid; font-size: 9.5px; letter-spacing: 0.1em; }
+  .res.V { color: var(--ok); } .res.N { color: var(--warn); } .res.D { color: var(--danger); }
+  .live { color: var(--danger); animation: blink 1.2s infinite; letter-spacing: 0.12em; font-size: 9.5px; }
+  @keyframes blink { 50% { opacity: 0.35; } }
+
+  /* ---------- Sentinelle ---------- */
+  #sentinel {
+    position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; text-align: center;
+    background: radial-gradient(circle at 50% 45%, rgba(var(--c-rgb), 0.12), transparent 60%), var(--bg); color: var(--text);
+  }
+  #sentinel[hidden] { display: none; }
+  #sentinel.alerte, #sentinel.intrusion {
+    --cyan: #ff4b4b; --line: rgba(255, 75, 75, 0.5);
+    background: radial-gradient(circle at 50% 45%, rgba(255, 40, 40, 0.28), transparent 65%), #0d0202;
+  }
+  #sentinel.intrusion { animation: alarm 0.8s steps(2) infinite; }
+  @keyframes alarm { 50% { background: radial-gradient(circle at 50% 45%, rgba(255, 40, 40, 0.5), transparent 70%), #2a0505; } }
+  .sn-box { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 520px; padding: 16px; }
+  .sn-shield { width: 120px; height: 120px; color: var(--cyan); filter: drop-shadow(0 0 12px var(--cyan)); }
+  .sn-shield .spin { transform-origin: 60px 60px; animation: spin 6s linear infinite; }
+  .sn-title { font-size: 30px; letter-spacing: 0.3em; color: var(--cyan); text-shadow: 0 0 14px var(--cyan); }
+  .sn-sub { color: var(--muted); font-size: 15px; }
+  .sn-count { font-size: 46px; color: var(--cyan); text-shadow: 0 0 16px var(--cyan); min-height: 1em; }
+  #snForm { display: flex; gap: 8px; }
+  #snCode {
+    width: 190px; text-align: center; font-size: 22px; letter-spacing: 0.4em; padding: 8px; color: var(--text);
+    background: rgba(0, 0, 0, 0.4); border: 1px solid var(--cyan); border-radius: 6px; outline: none;
+  }
+  #snMsg { color: var(--danger); min-height: 1.2em; font-size: 14px; }
+  #snVideo { width: 1px; height: 1px; opacity: 0; position: absolute; }
+  #sentinel.alerte #snVideo, #sentinel.intrusion #snVideo {
+    position: static; width: 220px; height: auto; opacity: 1; transform: scaleX(-1); border: 2px solid var(--cyan);
+  }
+  .sn-rec { display: none; color: var(--cyan); font-size: 12px; letter-spacing: 0.2em; }
+  #sentinel.alerte .sn-rec, #sentinel.intrusion .sn-rec { display: block; animation: blink 1s infinite; }
+  .sn-photos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .sn-photos img { width: 120px; border: 1px solid var(--line); cursor: pointer; }
+
   .reactor { width: 172px; height: 172px; position: relative; cursor: pointer; flex-shrink: 0; }
   .reactor svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .reactor .spin { transform-origin: 100px 100px; animation: spin 24s linear infinite; }
@@ -390,6 +448,7 @@
   .drop:focus, .drop.ok { border-color: var(--cyan); background: var(--cyan-soft); }
   .drop img { max-width: 140px; display: block; margin: 0 auto 6px; border-radius: 6px; }
   .link { color: var(--cyan); text-decoration: underline; cursor: pointer; }
+  button.link { background: none; border: none; padding: 0; font: inherit; }
   .saved { color: var(--cyan); font-size: 12px; letter-spacing: normal; opacity: 0; transition: opacity 0.2s; }
   .saved.show { opacity: 1; }
 </style>
@@ -435,6 +494,7 @@
   <!-- Centre : réacteur et discussion -->
   <div class="center">
     <div class="hub">
+      <div class="hub-card left" id="skyCard"><div class="t">// Ciel</div><div class="muted">Chargement…</div></div>
       <div class="hub-side left mono" id="gaugesLeft"></div>
       <div class="reactor" id="reactor" title="Clique pour parler">
         <svg viewBox="0 0 200 200" aria-hidden="true">
@@ -453,6 +513,7 @@
         <div class="core"></div>
       </div>
       <div class="hub-side mono" id="gaugesRight"></div>
+      <div class="hub-card right" id="footCard"><div class="t">// Foot</div><div class="muted">Chargement…</div></div>
     </div>
 
     <div class="center-row">
@@ -509,6 +570,28 @@
 </div><!-- /stage -->
 
 <div class="overlay" id="overlay"></div>
+<div id="sentinel" hidden>
+  <div class="sn-box">
+    <svg class="sn-shield" viewBox="0 0 120 120" aria-hidden="true" fill="none" stroke="currentColor">
+      <g class="spin"><circle cx="60" cy="60" r="56" stroke-width="3" stroke-dasharray="3 9"/></g>
+      <circle cx="60" cy="60" r="47" stroke-opacity="0.4"/>
+      <path d="M60 24 L86 34 V58 C86 76 74 88 60 95 C46 88 34 76 34 58 V34 Z" stroke-width="3"/>
+      <path d="M50 58 L57 66 L72 50" stroke-width="3" id="snCheck"/>
+    </svg>
+    <div class="sn-title mono" id="snTitle">SENTINELLE</div>
+    <div class="sn-sub" id="snSub"></div>
+    <div class="sn-count mono" id="snCount"></div>
+    <div class="sn-rec mono">● ENREGISTREMENT EN COURS</div>
+    <video id="snVideo" muted playsinline></video>
+    <form id="snForm" autocomplete="off">
+      <input id="snCode" type="password" inputmode="numeric" maxlength="8" placeholder="CODE" aria-label="Code secret">
+      <button class="btn" type="submit">Déverrouiller</button>
+    </form>
+    <div id="snMsg"></div>
+    <button class="btn" id="snCancel" type="button">Annuler</button>
+  </div>
+</div>
+
 <aside class="panel" id="panel" aria-label="Réglages">
   <h2>RÉGLAGES <span class="saved" id="saved">✓ Enregistré</span><button id="closeSettings" aria-label="Fermer">✕</button></h2>
 
@@ -720,6 +803,43 @@
   </section>
 
   <section>
+    <h3>⚽ Mon équipe de foot</h3>
+    <div class="field">
+      <label for="equipe">Ton équipe préférée</label>
+      <div class="row">
+        <input type="text" id="equipe" placeholder="ex. FC Nantes, PSG, OM…">
+        <button class="btn" id="equipeSave" type="button">Enregistrer</button>
+      </div>
+      <p class="hint" id="equipeHint">Grands championnats d'Europe (Ligue 1, Ligue 2, Premier League, Liga…).
+        Tu peux aussi dire : « Jarvis, mon équipe c'est le FC Nantes ».</p>
+    </div>
+  </section>
+
+  <section>
+    <h3>🛡️ Sentinelle</h3>
+    <p class="hint">Quand tu pars, dis « Jarvis, surveille le PC ». Si quelqu'un touche à la souris ou au clavier,
+      il a 20 secondes pour taper ton code. Sinon : « Accès non autorisé », photo avec la webcam et PC verrouillé.
+      Les photos sont rangées dans ton dossier Images → « Jarvis sentinelle ».</p>
+    <div class="field" style="margin-top: 10px">
+      <label for="snNewCode">Code secret (4 à 8 chiffres)</label>
+      <div class="row">
+        <input type="password" id="snNewCode" inputmode="numeric" autocomplete="new-password" maxlength="8" placeholder="••••">
+        <button class="btn" id="snSaveCode" type="button">Enregistrer</button>
+      </div>
+      <p class="hint" id="snCodeHint"></p>
+    </div>
+    <label class="toggle">
+      <span>Verrouiller le PC si le code n'est pas tapé<br>
+      <span class="hint">Il faudra ton mot de passe Windows pour le rouvrir.</span></span>
+      <input type="checkbox" id="snLock">
+    </label>
+    <p><button class="btn" id="snTestCam" type="button">📷 Tester la caméra</button>
+      <button class="btn" id="snStart" type="button">🛡️ Activer maintenant</button></p>
+    <video id="snPreview" muted playsinline hidden style="width: 100%; border: 1px solid var(--line); transform: scaleX(-1)"></video>
+    <p class="hint" id="snCamHint">La première fois, Edge te demande l'autorisation d'utiliser la caméra : clique sur « Autoriser ».</p>
+  </section>
+
+  <section>
     <h3>🏖️ Compte à rebours</h3>
     <div class="field">
       <label for="rentree">Date de la rentrée</label>
@@ -762,7 +882,9 @@ const TOOL_LABELS = {
   temps_de_jeu: "🎮 Temps de jeu", jours_avant_vacances: "🏖️ Vacances",
   lancer_jeu: "🎮 Jeu lancé", lister_jeux: "🎮 Jeux", musique_en_cours: "🎵 Musique en cours",
   minuteur: "⏰ Minuteur", lister_minuteurs: "⏰ Minuteurs", annuler_minuteurs: "⏰ Annulés",
-  definir_ville: "📍 Ville enregistrée", changer_theme: "🎨 Thème", retenir_info: "🧠 Retenu", oublier_info: "🧠 Oublié",
+  definir_ville: "📍 Ville enregistrée", changer_theme: "🎨 Thème",
+  ciel: "🌙 Ciel", score_equipe: "⚽ Score", definir_equipe: "⚽ Équipe enregistrée",
+  activer_sentinelle: "🛡️ Sentinelle", rapport_sentinelle: "🛡️ Rapport sentinelle", retenir_info: "🧠 Retenu", oublier_info: "🧠 Oublié",
   fermer_jarvis: "⏻ Extinction de Jarvis", eteindre_ordinateur: "⏻ Extinction du PC", annuler_extinction: "↺ Extinction annulée",
   ajouter_tache: "✅ Tâche ajoutée", lister_taches: "📋 Tâches", terminer_tache: "✔️ Tâche faite",
   lire_mails: "📧 Mails", agenda: "📅 Agenda", marees: "🌊 Marées",
@@ -909,6 +1031,11 @@ async function loadSettings() {
   fillVoices();
   applyWake(!!settings.ecoute_permanente, false);
   if (window.briefData) fillBriefSettings(window.briefData);
+  $("equipe").value = settings.equipe || "";
+  $("snLock").checked = settings.sentinelle_verrou !== false;
+  fetch("/api/sentinelle").then((r) => r.json()).then((st) => {
+    $("snCodeHint").textContent = st.code_ok ? "✅ Un code est enregistré (tu peux le changer)." : "Aucun code pour l'instant : choisis-en un.";
+  }).catch(() => {});
   $("voiceEngine").value = settings.voix_moteur || "navigateur";
   $("elevenVoice").value = settings.elevenlabs_voix_id || "";
   $("elevenKey").placeholder = window.briefData?.elevenlabs_ok ? "•••••••• (enregistrée)" : "sk_…";
@@ -1800,6 +1927,247 @@ function renderDay(day, homework) {
 }
 
 // ---------- Tâches et mails ----------
+// ---------- Ciel ----------
+function moonSvg(f) {
+  // f : 0 = nouvelle lune, 0,5 = pleine lune. La partie éclairée est dessinée par deux arcs.
+  const r = 15, c = 18, k = Math.cos(2 * Math.PI * f), rx = Math.abs(k) * r;
+  const waxing = f < 0.5, gibbous = k < 0;
+  const outer = waxing ? 1 : 0, term = waxing === gibbous ? 1 : 0;
+  return `<svg viewBox="0 0 36 36"><circle cx="${c}" cy="${c}" r="${r}" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-opacity="0.35"/>
+    <path d="M${c} ${c - r} A${r} ${r} 0 0 ${outer} ${c} ${c + r} A${rx.toFixed(2)} ${r} 0 0 ${term} ${c} ${c - r} Z" fill="currentColor" fill-opacity="0.9"/></svg>`;
+}
+function shortDate(iso) {
+  return new Date(iso + "T12:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+function renderSky(sky) {
+  const card = $("skyCard");
+  const title = `<div class="t">// Ciel</div>`;
+  if (!sky || !sky.ok) { card.innerHTML = title + `<div class="muted">Indisponible</div>`; return; }
+  if (!sky.data) { card.innerHTML = title + `<div class="muted">Indique ta ville dans les <button class="link" data-open-settings>réglages</button>.</div>`; return; }
+  const d = sky.data, l = d.lune, today = new Date().toLocaleDateString("sv");
+  let iss;
+  if (d.iss == null) iss = `<span class="muted">ISS : calcul impossible</span>`;
+  else if (!d.iss.length) iss = `<span class="muted">ISS : pas visible d'ici 3 jours</span>`;
+  else {
+    const p = d.iss[0];
+    const when = p.date === today ? "" : shortDate(p.date) + " ";
+    iss = `<span class="muted">ISS visible</span><br><span class="big mono">${when}${p.heure}</span> <span class="muted">${p.de}→${p.vers}</span>`;
+  }
+  card.innerHTML = title + `
+    <div class="moon-row">${moonSvg(l.fraction)}<div>${esc(l.nom.replace("Lune ", ""))}<br><span class="muted">${l.eclairee} %</span></div></div>
+    ${d.lever ? `<div class="mono"><span class="muted">☀</span> ${d.lever} <span class="muted">→</span> ${d.coucher}</div>` : ""}
+    <div>${iss}</div>`;
+  card.title = l.nom === "Pleine lune" ? "" : `Prochaine pleine lune : ${shortDate(l.pleine_lune)}`;
+}
+
+// ---------- Foot ----------
+function teamBlock(t) {
+  const logo = t.logo ? `<img src="${esc(t.logo)}" alt="" onerror="this.style.visibility='hidden'">` : "";
+  return `<div>${logo}<div class="n">${esc(t.nom)}</div></div>`;
+}
+function renderFoot(foot) {
+  const card = $("footCard");
+  if (!foot || !foot.ok) {
+    card.innerHTML = `<div class="t">// Foot</div><div class="muted">Scores indisponibles</div>`;
+    card.title = foot?.erreur || ""; return;
+  }
+  if (!foot.data) { card.innerHTML = `<div class="t">// Foot</div><div class="muted">Choisis ton équipe dans les <button class="link" data-open-settings>réglages</button>.</div>`; return; }
+  const d = foot.data, main = d.direct || d.dernier;
+  let html = `<div class="t">// Foot <span>${esc(d.ligue)}</span></div>`;
+  if (main) {
+    const head = d.direct ? `<span class="live">● EN DIRECT ${esc(main.detail || "")}</span>`
+      : `<span class="muted">${shortDate(main.date)}</span> <span class="res ${main.resultat}">${{ V: "VICTOIRE", N: "NUL", D: "DÉFAITE" }[main.resultat] || "FIN"}</span>`;
+    html += `<div>${head}</div><div class="match">${teamBlock(main.domicile)}<div class="sc mono">${main.domicile.score ?? "–"} - ${main.exterieur.score ?? "–"}</div>${teamBlock(main.exterieur)}</div>`;
+  }
+  if (d.prochain && !d.direct) {
+    const m = d.prochain, home = m.a_domicile;
+    const other = home ? m.exterieur.nom : m.domicile.nom;
+    const day = new Date(m.date + "T12:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" });
+    html += `<div><span class="muted">Prochain :</span> ${esc(day)} ${m.heure}<br><span class="muted">${home ? "contre" : "chez"}</span> ${esc(other)}</div>`;
+  }
+  card.innerHTML = html;
+  card.title = "";
+}
+// Pendant un match, le score se met à jour toutes les minutes
+setInterval(async () => {
+  const f = window.lastDash?.foot?.data;
+  const today = new Date().toLocaleDateString("sv");
+  if (!f || !(f.direct || f.prochain?.date === today)) return;
+  try {
+    const foot = await (await fetch("/api/foot")).json();
+    window.lastDash.foot = foot;
+    renderFoot(foot);
+  } catch (e) {}
+}, 60 * 1000);
+$("equipeSave").onclick = async () => {
+  const name = $("equipe").value.trim();
+  await saveSettings({ equipe: name });
+  if (!name) { $("equipeHint").textContent = "Équipe effacée."; renderFoot({ ok: true, data: null }); return; }
+  $("equipeHint").textContent = "⏳ Je cherche ton équipe…";
+  try {
+    const foot = await (await fetch("/api/foot")).json();
+    $("equipeHint").textContent = foot.ok ? `✅ Trouvée : ${foot.data.equipe} (${foot.data.ligue}).` : `❌ ${foot.erreur}`;
+    if (window.lastDash) window.lastDash.foot = foot;
+    renderFoot(foot);
+  } catch (e) { $("equipeHint").textContent = "❌ Jarvis ne répond pas."; }
+};
+
+// ---------- Sentinelle ----------
+const sn = { etat: "off", stream: null, audio: null };
+async function snPost(body) {
+  return (await fetch("/api/sentinelle", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })).json();
+}
+async function snCamera(on) {
+  if (on && !sn.stream) {
+    try {
+      sn.stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+      $("snVideo").srcObject = sn.stream;
+      await $("snVideo").play();
+      return true;
+    } catch (e) { sn.stream = null; return e.message || "caméra introuvable"; }
+  }
+  if (!on && sn.stream) { sn.stream.getTracks().forEach((t) => t.stop()); sn.stream = null; }
+  return true;
+}
+async function snPhoto() {
+  const v = $("snVideo");
+  if (!sn.stream || !v.videoWidth) return;
+  const c = document.createElement("canvas");
+  c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext("2d").drawImage(v, 0, 0);
+  try { await snPost({ action: "photo", image: c.toDataURL("image/jpeg", 0.85) }); } catch (e) {}
+}
+function snBeep(freq, duration, volume = 0.18) {
+  try {
+    sn.audio = sn.audio || new AudioContext();
+    const o = sn.audio.createOscillator(), g = sn.audio.createGain();
+    o.type = "square"; o.frequency.value = freq; g.gain.value = volume;
+    o.connect(g).connect(sn.audio.destination);
+    o.start(); o.stop(sn.audio.currentTime + duration);
+  } catch (e) {}
+}
+function snSiren() {
+  for (let i = 0; i < 8; i++) setTimeout(() => snBeep(i % 2 ? 620 : 980, 0.45, 0.25), i * 500);
+}
+function snRender(st) {
+  const before = sn.etat, now = st.etat, entering = before !== now;
+  sn.etat = now;
+  const box = $("sentinel");
+  if (now === "off") {
+    if (entering) { box.hidden = true; snCamera(false); }
+    return;
+  }
+  box.hidden = false;
+  box.className = now;
+  $("snCancel").hidden = now !== "depart";
+  $("snForm").hidden = now === "depart";
+  $("snCheck").style.display = now === "depart" || now === "armee" ? "" : "none";
+  if (now === "depart") {
+    $("snTitle").textContent = "SENTINELLE";
+    $("snSub").textContent = "Activation… Tu peux partir, je surveille le PC.";
+    $("snCount").textContent = st.reste + " s";
+    if (entering) { snCamera(true); speak("Mode sentinelle activé. Vous pouvez partir, je surveille l'ordinateur.", true); }
+  } else if (now === "armee") {
+    $("snTitle").textContent = "SENTINELLE ACTIVE";
+    $("snSub").textContent = `PC sous surveillance depuis ${st.active_le}. Tape ton code pour me désactiver.`;
+    $("snCount").textContent = "";
+    if (entering) snCamera(true);
+  } else if (now === "alerte") {
+    $("snTitle").textContent = "IDENTIFICATION REQUISE";
+    $("snSub").textContent = "Tape le code secret pour continuer.";
+    $("snCount").textContent = st.reste;
+    if (entering) {
+      snCamera(true).then(() => setTimeout(snPhoto, 700));
+      speak("Identification requise. Veuillez taper le code secret.", true);
+      $("snCode").value = ""; $("snCode").focus();
+    }
+    snBeep(st.reste <= 5 ? 1200 : 880, 0.1);
+  } else if (now === "intrusion") {
+    $("snTitle").textContent = "ACCÈS NON AUTORISÉ";
+    $("snSub").textContent = "Votre visage a été enregistré." + (settings.sentinelle_verrou !== false ? " Verrouillage du système." : "");
+    $("snCount").textContent = "";
+    if (entering) {
+      snCamera(true).then(() => { snPhoto(); setTimeout(snPhoto, 2000); });
+      speak("Accès non autorisé. Votre visage a été enregistré." + (settings.sentinelle_verrou !== false ? " Verrouillage du système." : ""), true);
+      snSiren();
+    }
+  }
+}
+async function snPoll() {
+  try { snRender(await (await fetch("/api/sentinelle")).json()); } catch (e) {}
+}
+setInterval(snPoll, 700); snPoll();
+// Hors Windows (ou si la fenêtre de Jarvis est devant) : la page voit aussi la souris et le clavier
+let snLastActivity = 0;
+for (const type of ["mousemove", "mousedown", "keydown", "touchstart"]) {
+  document.addEventListener(type, () => {
+    if (sn.etat !== "armee" || Date.now() - snLastActivity < 1000) return;
+    snLastActivity = Date.now();
+    snPost({ action: "activite" }).then(snPoll).catch(() => {});
+  }, true);
+}
+$("snForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const code = $("snCode").value;
+  $("snCode").value = "";
+  let res;
+  try { res = await snPost({ action: "desarmer", code }); } catch (err) { return; }
+  if (!res.ok) {
+    $("snMsg").textContent = res.reste ? `Code faux. Encore ${res.reste} essai${res.reste > 1 ? "s" : ""}.` : "Code faux.";
+    snBeep(220, 0.4);
+    return;
+  }
+  $("snMsg").textContent = "";
+  await snPoll();
+  const name = settings.prenom ? ` ${settings.prenom}` : "";
+  if (res.rapport.length) snShowReport(res.rapport, `Bon retour${name}. `);
+  else speak(`Sentinelle désactivée. Bon retour${name}, rien à signaler.`, true);
+};
+$("snCancel").onclick = async () => { await snPost({ action: "annuler" }); snPoll(); speak("Sentinelle annulée.", true); };
+function snWhen(i) {
+  const day = i.date.slice(0, 10), time = `${i.date.slice(11, 13)}h${i.date.slice(14, 16)}`;
+  if (day === new Date().toLocaleDateString("sv")) return `aujourd'hui à ${time}`;
+  return `le ${new Date(day + "T12:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} à ${time}`;
+}
+function snShowReport(list, hello = "") {
+  if (!list.length) return;
+  const div = addMessage("", "jarvis");
+  const photos = list.flatMap((i) => i.photos).map((n) => {
+    const url = "/api/sentinelle/photo?n=" + encodeURIComponent(n);
+    return `<img src="${url}" alt="Photo de l'intrus" onload="scrollDown()" onclick="window.open('${url}')">`;
+  }).join("");
+  div.innerHTML = `<b>⚠️ Rapport de la sentinelle</b><br>Quelqu'un a essayé d'utiliser le PC ${list.map(snWhen).join(", ")}.`
+    + (photos ? `<div class="sn-photos">${photos}</div>` : "<br>(pas de photo : caméra indisponible)");
+  scrollDown();
+  const n = list.reduce((a, i) => a + i.photos.length, 0);
+  speak(`${hello}Attention : pendant ton absence, quelqu'un a essayé d'utiliser le PC ${snWhen(list[list.length - 1])}.`
+    + (n ? ` J'ai pris ${n} photo${n > 1 ? "s" : ""}.` : ""), true);
+  snPost({ action: "vu" }).catch(() => {});
+}
+// Au démarrage : une intrusion pendant que Jarvis était fermé (PC verrouillé) ?
+fetch("/api/sentinelle/rapport").then((r) => r.json()).then((d) => {
+  if (d.rapport.length) setTimeout(() => snShowReport(d.rapport), 2500);
+}).catch(() => {});
+$("snSaveCode").onclick = async () => {
+  const res = await snPost({ action: "code", code: $("snNewCode").value });
+  $("snCodeHint").textContent = (res.ok ? "✅ " : "❌ ") + res.message;
+  if (res.ok) $("snNewCode").value = "";
+};
+$("snLock").onchange = () => saveSettings({ sentinelle_verrou: $("snLock").checked });
+$("snTestCam").onclick = async () => {
+  const ok = await snCamera(true);
+  if (ok !== true) { $("snCamHint").textContent = "❌ Caméra indisponible : " + ok; return; }
+  $("snPreview").srcObject = sn.stream; $("snPreview").hidden = false; $("snPreview").play();
+  $("snCamHint").textContent = "✅ La caméra marche !";
+  setTimeout(() => { $("snPreview").hidden = true; if (sn.etat === "off") snCamera(false); }, 5000);
+};
+$("snStart").onclick = async () => {
+  const res = await snPost({ action: "activer" });
+  if (!res.ok) { $("snCodeHint").textContent = "❌ " + res.message; return; }
+  openSettings(false);
+  snPoll();
+};
+
 function ring(value, label, max = 100, text) {
   const r = 26, c = 2 * Math.PI * r, v = value == null ? 0 : Math.max(0, Math.min(1, value / max));
   const color = value != null && max === 100 && value > 85 ? "#ff5f6d" : "currentColor";
@@ -1949,6 +2317,8 @@ async function loadDashboard(force) {
     renderTasks(d.taches, d.mails);
     renderVacances(d.vacances);
     renderJeux(d.jeux);
+    renderSky(d.ciel);
+    renderFoot(d.foot);
     $("hubMaj").textContent = d.maj;
   } catch (e) { /* Jarvis est peut-être en train de démarrer : on réessaiera */ }
 }
