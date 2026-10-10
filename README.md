@@ -29,6 +29,8 @@ Il peut agir sur ton PC :
 - 🛡️ surveiller le PC quand tu pars (« Jarvis, surveille le PC ») : si quelqu'un touche à la souris ou au
   clavier sans taper ton code secret, « Accès non autorisé », photo avec la webcam et PC verrouillé
 - ⚽ donner le score de ton équipe de foot (en direct pendant les matchs), son dernier résultat et son prochain match
+- ⚽ suivre ton club sur SportEasy : matchs, entraînements, convocations et heure de rendez-vous
+  (⚙️ Réglages → « Mon équipe de foot » → colle le lien « Synchronisation Calendrier » de SportEasy)
 - 🌙 décrire le ciel : phase de la lune, lever et coucher du soleil, et quand voir passer la Station spatiale
 - 🔄 se mettre à jour tout seul (proposé au démarrage, ou ⚙️ → « Mises à jour »)
 - ⏰ programmer des minuteurs et des rappels (« rappelle-moi dans 10 minutes de sortir les pâtes »)
@@ -134,6 +136,7 @@ jarvis/
 ├── theme.py      # thèmes de couleur de l'interface
 ├── sentinelle.py # mode sentinelle (surveillance du PC)
 ├── foot.py       # scores de l'équipe préférée (ESPN)
+├── sporteasy.py  # matchs et convocations du club (lien d'agenda SportEasy)
 ├── ciel.py       # lune, soleil et passages de l'ISS
 ├── maj.py        # mise à jour automatique depuis GitHub
 ├── version.json  # numéro de version (à augmenter à chaque nouveauté)

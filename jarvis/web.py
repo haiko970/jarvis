@@ -3,6 +3,7 @@
 import json
 import os
 import platform
+import re
 import shutil
 import socket
 import subprocess
@@ -17,7 +18,7 @@ import ollama
 
 from . import brief as brief_module
 from . import config, dashboard, elevenlabs, maj, musique, powers, pronote, sentinelle, systeme, theme
-from . import foot
+from . import foot, sporteasy
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -145,12 +146,14 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 settings.pop("pronote_mdp_secours", None)
                 settings.pop("pronote_jeton_secours", None)
                 settings.pop("sentinelle_code_secours", None)
+                settings.pop("sporteasy_ics_secours", None)
                 self._json({
                     "settings": settings,
                     "mail_services": {k: v[0] for k, v in brief_module.MAIL_SERVICES.items()},
                     "mail_ok": brief_module.mail_configured(),
                     "elevenlabs_ok": bool(config.get_secret("elevenlabs_cle")),
                     "pronote_ok": pronote.configured(),
+                    "sporteasy_ok": sporteasy.configured(),
                     "pronote_ents": pronote.ent_choices(),
                     "autostart_supported": brief_module.autostart_supported(),
                     "autostart": brief_module.autostart_enabled(),
@@ -204,6 +207,7 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 changes.pop("pronote_mdp_secours", None)
                 changes.pop("pronote_jeton_secours", None)
                 changes.pop("sentinelle_code_secours", None)
+                changes.pop("sporteasy_ics_secours", None)
                 before = config.load()
                 if "equipe" in changes and changes["equipe"].strip() != before["equipe"]:
                     # Nouvelle équipe : on la cherchera de nouveau sur ESPN
@@ -311,6 +315,27 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                     return
                 ok, message = brief_module.test_mail()
                 self._json({"ok": ok, "message": message})
+                return
+
+            if self.path == "/api/sporteasy":
+                lien = str(json.loads(raw or b"{}").get("lien", "")).strip()
+                if lien and not re.match(r"^(https?|webcal)://", lien):
+                    self._json({"ok": False, "message": "Ce n'est pas un lien : copie le lien qui commence par « webcal:// » ou « https:// »."})
+                    return
+                config.set_secret("sporteasy_ics", lien)
+                dashboard._cache["data"] = None
+                if not lien:
+                    self._json({"ok": True, "message": "SportEasy est déconnecté."})
+                    return
+                try:
+                    items = sporteasy.events(30)
+                    nxt = next((e for e in items if not e["annule"]), None)
+                    message = f"Connexion réussie : {len(items)} événement(s) dans les 30 prochains jours."
+                    if nxt:
+                        message += f" Prochain : {sporteasy.describe(nxt)}."
+                    self._json({"ok": True, "message": message})
+                except Exception as e:
+                    self._json({"ok": False, "message": f"Impossible de lire l'agenda SportEasy : {e}"})
                 return
 
             if self.path == "/api/sentinelle":

@@ -243,6 +243,7 @@
   .moon-row svg { width: 34px; height: 34px; flex-shrink: 0; filter: drop-shadow(0 0 4px currentColor); }
   .match { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; text-align: center; gap: 2px; }
   .match > div { min-width: 0; }
+  .hub-card .n1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .match img { width: 24px; height: 24px; object-fit: contain; display: block; margin: 0 auto 1px; }
   .match .n { font-size: 9.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .match .sc { font-size: 17px; color: var(--text); padding: 0 4px; white-space: nowrap; }
@@ -813,6 +814,18 @@
       <p class="hint" id="equipeHint">Grands championnats d'Europe (Ligue 1, Ligue 2, Premier League, Liga…).
         Tu peux aussi dire : « Jarvis, mon équipe c'est le FC Nantes ».</p>
     </div>
+    <div class="field">
+      <label for="sporteasyLink">Ton club sur SportEasy (matchs, entraînements, convocations)</label>
+      <div class="row">
+        <input type="text" id="sporteasyLink" autocomplete="off" placeholder="webcal://…">
+        <button class="btn" id="sporteasySave" type="button">Relier</button>
+      </div>
+      <p class="hint">Sur <a href="https://www.sporteasy.net" target="_blank">sporteasy.net</a> (sur ordinateur) : onglet
+        <b>Calendrier</b> → bouton <b>« Synchronisation Calendrier »</b> → copie le lien et colle-le ici.
+        Sur l'appli téléphone : Calendrier → « ⋯ » → « Synchroniser mon calendrier » → copier le lien.
+        Ne partage ce lien avec personne.</p>
+      <p class="hint" id="sporteasyHint"></p>
+    </div>
   </section>
 
   <section>
@@ -883,7 +896,7 @@ const TOOL_LABELS = {
   lancer_jeu: "🎮 Jeu lancé", lister_jeux: "🎮 Jeux", musique_en_cours: "🎵 Musique en cours",
   minuteur: "⏰ Minuteur", lister_minuteurs: "⏰ Minuteurs", annuler_minuteurs: "⏰ Annulés",
   definir_ville: "📍 Ville enregistrée", changer_theme: "🎨 Thème",
-  ciel: "🌙 Ciel", score_equipe: "⚽ Score", definir_equipe: "⚽ Équipe enregistrée",
+  ciel: "🌙 Ciel", score_equipe: "⚽ Score", definir_equipe: "⚽ Équipe enregistrée", mes_matchs: "⚽ SportEasy",
   activer_sentinelle: "🛡️ Sentinelle", rapport_sentinelle: "🛡️ Rapport sentinelle", retenir_info: "🧠 Retenu", oublier_info: "🧠 Oublié",
   fermer_jarvis: "⏻ Extinction de Jarvis", eteindre_ordinateur: "⏻ Extinction du PC", annuler_extinction: "↺ Extinction annulée",
   ajouter_tache: "✅ Tâche ajoutée", lister_taches: "📋 Tâches", terminer_tache: "✔️ Tâche faite",
@@ -1032,6 +1045,8 @@ async function loadSettings() {
   applyWake(!!settings.ecoute_permanente, false);
   if (window.briefData) fillBriefSettings(window.briefData);
   $("equipe").value = settings.equipe || "";
+  $("sporteasyLink").value = "";
+  $("sporteasyLink").placeholder = window.briefData?.sporteasy_ok ? "•••••••• (relié — colle un nouveau lien pour changer)" : "webcal://…";
   $("snLock").checked = settings.sentinelle_verrou !== false;
   fetch("/api/sentinelle").then((r) => r.json()).then((st) => {
     $("snCodeHint").textContent = st.code_ok ? "✅ Un code est enregistré (tu peux le changer)." : "Aucun code pour l'instant : choisis-en un.";
@@ -1926,7 +1941,6 @@ function renderDay(day, homework) {
   body.innerHTML = html;
 }
 
-// ---------- Tâches et mails ----------
 // ---------- Ciel ----------
 function moonSvg(f) {
   // f : 0 = nouvelle lune, 0,5 = pleine lune. La partie éclairée est dessinée par deux arcs.
@@ -1965,13 +1979,34 @@ function teamBlock(t) {
   const logo = t.logo ? `<img src="${esc(t.logo)}" alt="" onerror="this.style.visibility='hidden'">` : "";
   return `<div>${logo}<div class="n">${esc(t.nom)}</div></div>`;
 }
-function renderFoot(foot) {
+function clubBlock(e) {
+  const kind = { match: "Ton match", entrainement: "Entraînement", tournoi: "Tournoi" }[e.type] || "Ton club";
+  const today = new Date().toLocaleDateString("sv");
+  const tomorrow = new Date(Date.now() + 86400000).toLocaleDateString("sv");
+  const day = e.date === today ? "Aujourd'hui" : e.date === tomorrow ? "Demain"
+    : new Date(e.date + "T12:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" });
+  return `<div><span class="muted">${kind}</span><br><span class="big mono">${esc(day)} ${esc(e.heure || "")}</span></div>
+    <div class="n1" title="${esc(e.titre)}">${esc(e.titre)}</div>
+    ${e.rdv ? `<div><span class="muted">RDV</span> <span class="mono">${esc(e.rdv)}</span></div>` : ""}`;
+}
+function renderFoot(foot, club) {
   const card = $("footCard");
+  const ev = club && club.ok && club.data;
+  // Ton club (SportEasy) passe en premier ; l'équipe préférée tient alors sur une ligne
+  if (ev) {
+    let html = `<div class="t">// Foot <span>CLUB</span></div>` + clubBlock(ev);
+    const m = foot && foot.ok && foot.data && (foot.data.direct || foot.data.dernier);
+    if (m) {
+      html += `<div class="n1 muted" title="${esc(foot.data.equipe)}">${foot.data.direct ? '<span class="live">●</span> ' : ""}`
+        + `${esc(m.domicile.nom)} <span style="color: var(--text)">${m.domicile.score ?? "–"}-${m.exterieur.score ?? "–"}</span> ${esc(m.exterieur.nom)}</div>`;
+    }
+    card.innerHTML = html; card.title = ""; return;
+  }
   if (!foot || !foot.ok) {
     card.innerHTML = `<div class="t">// Foot</div><div class="muted">Scores indisponibles</div>`;
     card.title = foot?.erreur || ""; return;
   }
-  if (!foot.data) { card.innerHTML = `<div class="t">// Foot</div><div class="muted">Choisis ton équipe dans les <button class="link" data-open-settings>réglages</button>.</div>`; return; }
+  if (!foot.data) { card.innerHTML = `<div class="t">// Foot</div><div class="muted">Choisis ton équipe ou relie SportEasy dans les <button class="link" data-open-settings>réglages</button>.</div>`; return; }
   const d = foot.data, main = d.direct || d.dernier;
   let html = `<div class="t">// Foot <span>${esc(d.ligue)}</span></div>`;
   if (main) {
@@ -1996,19 +2031,28 @@ setInterval(async () => {
   try {
     const foot = await (await fetch("/api/foot")).json();
     window.lastDash.foot = foot;
-    renderFoot(foot);
+    renderFoot(foot, window.lastDash.club);
   } catch (e) {}
 }, 60 * 1000);
+$("sporteasySave").onclick = async () => {
+  $("sporteasyHint").textContent = "⏳ Je lis ton agenda SportEasy…";
+  try {
+    const res = await (await fetch("/api/sporteasy", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lien: $("sporteasyLink").value.trim() }) })).json();
+    $("sporteasyHint").textContent = (res.ok ? "✅ " : "❌ ") + res.message;
+    if (res.ok) { $("sporteasyLink").value = ""; loadDashboard(true); }
+  } catch (e) { $("sporteasyHint").textContent = "❌ Jarvis ne répond pas."; }
+};
 $("equipeSave").onclick = async () => {
   const name = $("equipe").value.trim();
   await saveSettings({ equipe: name });
-  if (!name) { $("equipeHint").textContent = "Équipe effacée."; renderFoot({ ok: true, data: null }); return; }
+  if (!name) { $("equipeHint").textContent = "Équipe effacée."; renderFoot({ ok: true, data: null }, window.lastDash?.club); return; }
   $("equipeHint").textContent = "⏳ Je cherche ton équipe…";
   try {
     const foot = await (await fetch("/api/foot")).json();
     $("equipeHint").textContent = foot.ok ? `✅ Trouvée : ${foot.data.equipe} (${foot.data.ligue}).` : `❌ ${foot.erreur}`;
     if (window.lastDash) window.lastDash.foot = foot;
-    renderFoot(foot);
+    renderFoot(foot, window.lastDash?.club);
   } catch (e) { $("equipeHint").textContent = "❌ Jarvis ne répond pas."; }
 };
 
@@ -2179,6 +2223,7 @@ function ring(value, label, max = 100, text) {
       <text x="32" y="36" text-anchor="middle" style="fill: var(--text)" font-size="12" font-family="Bahnschrift, Segoe UI">${text ?? (value == null ? "—" : value + "%")}</text>
     </svg><div class="lbl mono">${label}</div></div>`;
 }
+// ---------- Tâches et mails ----------
 function renderTasks(tasks, mails) {
   const body = $("taskBody");
   let html = "";
@@ -2318,7 +2363,7 @@ async function loadDashboard(force) {
     renderVacances(d.vacances);
     renderJeux(d.jeux);
     renderSky(d.ciel);
-    renderFoot(d.foot);
+    renderFoot(d.foot, d.club);
     $("hubMaj").textContent = d.maj;
   } catch (e) { /* Jarvis est peut-être en train de démarrer : on réessaiera */ }
 }

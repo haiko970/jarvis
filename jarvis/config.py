@@ -32,7 +32,8 @@ DEFAULTS = {
     "equipe_nom": "",
     "equipe_logo": "",
     "sentinelle_verrou": True,
-    "sentinelle_code_secours": "",  # seulement si le coffre-fort de Windows ne marche pas  # verrouiller le PC si le code n'est pas tapé à temps
+    "sentinelle_code_secours": "",
+    "sporteasy_ics_secours": "",  # lien d'agenda SportEasy (seulement si le coffre-fort ne marche pas)  # seulement si le coffre-fort de Windows ne marche pas  # verrouiller le PC si le code n'est pas tapé à temps
     "rentree": "",  # date de la rentrée (vide = 1er septembre)
     "vacances_ete": "",  # début des vacances d'été (vide = premier samedi de juillet)
     "demarrage_auto_regle": False,  # devient True après la première activation automatique

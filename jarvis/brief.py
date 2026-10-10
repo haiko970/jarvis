@@ -543,9 +543,13 @@ def brief_du_jour() -> str:
     from . import vacances
 
     add("Vacances d'été", vacances.jours_avant_vacances)
-    from . import ciel, foot
+    from . import ciel, foot, sporteasy
 
-    for title, func in (("Foot (équipe préférée)", foot.brief_section), ("Ciel ce soir", ciel.brief_section)):
+    for title, func in (
+        ("Mon club de foot (SportEasy : mes convocations aujourd'hui et demain)", sporteasy.brief_section),
+        ("Foot (équipe préférée)", foot.brief_section),
+        ("Ciel ce soir", ciel.brief_section),
+    ):
         try:
             text = func()
             if text:  # seulement s'il y a un match ou quelque chose à voir
@@ -561,7 +565,7 @@ BRIEF_PROMPT = """[Démarrage de l'ordinateur] Fais-moi mon brief du jour, comme
 Salue-moi selon l'heure (bonjour, bon après-midi ou bonsoir), puis résume en quelques phrases
 naturelles, à l'oral : la météo, l'heure de la marée haute, mes cours du jour (surtout les cours annulés et profs absents),
 mes devoirs pour demain, mes rendez-vous, mes tâches (surtout celles en retard ou du jour),
-le match de mon équipe s'il y en a un, la Station spatiale ou la pleine lune s'il y a quelque chose à voir ce soir,
+mes matchs et entraînements de club (avec l'heure de rendez-vous), le match de mon équipe préférée s'il y en a un, la Station spatiale ou la pleine lune s'il y a quelque chose à voir ce soir,
 les mails importants (qui m'a écrit et pour quoi, sans tout détailler), mes rappels,
 et termine par le nombre de jours avant les vacances d'été.
 Ignore les rubriques vides ou non configurées. Pas de liste à puces, 8 phrases maximum.

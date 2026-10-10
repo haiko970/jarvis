@@ -6,7 +6,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import brief, ciel, config, foot, pronote, temps_jeu, vacances
+from . import brief, ciel, config, foot, pronote, sporteasy, temps_jeu, vacances
 
 CACHE_SECONDS = 600  # les infos d'internet sont rafraîchies toutes les 10 minutes
 _cache: dict = {"time": 0.0, "data": None}
@@ -45,6 +45,15 @@ def _day():
                 "detail": l["salle"] and f"salle {l['salle']}", "annule": l["annule"],
                 "statut": l["statut"], "controle": l["controle"],
             })
+    if sporteasy.configured():
+        try:
+            for e in sporteasy.today_items(today):
+                icon = {"match": "⚽ ", "entrainement": "🏃 ", "tournoi": "🏆 "}.get(e["type"], "")
+                detail = " · ".join(x for x in (e["rdv"] and f"RDV {e['rdv']}", e["lieu"]) if x)
+                items.append({"heure": e["heure"] or "toute la journée", "titre": icon + e["titre"], "type": "rdv",
+                              "detail": detail, "annule": e["annule"], "statut": "ANNULÉ" if e["annule"] else ""})
+        except Exception:
+            pass  # pas d'internet : le reste de la journée s'affiche quand même
     events = brief.agenda_events(today)
     for heure, titre in events or []:
         items.append({"heure": heure.replace(":", "h"), "titre": titre, "type": "rdv"})
@@ -92,6 +101,7 @@ def collect(force: bool = False) -> dict:
             "jeux": _safe(lambda: temps_jeu.summary(7)),
             "ciel": _safe(lambda: ciel.sky_data() if s["ville"] else None),
             "foot": _safe(lambda: foot.team_data() if s["equipe"] else None),
+            "club": _safe(lambda: sporteasy.next_event() if sporteasy.configured() else None),
             "maj": datetime.datetime.now().strftime("%H:%M"),
         }
         _cache.update(time=time.time(), data=data)
