@@ -29,6 +29,7 @@ Il peut agir sur ton PC :
 - 🛡️ surveiller le PC quand tu pars (« Jarvis, surveille le PC ») : si quelqu'un touche à la souris ou au
   clavier sans taper ton code secret, « Accès non autorisé », photo avec la webcam et PC verrouillé
 - ⚽ donner le score de ton équipe de foot (en direct pendant les matchs), son dernier résultat et son prochain match
+- ⚽ te dire les grands matchs de foot du soir (Ligue des champions, équipe de France, Ligue 1…), annoncés à 18 h
 - ⚽ suivre ton club sur SportEasy : matchs, entraînements, convocations et heure de rendez-vous
   (⚙️ Réglages → « Mon équipe de foot » → colle le lien « Synchronisation Calendrier » de SportEasy)
 - 🌙 décrire le ciel : phase de la lune, lever et coucher du soleil, et quand voir passer la Station spatiale

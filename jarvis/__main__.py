@@ -90,6 +90,10 @@ def main() -> None:
     from . import temps_jeu
 
     threading.Thread(target=temps_jeu.tracker_loop, daemon=True).start()
+    # Les grands matchs de foot du soir, annoncés à 18 h
+    from . import foot
+
+    threading.Thread(target=foot.announce_loop, daemon=True).start()
 
     # Pendant que la fenêtre s'ouvre, le cerveau se réveille et lit ses instructions.
     threading.Thread(target=brain.warm_up, daemon=True).start()

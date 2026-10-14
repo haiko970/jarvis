@@ -55,6 +55,20 @@ TOOLS = [
 
 _cache: dict = {}
 
+# Le site des scores est en anglais : quelques noms en français
+NOMS_FR = {
+    "Belgium": "Belgique", "Germany": "Allemagne", "Spain": "Espagne", "England": "Angleterre", "Italy": "Italie",
+    "Netherlands": "Pays-Bas", "Switzerland": "Suisse", "Croatia": "Croatie", "Brazil": "Brésil", "Argentina": "Argentine",
+    "Morocco": "Maroc", "Algeria": "Algérie", "Senegal": "Sénégal", "Tunisia": "Tunisie", "Austria": "Autriche",
+    "Denmark": "Danemark", "Sweden": "Suède", "Norway": "Norvège", "Poland": "Pologne", "Scotland": "Écosse",
+    "Wales": "Pays de Galles", "Ireland": "Irlande", "Republic of Ireland": "Irlande", "Turkey": "Turquie", "Türkiye": "Turquie",
+    "Greece": "Grèce", "Ukraine": "Ukraine", "Czechia": "Tchéquie", "Czech Republic": "Tchéquie", "Hungary": "Hongrie",
+    "Serbia": "Serbie", "Iceland": "Islande", "Luxembourg": "Luxembourg", "Mexico": "Mexique", "United States": "États-Unis",
+    "Japan": "Japon", "Cameroon": "Cameroun", "Ivory Coast": "Côte d'Ivoire",
+    "Paris Saint-Germain": "PSG", "Club Brugge": "Bruges", "Bayern Munich": "Bayern Munich", "Internazionale": "Inter Milan",
+    "Sporting CP": "Sporting Portugal", "Red Star Belgrade": "Étoile rouge de Belgrade",
+}
+
 
 def _get(url: str, seconds: int = 60) -> dict:
     """Lit une page d'ESPN (gardée en mémoire un moment pour ne pas la redemander sans arrêt)."""
@@ -139,7 +153,7 @@ def _match(event: dict, team_id: str) -> dict | None:
             team = c.get("team", {})
             sides[c.get("homeAway", "home")] = {
                 "id": str(team.get("id", c.get("id", ""))),
-                "nom": team.get("shortDisplayName") or team.get("displayName", "?"),
+                "nom": NOMS_FR.get(team.get("displayName", ""), team.get("shortDisplayName") or team.get("displayName", "?")),
                 "logo": team.get("logo") or (team.get("logos") or [{}])[0].get("href", ""),
                 "score": _score(c.get("score")),
                 "gagne": c.get("winner"),
@@ -282,3 +296,132 @@ def brief_section() -> str | None:
 
 
 HANDLERS = {"score_equipe": score_equipe, "definir_equipe": definir_equipe}
+
+
+# ---------- Les grands matchs du soir (toutes équipes) ----------
+# Compétitions suivies, avec leur importance (plus c'est haut, plus le match compte)
+COMPETITIONS = {
+    "uefa.champions": ("Ligue des champions", 10), "uefa.nations": ("Ligue des nations", 7),
+    "fifa.friendly": ("Match amical international", 3), "uefa.euro": ("Euro", 10), "fifa.world": ("Coupe du monde", 10),
+    "uefa.europa": ("Ligue Europa", 6), "uefa.europa.conf": ("Ligue Conférence", 4),
+    "fra.1": ("Ligue 1", 6), "fra.coupe_de_france": ("Coupe de France", 5),
+    "eng.1": ("Premier League", 4), "esp.1": ("Liga", 4), "ita.1": ("Serie A", 3), "ger.1": ("Bundesliga", 3),
+}
+# Les équipes qui rendent un match « gros »
+BIG_TEAMS = {
+    "france", "paris saint germain", "marseille", "lyon", "monaco", "lille", "nantes", "lens", "rennes", "nice",
+    "real madrid", "barcelona", "atletico madrid", "manchester city", "liverpool", "arsenal", "chelsea",
+    "manchester united", "tottenham hotspur", "bayern munich", "borussia dortmund", "internazionale", "ac milan",
+    "juventus", "napoli", "spain", "england", "germany", "portugal", "italy", "argentina", "brazil",
+    # les mêmes, avec les noms affichés en français
+    "psg", "inter milan", "espagne", "angleterre", "allemagne", "italie", "argentine", "bresil",
+}
+SOIR = "17h00"  # « le soir » commence à 17 h
+
+MATCHS_TOOL = {
+    "name": "matchs_du_soir",
+    "description": (
+        "Les grands matchs de foot de ce soir (ou d'un autre jour), toutes équipes confondues : Ligue des champions, "
+        "équipe de France, Ligue 1, grands championnats européens. Avec l'heure et le score s'ils ont commencé."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {"jour": {"type": "string", "description": "aujourd'hui (par défaut), demain, ou une date AAAA-MM-JJ"}},
+        "required": [],
+        "additionalProperties": False,
+    },
+}
+TOOLS.append(MATCHS_TOOL)
+
+
+def _is_big(name: str) -> bool:
+    simple = _simple(name)
+    return any(_simple(b) == simple or (len(simple) > 4 and _simple(b) in simple) for b in BIG_TEAMS)
+
+
+def evening_matches(day: datetime.date | None = None, limit: int = 5, evening_only: bool = True) -> list[dict]:
+    """Les matchs importants du jour, du plus important au moins important."""
+    day = day or datetime.date.today()
+    s = config.load()
+    favourite = s["equipe_id"]
+    found = []
+    for league, (name, weight) in COMPETITIONS.items():
+        try:
+            data = _get(f"{API}/{league}/scoreboard?dates={day.strftime('%Y%m%d')}", 300)
+        except Exception:
+            continue
+        for event in data.get("events", []):
+            m = _match(event, "")
+            if not m or m["date"] != day.isoformat() or m["etat"] == "reporte":
+                continue
+            if evening_only and m["heure"] < SOIR:
+                continue
+            home, away = m["domicile"], m["exterieur"]
+            bigs = _is_big(home["nom"]) + _is_big(away["nom"])
+            # Petit championnat étranger sans grande équipe : on ne le garde pas
+            if weight < 5 and bigs == 0:
+                continue
+            score = weight + 4 * bigs + (8 if favourite and favourite in (home["id"], away["id"]) else 0)
+            if "france" in (_simple(home["nom"]), _simple(away["nom"])):
+                score += 10
+            m["competition"] = name
+            m["importance"] = score
+            found.append(m)
+    found.sort(key=lambda m: (-m["importance"], m["heure"]))
+    return found[:limit]
+
+
+def _match_line(m: dict) -> str:
+    teams = f"{m['domicile']['nom']} – {m['exterieur']['nom']}"
+    if m["etat"] == "in":
+        return f"{teams}, en cours : {m['domicile']['score']} à {m['exterieur']['score']} ({m['competition']})"
+    if m["etat"] == "post":
+        return f"{teams}, terminé : {m['domicile']['score']} à {m['exterieur']['score']} ({m['competition']})"
+    return f"{m['heure']} : {teams} ({m['competition']})"
+
+
+def matchs_du_soir(jour: str = "") -> str:
+    from .brief import french_date, parse_day
+
+    day = parse_day(jour) or datetime.date.today()
+    try:
+        matches = evening_matches(day, limit=6)
+    except Exception as e:
+        return f"Je n'arrive pas à joindre le site des scores : {e}"
+    when = "ce soir" if day == datetime.date.today() else french_date(day)
+    if not matches:
+        return f"Pas de grand match {when}."
+    top = matches[0]
+    lines = [f"- {_match_line(m)}" + (" ← le plus gros match" if m is top else "") for m in sorted(matches, key=lambda m: m["heure"])]
+    return f"Grands matchs de foot {when} :\n" + "\n".join(lines)
+
+
+def evening_brief() -> str | None:
+    """Pour le brief : les 3 plus gros matchs de ce soir."""
+    matches = evening_matches(limit=3)
+    if not matches:
+        return None
+    return "Ce soir : " + " ; ".join(_match_line(m) for m in sorted(matches, key=lambda m: m["heure"])) + "."
+
+
+def announce_loop() -> None:
+    """Chaque jour à 18 h, Jarvis annonce les grands matchs du soir (s'il est ouvert)."""
+    from .powers import EVENTS
+
+    done = None
+    while True:
+        now = datetime.datetime.now()
+        if config.load()["annonce_matchs"] and now.strftime("%H:%M") >= "18:00" and done != now.date() and now.hour < 21:
+            done = now.date()
+            try:
+                matches = [m for m in evening_matches(limit=3) if m["etat"] == "pre"]
+                if matches:
+                    lines = ", ".join(f"{m['domicile']['nom']} contre {m['exterieur']['nom']} à {m['heure']} en {m['competition']}"
+                                      for m in sorted(matches, key=lambda m: m["heure"]))
+                    EVENTS.put(f"⚽ Les grands matchs de ce soir : {lines}.")
+            except Exception:
+                pass
+        time.sleep(60)
+
+
+HANDLERS["matchs_du_soir"] = matchs_du_soir

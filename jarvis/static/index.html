@@ -814,6 +814,12 @@
       <p class="hint" id="equipeHint">Grands championnats d'Europe (Ligue 1, Ligue 2, Premier League, Liga…).
         Tu peux aussi dire : « Jarvis, mon équipe c'est le FC Nantes ».</p>
     </div>
+    <label class="toggle">
+      <span>Me dire les grands matchs du soir<br>
+      <span class="hint">Ligue des champions, équipe de France, Ligue 1, gros matchs européens : dans « Aujourd'hui »,
+        dans le brief et annoncés à 18 h. Demande aussi : « Jarvis, il y a quoi comme match ce soir ? »</span></span>
+      <input type="checkbox" id="annonceMatchs">
+    </label>
     <div class="field">
       <label for="sporteasyLink">Ton club sur SportEasy (matchs, entraînements, convocations)</label>
       <div class="row">
@@ -896,7 +902,7 @@ const TOOL_LABELS = {
   lancer_jeu: "🎮 Jeu lancé", lister_jeux: "🎮 Jeux", musique_en_cours: "🎵 Musique en cours",
   minuteur: "⏰ Minuteur", lister_minuteurs: "⏰ Minuteurs", annuler_minuteurs: "⏰ Annulés",
   definir_ville: "📍 Ville enregistrée", changer_theme: "🎨 Thème",
-  ciel: "🌙 Ciel", score_equipe: "⚽ Score", definir_equipe: "⚽ Équipe enregistrée", mes_matchs: "⚽ SportEasy",
+  ciel: "🌙 Ciel", score_equipe: "⚽ Score", definir_equipe: "⚽ Équipe enregistrée", mes_matchs: "⚽ SportEasy", matchs_du_soir: "⚽ Matchs du soir",
   activer_sentinelle: "🛡️ Sentinelle", rapport_sentinelle: "🛡️ Rapport sentinelle", retenir_info: "🧠 Retenu", oublier_info: "🧠 Oublié",
   fermer_jarvis: "⏻ Extinction de Jarvis", eteindre_ordinateur: "⏻ Extinction du PC", annuler_extinction: "↺ Extinction annulée",
   ajouter_tache: "✅ Tâche ajoutée", lister_taches: "📋 Tâches", terminer_tache: "✔️ Tâche faite",
@@ -1045,6 +1051,7 @@ async function loadSettings() {
   applyWake(!!settings.ecoute_permanente, false);
   if (window.briefData) fillBriefSettings(window.briefData);
   $("equipe").value = settings.equipe || "";
+  $("annonceMatchs").checked = settings.annonce_matchs !== false;
   $("sporteasyLink").value = "";
   $("sporteasyLink").placeholder = window.briefData?.sporteasy_ok ? "•••••••• (relié — colle un nouveau lien pour changer)" : "webcal://…";
   $("snLock").checked = settings.sentinelle_verrou !== false;
@@ -2034,6 +2041,10 @@ setInterval(async () => {
     renderFoot(foot, window.lastDash.club);
   } catch (e) {}
 }, 60 * 1000);
+$("annonceMatchs").onchange = async () => {
+  await saveSettings({ annonce_matchs: $("annonceMatchs").checked });
+  loadDashboard(true);
+};
 $("sporteasySave").onclick = async () => {
   $("sporteasyHint").textContent = "⏳ Je lis ton agenda SportEasy…";
   try {

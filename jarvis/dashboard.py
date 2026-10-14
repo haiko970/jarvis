@@ -54,6 +54,15 @@ def _day():
                               "detail": detail, "annule": e["annule"], "statut": "ANNULÉ" if e["annule"] else ""})
         except Exception:
             pass  # pas d'internet : le reste de la journée s'affiche quand même
+    if config.load()["annonce_matchs"]:
+        try:  # les grands matchs de foot du soir
+            for m in foot.evening_matches(today, limit=3):
+                score = f"{m['domicile']['score']}-{m['exterieur']['score']}"
+                detail = m["competition"] + (f" · EN DIRECT {score}" if m["etat"] == "in" else f" · terminé {score}" if m["etat"] == "post" else "")
+                items.append({"heure": m["heure"], "titre": f"⚽ {m['domicile']['nom']} – {m['exterieur']['nom']}",
+                              "type": "rdv", "detail": detail, "annule": False, "statut": ""})
+        except Exception:
+            pass
     events = brief.agenda_events(today)
     for heure, titre in events or []:
         items.append({"heure": heure.replace(":", "h"), "titre": titre, "type": "rdv"})

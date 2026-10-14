@@ -31,6 +31,7 @@ DEFAULTS = {
     "equipe_ligue": "",
     "equipe_nom": "",
     "equipe_logo": "",
+    "annonce_matchs": True,  # annoncer les grands matchs du soir à 18 h
     "sentinelle_verrou": True,
     "sentinelle_code_secours": "",
     "sporteasy_ics_secours": "",  # lien d'agenda SportEasy (seulement si le coffre-fort ne marche pas)  # seulement si le coffre-fort de Windows ne marche pas  # verrouiller le PC si le code n'est pas tapé à temps
