@@ -59,6 +59,9 @@ def install() -> tuple[bool, str]:
             archive = zipfile.ZipFile(io.BytesIO(r.read()))
     except Exception as e:
         return False, f"Téléchargement impossible : {e}"
+    from . import ruview
+
+    ruview.arreter()  # sous Windows, un programme en marche ne peut pas être remplacé
     with tempfile.TemporaryDirectory() as tmp:
         archive.extractall(tmp)
         roots = [p for p in Path(tmp).iterdir() if (p / "jarvis" / "__main__.py").exists()]

@@ -1,0 +1,10 @@
+RuView pour Windows, deja pret : Jarvis le lance tout seul, il n'y a rien a installer.
+
+- Programme : serveur de RuView (sensing-server), compile pour Windows a partir de
+  https://github.com/ruvnet/RuView (version a1ca023 du 12 octobre 2026).
+- Dossier "ui" : l'ecran 3D de RuView (bouton dans les Reglages de Jarvis).
+- Licence : MIT (voir LICENSE).
+
+Si Windows affiche "Windows a protege votre ordinateur" ou si l'antivirus bloque le
+programme, c'est parce qu'il n'est pas signe : choisis "Informations complementaires"
+puis "Executer quand meme", ou autorise-le dans l'antivirus.

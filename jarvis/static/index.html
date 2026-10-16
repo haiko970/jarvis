@@ -869,8 +869,8 @@
   <section>
     <h3>📡 Présence (RuView)</h3>
     <p class="hint"><a href="https://github.com/ruvnet/RuView" target="_blank">RuView</a> devine s'il y a quelqu'un dans
-      la pièce et si ça bouge, rien qu'avec les ondes WiFi : pas de caméra. Pour l'installer, double-clique une fois sur
-      <b>installer_ruview.bat</b> dans le dossier de Jarvis (compte 30 à 60 minutes la première fois).</p>
+      la pièce et si ça bouge, rien qu'avec les ondes WiFi : pas de caméra. Il est déjà fourni avec Jarvis (Windows),
+      rien à installer.</p>
     <label class="toggle">
       <span>Lancer RuView avec Jarvis<br><span class="hint" id="ruviewHint"></span></span>
       <input type="checkbox" id="ruviewActif">
@@ -2316,9 +2316,9 @@ let ruviewMsgUntil = 0;  // le message d'un bouton reste affiché quelques secon
 function renderRuview(e) {
   const body = $("ruviewBody");
   body.className = "empty";
-  if (Date.now() > ruviewMsgUntil) $("ruviewHint").textContent = !e.installe ? "RuView n'est pas encore installé."
+  if (Date.now() > ruviewMsgUntil) $("ruviewHint").textContent = !e.installe ? "Programme RuView introuvable : mets Jarvis à jour."
     : e.marche ? "✅ RuView tourne." : "RuView est installé mais arrêté.";
-  if (!e.installe) { body.innerHTML = "RuView n'est pas installé : double-clique sur <b>installer_ruview.bat</b> dans le dossier de Jarvis."; return; }
+  if (!e.installe) { body.innerHTML = "Programme RuView introuvable : mets Jarvis à jour (⚙️ → Mises à jour)."; return; }
   if (!e.marche) {
     body.innerHTML = `RuView est arrêté. <button type="button" data-ruview="demarrer">Le lancer</button>`;
     $("ruviewTag").textContent = "RV-08"; return;

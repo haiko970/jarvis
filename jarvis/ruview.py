@@ -1,8 +1,8 @@
 """RuView : savoir si quelqu'un est dans la pièce grâce au WiFi (https://github.com/ruvnet/RuView).
 
-RuView est un programme à part, installé une fois avec « installer_ruview.bat » dans le dossier
-personnel (~/RuView), donc hors du dossier de Jarvis : la mise à jour de Jarvis n'y touche pas.
-Jarvis lance son petit serveur en arrière-plan et lui demande ce qu'il voit.
+Le serveur de RuView pour Windows est déjà compilé et rangé dans le dossier « ruview » de Jarvis
+(rien à installer, ~10 Mo). Jarvis le lance en arrière-plan et lui demande ce qu'il voit.
+Sur macOS ou Linux, il faut le compiler soi-même dans ~/RuView (voir le site de RuView).
 
 Sans capteur, RuView écoute la force du WiFi du PC : il devine seulement s'il y a quelqu'un
 et si ça bouge. Avec une carte ESP32-S3 (~9 €), il peut aussi estimer la respiration."""
@@ -16,7 +16,7 @@ from pathlib import Path
 
 from . import config
 
-DOSSIER = Path.home() / "RuView"
+DOSSIER = Path(__file__).resolve().parent.parent / "ruview"  # programme Windows et écran de RuView
 PORT = 3000  # écran et données de RuView : http://127.0.0.1:3000/ui/index.html
 PORT_WS = 3001
 SOURCES = {
@@ -44,9 +44,10 @@ ETATS = {
 
 
 def programme() -> Path:
-    """Le serveur de RuView compilé par installer_ruview.bat."""
-    nom = "sensing-server.exe" if platform.system() == "Windows" else "sensing-server"
-    return DOSSIER / "v2" / "target" / "release" / nom
+    """Le serveur de RuView : fourni avec Jarvis sous Windows, compilé soi-même ailleurs."""
+    if platform.system() == "Windows":
+        return DOSSIER / "sensing-server.exe"
+    return Path.home() / "RuView" / "v2" / "target" / "release" / "sensing-server"
 
 
 def installe() -> bool:
@@ -71,9 +72,10 @@ def demarrer() -> tuple[bool, str]:
     if en_marche():
         return True, "RuView est déjà lancé."
     if not installe():
-        return False, "RuView n'est pas installé : double-clique sur « installer_ruview.bat » dans le dossier de Jarvis."
+        return False, "Le programme de RuView est introuvable : mets Jarvis à jour (⚙️ → Mises à jour)."
     source = config.load()["ruview_source"]
-    commande = [str(programme()), "--source", source, "--http-port", str(PORT), "--ws-port", str(PORT_WS)]
+    commande = [str(programme()), "--source", source, "--http-port", str(PORT), "--ws-port", str(PORT_WS),
+                "--ui-path", "ui"]
     if source == "wifi":
         commande += ["--tick-ms", "500"]  # le WiFi du PC ne donne pas plus de 2 mesures par seconde
     elif source == "esp32":
@@ -84,8 +86,8 @@ def demarrer() -> tuple[bool, str]:
         options["creationflags"] = subprocess.CREATE_NO_WINDOW
     journal = open(Path.home() / ".jarvis_ruview.log", "w", encoding="utf-8")
     try:
-        # Lancé depuis v2 : RuView y trouve son écran (dossier ../ui).
-        _process["p"] = subprocess.Popen(commande, cwd=DOSSIER / "v2", stdout=journal, stderr=subprocess.STDOUT, **options)
+        # Lancé depuis le dossier « ruview » de Jarvis : il y trouve son écran (dossier « ui »)
+        _process["p"] = subprocess.Popen(commande, cwd=DOSSIER, stdout=journal, stderr=subprocess.STDOUT, **options)
     except OSError as e:
         return False, f"Impossible de lancer RuView : {e}"
     for _ in range(30):  # jusqu'à 15 secondes pour démarrer
@@ -145,7 +147,7 @@ def etat() -> dict:
 def phrase(e: dict) -> str:
     """L'état de la pièce en une phrase, pour Jarvis."""
     if not e["installe"]:
-        return "RuView n'est pas installé : double-clique sur installer_ruview.bat dans le dossier de Jarvis."
+        return "Le programme de RuView est introuvable : il faut mettre Jarvis à jour."
     if not e["marche"]:
         return "RuView n'est pas lancé. Active-le dans les Réglages, rubrique Présence."
     if e.get("attente"):
