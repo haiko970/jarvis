@@ -94,6 +94,13 @@ def main() -> None:
     from . import foot
 
     threading.Thread(target=foot.announce_loop, daemon=True).start()
+    # RuView (présence par le WiFi) tourne à côté de Jarvis, s'il est installé
+    import atexit
+
+    from . import ruview
+
+    threading.Thread(target=ruview.demarrage_auto, daemon=True).start()
+    atexit.register(ruview.arreter)
 
     # Pendant que la fenêtre s'ouvre, le cerveau se réveille et lit ses instructions.
     threading.Thread(target=brain.warm_up, daemon=True).start()

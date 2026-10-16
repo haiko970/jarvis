@@ -32,6 +32,10 @@ Il peut agir sur ton PC :
 - ⚽ te dire les grands matchs de foot du soir (Ligue des champions, équipe de France, Ligue 1…), annoncés à 18 h
 - ⚽ suivre ton club sur SportEasy : matchs, entraînements, convocations et heure de rendez-vous
   (⚙️ Réglages → « Mon équipe de foot » → colle le lien « Synchronisation Calendrier » de SportEasy)
+- 📡 savoir s'il y a quelqu'un dans la pièce et si ça bouge, rien qu'avec le WiFi, sans caméra, grâce à
+  [RuView](https://github.com/ruvnet/RuView) : double-clique une fois sur `installer_ruview.bat` (30 à 60 minutes
+  la première fois), puis relance Jarvis. Cadre « Présence » du tableau de bord et « Jarvis, il y a quelqu'un dans
+  la pièce ? ». Avec le WiFi du PC seul, c'est approximatif ; avec un capteur ESP32-S3 (~9 €), c'est plus précis
 - 🌙 décrire le ciel : phase de la lune, lever et coucher du soleil, et quand voir passer la Station spatiale
 - 🔄 se mettre à jour tout seul (proposé au démarrage, ou ⚙️ → « Mises à jour »)
 - ⏰ programmer des minuteurs et des rappels (« rappelle-moi dans 10 minutes de sortir les pâtes »)

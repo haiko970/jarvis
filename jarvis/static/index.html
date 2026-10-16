@@ -204,6 +204,10 @@
   .countdown-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
   .countdown-head .big { font-size: 24px; font-weight: 300; color: var(--cyan); text-shadow: var(--glow); line-height: 1; }
   .countdown-head .sub { font-size: 11px; color: var(--muted); text-align: right; }
+  .presence-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px;
+    background: var(--muted); vertical-align: middle; }
+  .presence-dot.on { background: var(--cyan); box-shadow: var(--glow); animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.35; } }
   .dots { display: flex; flex-wrap: wrap; gap: 3px; }
   .dots i { width: 6px; height: 6px; border-radius: 50%; border: 1px solid rgba(var(--c-rgb), 0.35); }
   .dots i.we { border-color: rgba(var(--c-rgb), 0.18); }
@@ -489,6 +493,10 @@
     <section class="hud" id="tidePanel">
       <div class="hud-title"><span>// Marées</span><span class="tag mono" id="tideCity">TD-02</span></div>
       <div id="tideBody" class="empty">Chargement…</div>
+    </section>
+    <section class="hud" id="ruviewPanel">
+      <div class="hud-title"><span>// Présence</span><span class="tag mono" id="ruviewTag">RV-08</span></div>
+      <div id="ruviewBody" class="empty">Chargement…</div>
     </section>
   </div>
 
@@ -859,6 +867,26 @@
   </section>
 
   <section>
+    <h3>📡 Présence (RuView)</h3>
+    <p class="hint"><a href="https://github.com/ruvnet/RuView" target="_blank">RuView</a> devine s'il y a quelqu'un dans
+      la pièce et si ça bouge, rien qu'avec les ondes WiFi : pas de caméra. Pour l'installer, double-clique une fois sur
+      <b>installer_ruview.bat</b> dans le dossier de Jarvis (compte 30 à 60 minutes la première fois).</p>
+    <label class="toggle">
+      <span>Lancer RuView avec Jarvis<br><span class="hint" id="ruviewHint"></span></span>
+      <input type="checkbox" id="ruviewActif">
+    </label>
+    <div class="field">
+      <label for="ruviewSource">Capteur</label>
+      <select id="ruviewSource">
+        <option value="wifi">Le WiFi du PC (sans rien acheter, approximatif)</option>
+        <option value="esp32">Un capteur ESP32-S3 (~9 €, plus précis, respiration)</option>
+        <option value="simulate">Démonstration (fausses données, pour essayer)</option>
+      </select>
+    </div>
+    <p><button class="btn" id="ruviewScreen" type="button">🛰️ Ouvrir l'écran de RuView</button></p>
+  </section>
+
+  <section>
     <h3>🏖️ Compte à rebours</h3>
     <div class="field">
       <label for="rentree">Date de la rentrée</label>
@@ -1055,6 +1083,8 @@ async function loadSettings() {
   $("sporteasyLink").value = "";
   $("sporteasyLink").placeholder = window.briefData?.sporteasy_ok ? "•••••••• (relié — colle un nouveau lien pour changer)" : "webcal://…";
   $("snLock").checked = settings.sentinelle_verrou !== false;
+  $("ruviewActif").checked = settings.ruview_actif !== false;
+  $("ruviewSource").value = settings.ruview_source || "wifi";
   fetch("/api/sentinelle").then((r) => r.json()).then((st) => {
     $("snCodeHint").textContent = st.code_ok ? "✅ Un code est enregistré (tu peux le changer)." : "Aucun code pour l'instant : choisis-en un.";
   }).catch(() => {});
@@ -2279,6 +2309,58 @@ function renderVacances(block) {
        <div class="dots">${dots}</div>`;
 }
 
+// ---------- Présence (RuView) ----------
+const RV_ETATS = { absent: "Personne", present_still: "Quelqu'un, immobile", present_moving: "Quelqu'un bouge" };
+const RV_SOURCES = { wifi: "WIFI DU PC", esp32: "ESP32", simulate: "DÉMO", simulated: "DÉMO" };
+let ruviewMsgUntil = 0;  // le message d'un bouton reste affiché quelques secondes
+function renderRuview(e) {
+  const body = $("ruviewBody");
+  body.className = "empty";
+  if (Date.now() > ruviewMsgUntil) $("ruviewHint").textContent = !e.installe ? "RuView n'est pas encore installé."
+    : e.marche ? "✅ RuView tourne." : "RuView est installé mais arrêté.";
+  if (!e.installe) { body.innerHTML = "RuView n'est pas installé : double-clique sur <b>installer_ruview.bat</b> dans le dossier de Jarvis."; return; }
+  if (!e.marche) {
+    body.innerHTML = `RuView est arrêté. <button type="button" data-ruview="demarrer">Le lancer</button>`;
+    $("ruviewTag").textContent = "RV-08"; return;
+  }
+  $("ruviewTag").textContent = RV_SOURCES[e.source] || "RV-08";
+  if (e.attente) { body.textContent = "RuView démarre…"; return; }
+  body.className = "";
+  const extra = [];
+  if (e.presence && e.personnes > 1) extra.push(`~${e.personnes} personnes`);
+  if (e.respiration) extra.push(`respiration ${e.respiration}/min`);
+  body.innerHTML = `<div class="countdown-head"><span class="mono"><i class="presence-dot ${e.presence ? "on" : ""}"></i>${esc(RV_ETATS[e.mouvement] || (e.presence ? "Quelqu'un" : "Personne"))}</span>
+    <span class="sub mono">SÛR À ${e.confiance}%</span></div>
+    ${extra.length ? `<div class="sub mono muted">${esc(extra.join(" · "))}</div>` : ""}`;
+}
+async function loadRuview() {
+  try { renderRuview(await (await fetch("/api/ruview")).json()); } catch (e) {}
+}
+async function ruviewAction(action) {
+  $("ruviewHint").textContent = "⏳ Un instant…";
+  try {
+    const res = await (await fetch("/api/ruview", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }) })).json();
+    renderRuview(res);
+    $("ruviewHint").textContent = (res.ok ? "✅ " : "❌ ") + res.message;
+    ruviewMsgUntil = Date.now() + 15000;
+  } catch (e) { $("ruviewHint").textContent = "❌ Jarvis ne répond pas."; }
+}
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-ruview]");
+  if (btn) ruviewAction(btn.dataset.ruview);
+});
+$("ruviewActif").onchange = async () => {
+  const on = $("ruviewActif").checked;
+  await saveSettings({ ruview_actif: on });
+  ruviewAction(on ? "demarrer" : "arreter");
+};
+$("ruviewSource").onchange = async () => {
+  await saveSettings({ ruview_source: $("ruviewSource").value });
+  if ($("ruviewActif").checked) ruviewAction("relancer");
+};
+$("ruviewScreen").onclick = () => ruviewAction("ecran");
+
 // ---------- Statistiques de jeu ----------
 const fmtMin = (m) => (m >= 60 ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")}` : `${m} min`);
 function renderJeux(block) {
@@ -2390,6 +2472,7 @@ fetch("/api/info").then((r) => r.json()).then((i) => { $("hubBrain").textContent
 loadDashboard(); setInterval(() => loadDashboard(), 10 * 60 * 1000);
 loadSystem(); setInterval(loadSystem, 3000);
 loadMedia(); setInterval(loadMedia, 3000);
+loadRuview(); setInterval(loadRuview, 3000);
 // Chaque minute, le repère « maintenant » des marées et de la journée avance.
 setInterval(() => {
   const d = window.lastDash;

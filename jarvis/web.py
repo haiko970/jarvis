@@ -18,7 +18,7 @@ import ollama
 
 from . import brief as brief_module
 from . import config, dashboard, elevenlabs, maj, musique, powers, pronote, sentinelle, systeme, theme
-from . import foot, sporteasy
+from . import foot, ruview, sporteasy
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -178,6 +178,8 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                     self._json({"ok": True, "data": foot.team_data() if config.load()["equipe"] else None})
                 except Exception as e:
                     self._json({"ok": False, "erreur": str(e)})
+            elif self.path == "/api/ruview":
+                self._json(ruview.etat())
             elif self.path == "/api/events":
                 events = []
                 while not EVENTS.empty():
@@ -336,6 +338,22 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                     self._json({"ok": True, "message": message})
                 except Exception as e:
                     self._json({"ok": False, "message": f"Impossible de lire l'agenda SportEasy : {e}"})
+                return
+
+            if self.path == "/api/ruview":
+                action = json.loads(raw or b"{}").get("action")
+                if action == "ecran":  # l'écran 3D de RuView, dans le navigateur
+                    ok, message = ruview.demarrer()
+                    if ok:
+                        webbrowser.open(f"http://127.0.0.1:{ruview.PORT}")
+                elif action == "arreter":
+                    ruview.arreter()
+                    ok, message = True, "RuView est arrêté."
+                else:  # « demarrer » ou « relancer » (après un changement de capteur)
+                    if action == "relancer":
+                        ruview.arreter()
+                    ok, message = ruview.demarrer()
+                self._json({"ok": ok, "message": message, **ruview.etat()})
                 return
 
             if self.path == "/api/sentinelle":
