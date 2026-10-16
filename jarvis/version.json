@@ -1,1 +1,1 @@
-{"version": "2026.10.16.1", "nouveautes": "RuView : Jarvis sait s'il y a quelqu'un dans la pièce grâce au WiFi (cadre « Présence », à installer avec installer_ruview.bat)."}
+{"version": "2026.10.16.2", "nouveautes": "Installation de RuView : vérifie la place libre sur le disque et s’arrête avec un message clair si les outils de Microsoft manquent."}

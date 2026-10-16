@@ -15,6 +15,18 @@ echo Windows va peut-etre te demander plusieurs fois l'autorisation : clique sur
 echo Laisse cette fenetre ouverte jusqu'au message "RuView est pret".
 echo.
 
+rem --- Place libre sur le disque : il faut environ 15 Go (outils de Microsoft + compilation) ---
+set "LIBRE="
+for /f %%f in ('powershell -NoProfile -Command "[math]::Floor((Get-Item $env:USERPROFILE).PSDrive.Free/1GB)"') do set "LIBRE=%%f"
+if not defined LIBRE goto place_ok
+if %LIBRE% GEQ 15 goto place_ok
+echo [ERREUR] Pas assez de place sur le disque : il reste %LIBRE% Go, il en faut environ 15.
+echo Fais de la place (Parametres de Windows ^> Systeme ^> Stockage ^> "Fichiers temporaires"),
+echo vide la corbeille, desinstalle des jeux que tu n'utilises plus, puis relance ce fichier.
+goto erreur
+:place_ok
+echo Place libre sur le disque : %LIBRE% Go.
+
 where winget >nul 2>nul
 if not errorlevel 1 goto winget_ok
 echo [ERREUR] L'outil "winget" de Windows est introuvable.
@@ -54,7 +66,13 @@ if exist "%VSWHERE%" for /f "usebackq delims=" %%i in (`"%VSWHERE%" -products * 
 if defined VC goto vc_ok
 echo [3/4] Installation des outils de compilation de Microsoft (environ 3 Go, c'est long)...
 winget install --id Microsoft.VisualStudio.2022.BuildTools -e --accept-source-agreements --accept-package-agreements --override "--wait --passive --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
-if errorlevel 1 goto erreur
+rem On ne se fie pas au code de retour de winget : on verifie que les outils sont vraiment la.
+if exist "%VSWHERE%" for /f "usebackq delims=" %%i in (`"%VSWHERE%" -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "VC=%%i"
+if defined VC goto vc_ok
+echo.
+echo [ERREUR] Les outils de compilation de Microsoft ne se sont pas installes.
+echo Le plus souvent : pas assez de place sur le disque (il faut environ 15 Go libres).
+goto erreur
 :vc_ok
 echo [3/4] Les outils de compilation sont prets.
 
