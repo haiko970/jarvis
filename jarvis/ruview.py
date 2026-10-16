@@ -17,7 +17,7 @@ from pathlib import Path
 from . import config
 
 DOSSIER = Path.home() / "RuView"
-PORT = 3000  # écran et données de RuView : http://127.0.0.1:3000
+PORT = 3000  # écran et données de RuView : http://127.0.0.1:3000/ui/index.html
 PORT_WS = 3001
 SOURCES = {
     "wifi": "le WiFi du PC (présence et mouvement, approximatif)",
@@ -76,6 +76,9 @@ def demarrer() -> tuple[bool, str]:
     commande = [str(programme()), "--source", source, "--http-port", str(PORT), "--ws-port", str(PORT_WS)]
     if source == "wifi":
         commande += ["--tick-ms", "500"]  # le WiFi du PC ne donne pas plus de 2 mesures par seconde
+    elif source == "esp32":
+        # Le capteur envoie ses mesures par le réseau de la maison (adresses privées seulement)
+        commande += ["--udp-bind", "0.0.0.0", "--udp-allow", "192.168.0.0/16,10.0.0.0/8,172.16.0.0/12"]
     options = {}
     if platform.system() == "Windows":
         options["creationflags"] = subprocess.CREATE_NO_WINDOW

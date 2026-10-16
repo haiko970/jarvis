@@ -345,7 +345,7 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 if action == "ecran":  # l'écran 3D de RuView, dans le navigateur
                     ok, message = ruview.demarrer()
                     if ok:
-                        webbrowser.open(f"http://127.0.0.1:{ruview.PORT}")
+                        webbrowser.open(f"http://127.0.0.1:{ruview.PORT}/ui/index.html")
                 elif action == "arreter":
                     ruview.arreter()
                     ok, message = True, "RuView est arrêté."
