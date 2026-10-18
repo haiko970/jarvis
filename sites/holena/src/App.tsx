@@ -10,6 +10,14 @@ import { CARTE_H, CARTE_L, PART_LOGO } from './carte';
 // Page d'origine du projet, ouverte par le bouton et le lien de la carte
 const PAGE_PROJET = 'https://www.piaf.solutions/fr/2023/03/11/le-pont-du-sel/';
 
+// Liens des trois destinations (Guérande, Pérou, Chili).
+// Pour l'instant ils mènent tous à la page HOLENA : remplacer par l'adresse exacte de chaque page.
+const LIENS = {
+  guerande: PAGE_PROJET,
+  perou: PAGE_PROJET,
+  chili: PAGE_PROJET,
+};
+
 const NAV = [
   { number: '01', label: 'PONTS_DU_SEL', delay: 450, apropos: false },
   { number: '02', label: 'EXPERTISES', delay: 550, apropos: true },
@@ -117,21 +125,30 @@ function Fleches() {
   );
 }
 
-function Destination({ titre, court, texte, className, anim, delay, align = 'left' }: {
-  titre: string; court: string; texte: string; className: string; anim: string; delay: number; align?: 'left' | 'right';
+function Destination({ titre, court, texte, lien, className, anim, delay }: {
+  titre: string; court: string; texte: string; lien: string; className: string; anim: string; delay: number;
 }) {
   return (
-    <div className={`absolute ${className} ${anim} ${align === 'right' ? 'text-right' : ''}`} style={{ animationDelay: `${delay}ms` }}>
-      <span className="font-manrope text-white text-[10px] md:text-[13px] leading-[15.6px] whitespace-nowrap">
+    <a
+      href={lien}
+      target="_blank"
+      rel="noreferrer"
+      className={`group absolute block pointer-events-auto ${className} ${anim}`}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <span className="font-manrope text-white text-[10px] md:text-[13px] leading-[15.6px] whitespace-nowrap group-hover:text-[#AFDDFF] transition-colors">
         <span className="hidden md:inline">{titre}</span>
         <span className="md:hidden">{court}</span>
       </span>
       <p className="hidden md:block font-manrope text-white/50 text-[11px] leading-[14px] mt-[4px] max-w-[190px]">{texte}</p>
-    </div>
+      <span className="hidden md:inline-block font-manrope text-[#AFDDFF] text-[11px] leading-[14px] mt-[6px] group-hover:underline">
+        Voir le projet ↗
+      </span>
+    </a>
   );
 }
 
-const CARRE = 'absolute w-[9%] aspect-square border border-white/80 anim-scale-in overflow-hidden';
+const CARRE = 'absolute block pointer-events-auto w-[9%] aspect-square border border-white/80 hover:border-[#AFDDFF] transition-colors anim-scale-in overflow-hidden';
 
 // Le centre de la page : le logo HOLENA et ses trois flèches
 function Carte({ logoVisible }: { logoVisible: boolean }) {
@@ -148,14 +165,14 @@ function Carte({ logoVisible }: { logoVisible: boolean }) {
       <Fleches />
 
       {/* Pérou */}
-      <div className={CARRE} style={{ left: px(112), top: py(352), animationDelay: '1800ms' }}>
+      <a href={LIENS.perou} target="_blank" rel="noreferrer" className={CARRE} style={{ left: px(112), top: py(352), animationDelay: '1800ms' }}>
         <img src={photoMaras} alt="Chemin vers les salines de Maras, au Pérou" className="w-full h-full object-cover" />
-      </div>
+      </a>
 
       {/* Chili */}
-      <div className={`${CARRE} bg-black/40`} style={{ left: px(795), top: py(338), animationDelay: '2000ms' }}>
+      <a href={LIENS.chili} target="_blank" rel="noreferrer" className={CARRE} style={{ left: px(795), top: py(338), animationDelay: '2000ms' }}>
         <img src={logoMer} alt="Label La Mer en Commun" className="w-full h-full object-contain" />
-      </div>
+      </a>
     </div>
   );
 }
@@ -169,6 +186,7 @@ function TextesCarte() {
           titre="[ GUÉRANDE — FRANCE ]"
           court="[ GUÉRANDE ]"
           texte="Le terroir de départ : l’expérience des paludiers de Guérande."
+          lien={LIENS.guerande}
           className="left-0 top-0"
           anim="anim-slide-right"
           delay={1500}
@@ -179,6 +197,7 @@ function TextesCarte() {
           titre="[ PÉROU — SEL DE MARAS ]"
           court="[ PÉROU ]"
           texte="Salines artisanales des Andes, un patrimoine vivant."
+          lien={LIENS.perou}
           className="left-0 top-0"
           anim="anim-slide-left"
           delay={1700}
@@ -189,33 +208,12 @@ function TextesCarte() {
           titre="[ CHILI — ZONE DE CAHUIL ]"
           court="[ CHILI ]"
           texte="Action reconnue par le label national « La Mer en Commun »."
+          lien={LIENS.chili}
           className="left-0 top-0"
           anim="anim-slide-right"
           delay={1900}
         />
       </div>
-    </div>
-  );
-}
-
-// Grains de sel : positions fixes (pas d'aléatoire, le rendu reste stable)
-const GRAINS = Array.from({ length: 28 }, (_, i) => ({
-  left: `${(i * 37) % 100}%`,
-  size: 1 + (i % 3),
-  duration: 14 + ((i * 7) % 12),
-  delay: -((i * 3.1) % 20),
-}));
-
-function SaltGrains() {
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {GRAINS.map((g, i) => (
-        <span
-          key={i}
-          className="absolute bottom-[-10px] rounded-full bg-white/60 anim-grain"
-          style={{ left: g.left, width: g.size, height: g.size, animationDuration: `${g.duration}s`, animationDelay: `${g.delay}s` }}
-        />
-      ))}
     </div>
   );
 }
@@ -256,13 +254,6 @@ export default function App() {
       {pageVisible && !introFinie && <Intro onSortie={() => setSiteLance(true)} onFin={() => setIntroFinie(true)} />}
       {siteLance && (
       <>
-      {/* Fond : photo de Maras, assombrie pour que le texte blanc reste lisible */}
-      <div className="absolute inset-0 anim-fade-in">
-        <img src={photoMaras} alt="" className="absolute inset-0 w-full h-full object-cover blur-[3px] anim-ken-burns" />
-        <div className="absolute inset-0 bg-black/60" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/80" />
-      </div>
-      <SaltGrains />
 
       <div className="relative z-10 w-full h-full">
         <GridLines />

@@ -27,20 +27,12 @@ body { background: #000; overflow-x: hidden; }
 .anim-grid-h      { opacity: 0; transform-origin: left; animation: gridRevealH 1.2s cubic-bezier(0.16,1,0.3,1) forwards; }
 .anim-draw-line   { stroke-dasharray: 100; stroke-dashoffset: 100; animation: drawLine 1s cubic-bezier(0.16,1,0.3,1) forwards; }
 
-/* Fond : la photo de Maras avance doucement (effet « Ken Burns ») */
-@keyframes kenBurns { from { transform: scale(1.08) translate(0, 0); } to { transform: scale(1.22) translate(-2%, -1.5%); } }
-.anim-ken-burns { animation: kenBurns 28s ease-in-out infinite alternate; }
-
-/* Grains de sel qui montent lentement */
-@keyframes grain { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateY(-110vh); opacity: 0; } }
-.anim-grain { animation: grain linear infinite; }
-
 /* Le logo HOLENA tourne très lentement dans son carré */
 @keyframes slowSpin { to { transform: rotate(360deg); } }
 .anim-slow-spin { animation: slowSpin 60s linear infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .anim-grain, .anim-slow-spin { animation: none; }
+  .anim-slow-spin { animation: none; }
 }
 
 /* ---------- Intro : le logo HOLENA apparaît puis s'efface ---------- */
