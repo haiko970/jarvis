@@ -1,0 +1,322 @@
+import { useState } from 'react';
+import { MapPin, Menu, X } from 'lucide-react';
+import logoHolena from './assets/logo-holena.png';
+import logoMer from './assets/logo-mer-en-commun.png';
+import photoMaras from './assets/maras.jpg';
+
+// Page d'origine du projet, ouverte par le bouton et le lien de la carte
+const PAGE_PROJET = 'https://www.piaf.solutions/fr/2023/03/11/le-pont-du-sel/';
+
+const NAV = [
+  { number: '01', label: 'LE_PROJET', delay: 350 },
+  { number: '02', label: 'PONTS_DU_SEL', delay: 450 },
+  { number: '03', label: 'EXPERTISES', delay: 550 },
+  { number: '04', label: 'CONTACT', delay: 650 },
+];
+
+function NavItem({ number, label, delay }: { number: string; label: string; delay: number }) {
+  return (
+    <div className="flex items-center gap-[3px] anim-fade-up" style={{ animationDelay: `${delay}ms` }}>
+      <span className="font-manrope text-[#AFDDFF]/80 text-[13px] leading-[15.6px]">{number}.</span>
+      <span className="font-manrope text-white text-[13px] leading-[15.6px] cursor-pointer hover:text-[#AFDDFF] transition-colors">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+// Petite pastille bleue « LA MER EN COMMUN » (le label obtenu par l'action au Chili)
+function LabelChip() {
+  return (
+    <span className="font-manrope bg-[#AFDDFF] rounded-[3px] px-[5px] py-[2px] text-black text-[13px] leading-[15.6px] whitespace-nowrap">
+      LA_MER_EN_COMMUN
+    </span>
+  );
+}
+
+const verticalPositions = ['12.6%', '37.5%', '61.9%', '86.2%'];
+const horizontalPositions = ['32.7%', '71.4%'];
+
+function GridLines() {
+  return (
+    <>
+      {verticalPositions.map((left, i) => (
+        <div
+          key={`v${i}`}
+          className="absolute top-0 h-full w-px bg-white/[0.04] anim-grid-v"
+          style={{ left, animationDelay: `${600 + i * 100}ms` }}
+        />
+      ))}
+      {horizontalPositions.map((top, i) => (
+        <div
+          key={`h${i}`}
+          className="absolute left-0 w-full h-px bg-white/[0.04] anim-grid-h"
+          style={{ top, animationDelay: `${800 + i * 150}ms` }}
+        />
+      ))}
+      {horizontalPositions.map((top, hi) =>
+        verticalPositions.map((left, vi) => (
+          <div
+            key={`p${hi}-${vi}`}
+            className="absolute anim-scale-in"
+            style={{ top, left, animationDelay: `${1000 + (hi * 4 + vi) * 80}ms` }}
+          >
+            <div className="absolute w-[10px] h-px bg-white/70 -translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute w-px h-[10px] bg-white/70 -translate-x-1/2 -translate-y-1/2" />
+          </div>
+        )),
+      )}
+    </>
+  );
+}
+
+function ConnectorLine({ x1, y1, x2, y2, delay }: { x1: string; y1: string; x2: string; y2: string; delay: number }) {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none anim-fade-in" style={{ animationDelay: `${delay}ms` }}>
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(255,255,255,0.25)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+const SQUARE = 'absolute w-[80px] h-[80px] lg:w-[100px] lg:h-[100px] border border-white/80 anim-scale-in overflow-hidden';
+
+function NodeLabel({ title, text, maxW, className, anim, delay }: {
+  title: string; text: string; maxW: string; className: string; anim: string; delay: number;
+}) {
+  return (
+    <div className={`absolute ${className} ${anim}`} style={{ animationDelay: `${delay}ms` }}>
+      <span className="font-manrope text-white text-[13px] leading-[15.6px] whitespace-nowrap">{title}</span>
+      <p className={`font-manrope text-white/50 text-[11px] leading-[14px] mt-[4px] ${maxW}`}>{text}</p>
+    </div>
+  );
+}
+
+// Les trois « nœuds » : HOLENA (Guérande), le Pérou et le Chili
+function CentralNodes() {
+  return (
+    <div className="absolute inset-0 pointer-events-none hidden md:block">
+      {/* 1. HOLENA — le logo tourne lentement */}
+      <div className={`${SQUARE} top-[27%] left-[60%] bg-black/40`} style={{ animationDelay: '1500ms' }}>
+        <img src={logoHolena} alt="Logo HOLENA" className="w-full h-full object-contain anim-slow-spin" />
+      </div>
+      <NodeLabel
+        title="[ HOLENA — GUÉRANDE ]"
+        text="« Récolter le sel » en breton. Le terroir de départ de chaque pont."
+        maxW="max-w-[160px]"
+        className="top-[11%] left-[26%]"
+        anim="anim-slide-left"
+        delay={1100}
+      />
+
+      {/* 2. Pérou — photo des salines de Maras */}
+      <div className={`${SQUARE} top-[58%] left-[32%]`} style={{ animationDelay: '1800ms' }}>
+        <img src={photoMaras} alt="Chemin vers les salines de Maras, au Pérou" className="w-full h-full object-cover" />
+      </div>
+      <NodeLabel
+        title="[ PÉROU — SEL DE MARAS ]"
+        text="Salines artisanales des Andes, un patrimoine vivant."
+        maxW="max-w-[160px]"
+        className="top-[76%] left-[3%]"
+        anim="anim-slide-left"
+        delay={1400}
+      />
+
+      {/* 3. Chili — label « La Mer en Commun » */}
+      <div className={`${SQUARE} top-[63%] left-[50%] bg-black/40`} style={{ animationDelay: '2100ms' }}>
+        <img src={logoMer} alt="Label La Mer en Commun" className="w-full h-full object-contain" />
+      </div>
+      <NodeLabel
+        title="[ CHILI — ZONE DE CAHUIL ]"
+        text="Action reconnue par le label national « La Mer en Commun »."
+        maxW="max-w-[180px]"
+        className="top-[50%] left-[78%]"
+        anim="anim-slide-right"
+        delay={1700}
+      />
+
+      <ConnectorLine x1="38%" y1="14%" x2="52%" y2="14%" delay={1200} />
+      <ConnectorLine x1="52%" y1="14%" x2="60%" y2="27%" delay={1400} />
+      <ConnectorLine x1="32%" y1="58%" x2="20%" y2="74%" delay={1500} />
+      <ConnectorLine x1="20%" y1="74%" x2="6%" y2="74%" delay={1700} />
+      <ConnectorLine x1="78%" y1="53%" x2="63%" y2="53%" delay={1800} />
+      <ConnectorLine x1="63%" y1="53%" x2="50%" y2="63%" delay={2000} />
+    </div>
+  );
+}
+
+// Grains de sel : positions fixes (pas d'aléatoire, le rendu reste stable)
+const GRAINS = Array.from({ length: 28 }, (_, i) => ({
+  left: `${(i * 37) % 100}%`,
+  size: 1 + (i % 3),
+  duration: 14 + ((i * 7) % 12),
+  delay: -((i * 3.1) % 20),
+}));
+
+function SaltGrains() {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {GRAINS.map((g, i) => (
+        <span
+          key={i}
+          className="absolute bottom-[-10px] rounded-full bg-white/60 anim-grain"
+          style={{ left: g.left, width: g.size, height: g.size, animationDuration: `${g.duration}s`, animationDelay: `${g.delay}s` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+const EASE = 'ease-[cubic-bezier(0.76,0,0.24,1)]';
+
+export default function App() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  return (
+    <section className="relative w-full h-screen overflow-hidden bg-black">
+      {/* Fond : photo de Maras, assombrie pour que le texte blanc reste lisible */}
+      <div className="absolute inset-0 anim-fade-in">
+        <img src={photoMaras} alt="" className="absolute inset-0 w-full h-full object-cover blur-[3px] anim-ken-burns" />
+        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/80" />
+      </div>
+      <SaltGrains />
+
+      <div className="relative z-10 w-full h-full">
+        <nav className="absolute top-0 left-0 w-full flex items-center px-5 md:px-[35px] py-5 md:py-[27px]">
+          <div className="flex items-center gap-[40px]">
+            <span
+              className="font-graphik text-white text-[18px] md:text-[21px] leading-[21px] whitespace-nowrap anim-fade-up"
+              style={{ animationDelay: '200ms' }}
+            >
+              HOLENA // PONTS DU SEL
+            </span>
+            <div className="hidden lg:flex items-center gap-[40px]">
+              {NAV.map((n) => <NavItem key={n.number} {...n} />)}
+            </div>
+          </div>
+
+          <div className="hidden lg:flex items-center gap-[12px] ml-auto anim-slide-right" style={{ animationDelay: '600ms' }}>
+            <MapPin className="w-[15px] h-[15px] text-white" strokeWidth={1.5} />
+            <span className="font-manrope text-white text-[13px] leading-[15.6px]">Guérande, France</span>
+            <span className="font-manrope text-[#AFDDFF] text-[13px] leading-[15.6px]">[ EN COURS ]</span>
+            <span className="font-manrope text-white text-[13px] leading-[15.6px] ml-[20px]">LABEL :</span>
+            <LabelChip />
+          </div>
+
+          <button
+            className="lg:hidden ml-auto relative w-[40px] h-[40px] flex items-center justify-center anim-fade-in"
+            style={{ animationDelay: '400ms' }}
+            aria-label="Ouvrir ou fermer le menu"
+            onClick={() => setMenuOpen((o) => !o)}
+          >
+            <span className={`absolute transition-all duration-300 ${EASE} ${menuOpen ? 'opacity-0 rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100'}`}>
+              <Menu className="w-[22px] h-[22px] text-white" strokeWidth={1.5} />
+            </span>
+            <span className={`absolute transition-all duration-300 ${EASE} ${menuOpen ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'}`}>
+              <X className="w-[22px] h-[22px] text-white" strokeWidth={1.5} />
+            </span>
+          </button>
+        </nav>
+
+        {/* Menu mobile */}
+        <div className={`fixed inset-0 z-50 lg:hidden transition-all duration-500 ${EASE} ${menuOpen ? 'visible' : 'invisible'}`}>
+          <div
+            className={`absolute inset-0 bg-black/90 backdrop-blur-md transition-opacity duration-500 ${EASE} ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
+            onClick={() => setMenuOpen(false)}
+          />
+          <div className={`relative h-full flex flex-col px-5 pt-24 pb-10 transition-all duration-500 ${EASE} ${menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+            <button
+              className="absolute top-5 right-5 w-[40px] h-[40px] flex items-center justify-center"
+              aria-label="Fermer le menu"
+              onClick={() => setMenuOpen(false)}
+            >
+              <X className="w-[22px] h-[22px] text-white" strokeWidth={1.5} />
+            </button>
+            <div className="flex flex-col gap-8">
+              {NAV.map((n, i) => (
+                <div
+                  key={n.number}
+                  className={`transition-all duration-500 ${EASE} ${menuOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-6'}`}
+                  style={{ transitionDelay: menuOpen ? `${150 + i * 75}ms` : '0ms' }}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="font-manrope text-[#AFDDFF]/80 text-[14px] leading-[1]">{n.number}.</span>
+                    <span className="font-manrope text-white text-[28px] leading-[1.2] tracking-tight">{n.label}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div
+              className={`mt-auto pt-10 border-t border-white/10 transition-all duration-500 ${EASE} ${menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+              style={{ transitionDelay: menuOpen ? '450ms' : '0ms' }}
+            >
+              <div className="flex items-center gap-[10px] mb-3">
+                <MapPin className="w-[15px] h-[15px] text-white" strokeWidth={1.5} />
+                <span className="font-manrope text-white text-[13px] leading-[15.6px]">Guérande, France</span>
+                <span className="font-manrope text-[#AFDDFF] text-[13px] leading-[15.6px]">[ EN COURS ]</span>
+              </div>
+              <div className="flex items-center gap-[8px]">
+                <span className="font-manrope text-white text-[13px] leading-[15.6px]">LABEL :</span>
+                <LabelChip />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h1
+          className="font-graphik text-white font-normal leading-[1em] absolute anim-fade-up text-[32px] sm:text-[48px] md:text-[68px] top-[140px] sm:top-[160px] md:top-[178px] left-5 md:left-[35px] max-w-[300px] sm:max-w-[420px] md:max-w-[554px]"
+          style={{ animationDelay: '400ms' }}
+        >
+          Récolter le sel. Bâtir des ponts.
+        </h1>
+
+        <GridLines />
+        <CentralNodes />
+
+        <div className="absolute bottom-5 md:bottom-[35px] left-5 md:left-[35px] right-5 md:right-[35px] flex flex-col md:flex-row items-start md:items-end justify-between gap-5 md:gap-0">
+          <a
+            href={PAGE_PROJET}
+            target="_blank"
+            rel="noreferrer"
+            className="bg-[#AFDDFF] px-[16px] md:px-[20px] py-[10px] md:py-[12px] flex items-center gap-[10px] hover:bg-[#c8e8ff] transition-colors anim-fade-up"
+            style={{ animationDelay: '900ms' }}
+          >
+            <span className="text-black text-[16px] leading-none">&#10022;</span>
+            <span className="font-manrope text-black text-[12px] md:text-[13px] leading-[15.6px] uppercase tracking-wide">
+              Découvrir les Ponts du Sel
+            </span>
+          </a>
+
+          <div className="relative max-w-[280px] hidden sm:block anim-slide-right" style={{ animationDelay: '1100ms' }}>
+            <span className="font-manrope text-black text-[13px] leading-[15.6px] bg-[#AFDDFF] px-[6px] py-[2px] inline-block mb-[10px]">
+              AOP · IGP — UN ACCOMPAGNEMENT À 360°
+            </span>
+            <div className="relative p-[20px]">
+              <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 280 168" preserveAspectRatio="none">
+                <polygon
+                  points="0.5,0.5 279.5,0.5 279.5,167.5 30,167.5 0.5,137.5"
+                  fill="none"
+                  stroke="#AFDDFF"
+                  strokeWidth="1"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </svg>
+              <p className="relative font-manrope text-white text-[13px] leading-[18px] mb-[18px]">
+                Conseil, expertise technique et juridique pour faire reconnaître les produits des producteurs
+                artisans et paysans, au service des communautés locales et des écosystèmes.
+              </p>
+              <a
+                href={PAGE_PROJET}
+                target="_blank"
+                rel="noreferrer"
+                className="relative block font-manrope text-[#AFDDFF] text-[13px] leading-[15.6px] cursor-pointer hover:underline"
+              >
+                VOIR_LE_PROJET_HOLENA
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
