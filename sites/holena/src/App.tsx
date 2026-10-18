@@ -296,10 +296,10 @@ export default function App() {
         </div>
 
         <h1
-          className="font-graphik text-white font-normal leading-[1em] absolute anim-fade-up text-[32px] sm:text-[48px] md:text-[68px] top-[140px] sm:top-[160px] md:top-[178px] left-5 md:left-[35px] max-w-[300px] sm:max-w-[420px] md:max-w-[554px]"
+          className="font-graphik text-white font-normal leading-[1em] absolute anim-fade-up text-[30px] sm:text-[42px] md:text-[46px] xl:text-[58px] top-[140px] sm:top-[160px] md:top-[178px] left-5 md:left-[35px] max-w-[320px] sm:max-w-[480px] md:max-w-[600px] xl:max-w-[720px]"
           style={{ animationDelay: '400ms' }}
         >
-          Récolter le sel. Bâtir des ponts.
+          Quand le vent se lève, certains construisent des murs. Et d’autres des moulins.
         </h1>
 
         <GridLines />
