@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import logoHolenaHd from './assets/logo-holena-hd.png';
+import { PART_LOGO, largeurCarte, largeurLogoIntro } from './carte';
 
 // ---------------------------------------------------------------
 // Intro : des fils fins qui ondulent (comme deux brins d'une corde)
@@ -25,7 +26,7 @@ const ARRIVEE = 1800; // durée du trajet d'un fil jusqu'à son cercle
 const ENROULEMENT = 1200; // durée pour s'enrouler autour du cercle
 const DERNIER_DEPART = 1100; // le dernier fil part à ce moment-là
 const LOGO_VISIBLE = 300 + DERNIER_DEPART + ARRIVEE + ENROULEMENT - 200;
-const DEBUT_SORTIE = LOGO_VISIBLE + 1300; // le logo s'efface et le site commence
+const DEBUT_SORTIE = LOGO_VISIBLE + 1300; // le logo se pose au centre et le site commence
 
 type Paire = { anneau: number; angle: number; arc: number; depart: number; decalage: number };
 
@@ -56,6 +57,14 @@ type Props = {
 export default function Intro({ onSortie, onFin }: Props) {
   const toile = useRef<HTMLCanvasElement>(null);
   const boite = useRef<HTMLDivElement>(null);
+  // De combien le logo doit rétrécir pour se poser pile sur le logo du site
+  const [fin, setFin] = useState(() => (largeurCarte() * PART_LOGO) / largeurLogoIntro());
+
+  useEffect(() => {
+    const calcul = () => setFin((largeurCarte() * PART_LOGO) / largeurLogoIntro());
+    window.addEventListener('resize', calcul);
+    return () => window.removeEventListener('resize', calcul);
+  }, []);
 
   useEffect(() => {
     const canvas = toile.current!;
@@ -149,7 +158,7 @@ export default function Intro({ onSortie, onFin }: Props) {
       <div
         ref={boite}
         className="relative w-[min(70vw,60vh,460px)] aspect-[1040/940] logo-sortie"
-        style={{ animationDelay: `${DEBUT_SORTIE}ms` }}
+        style={{ animationDelay: `${DEBUT_SORTIE}ms`, '--fin': fin } as CSSProperties}
       >
         {/* le logo apparaît avec un éclat quand les fils ont formé les cercles */}
         <img
@@ -161,7 +170,8 @@ export default function Intro({ onSortie, onFin }: Props) {
       </div>
 
       <button
-        className="absolute bottom-5 right-5 md:bottom-[35px] md:right-[35px] font-manrope text-white/50 text-[12px] leading-[15.6px] tracking-wide hover:text-white transition-colors"
+        style={{ animationDelay: `${DEBUT_SORTIE}ms` }}
+        className="absolute bottom-5 right-5 md:bottom-[35px] md:right-[35px] intro-bouton font-manrope text-white/50 text-[12px] leading-[15.6px] tracking-wide hover:text-white transition-colors"
         onClick={() => {
           onSortie();
           onFin();

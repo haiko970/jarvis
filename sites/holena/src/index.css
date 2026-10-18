@@ -49,9 +49,12 @@ body { background: #000; overflow-x: hidden; }
   35%  { opacity: 1; filter: drop-shadow(0 0 28px rgba(175,221,255,0.9)); }
   100% { opacity: 1; filter: drop-shadow(0 0 0 rgba(175,221,255,0)); }
 }
-@keyframes logoSortie { to { opacity: 0; transform: scale(0.35); } }
-@keyframes introSortie { to { opacity: 0; visibility: hidden; } }
+/* le logo rétrécit et se pose au centre du site (--fin est calculé dans Intro.tsx) */
+@keyframes logoSortie { to { transform: scale(var(--fin, 0.5)); } }
+@keyframes introSortie { to { background-color: rgba(0,0,0,0); } }
+@keyframes boutonSortie { to { opacity: 0; } }
 
 .logo-eclat  { opacity: 0; animation: logoEclat 0.9s cubic-bezier(0.16,1,0.3,1) forwards; }
 .logo-sortie { animation: logoSortie 0.8s cubic-bezier(0.76,0,0.24,1) forwards; }
 .intro-sortie{ animation: introSortie 0.8s cubic-bezier(0.76,0,0.24,1) forwards; }
+.intro-bouton{ animation: boutonSortie 0.4s ease forwards; }

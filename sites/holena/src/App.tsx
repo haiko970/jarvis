@@ -1,26 +1,29 @@
 import { useEffect, useState } from 'react';
 import { MapPin, Menu, RotateCcw, X } from 'lucide-react';
-import logoHolena from './assets/logo-holena.png';
+import logoHolenaHd from './assets/logo-holena-hd.png';
 import logoMer from './assets/logo-mer-en-commun.png';
 import photoMaras from './assets/maras.jpg';
 import Intro from './Intro';
-
+import APropos from './APropos';
+import { CARTE_H, CARTE_L, PART_LOGO } from './carte';
 
 // Page d'origine du projet, ouverte par le bouton et le lien de la carte
 const PAGE_PROJET = 'https://www.piaf.solutions/fr/2023/03/11/le-pont-du-sel/';
 
 const NAV = [
-  { number: '01', label: 'LE_PROJET', delay: 350 },
-  { number: '02', label: 'PONTS_DU_SEL', delay: 450 },
-  { number: '03', label: 'EXPERTISES', delay: 550 },
-  { number: '04', label: 'CONTACT', delay: 650 },
+  { number: '01', label: 'PONTS_DU_SEL', delay: 450, apropos: false },
+  { number: '02', label: 'EXPERTISES', delay: 550, apropos: true },
+  { number: '03', label: 'CONTACT', delay: 650, apropos: false },
 ];
 
-function NavItem({ number, label, delay }: { number: string; label: string; delay: number }) {
+function NavItem({ number, label, delay, onClick }: { number: string; label: string; delay: number; onClick?: () => void }) {
   return (
     <div className="flex items-center gap-[3px] anim-fade-up" style={{ animationDelay: `${delay}ms` }}>
       <span className="font-manrope text-[#AFDDFF]/80 text-[13px] leading-[15.6px]">{number}.</span>
-      <span className="font-manrope text-white text-[13px] leading-[15.6px] cursor-pointer hover:text-[#AFDDFF] transition-colors">
+      <span
+        className="font-manrope text-white text-[13px] leading-[15.6px] cursor-pointer hover:text-[#AFDDFF] transition-colors whitespace-nowrap"
+        onClick={onClick}
+      >
         {label}
       </span>
     </div>
@@ -72,76 +75,125 @@ function GridLines() {
   );
 }
 
-function ConnectorLine({ x1, y1, x2, y2, delay }: { x1: string; y1: string; x2: string; y2: string; delay: number }) {
+// Position dans la carte (coordonnées sur 1000 × 560) → pourcentages CSS
+const px = (x: number) => `${(x / CARTE_L) * 100}%`;
+const py = (y: number) => `${(y / CARTE_H) * 100}%`;
+
+// Les trois flèches qui partent du logo
+const FLECHES = [
+  { nom: 'guerande', x1: 600, y1: 160, x2: 690, y2: 92, delay: 1300 },
+  { nom: 'perou', x1: 370, y1: 335, x2: 212, y2: 392, delay: 1500 },
+  { nom: 'chili', x1: 640, y1: 300, x2: 790, y2: 352, delay: 1700 },
+];
+
+function Fleches() {
   return (
-    <svg className="absolute inset-0 w-full h-full pointer-events-none anim-fade-in" style={{ animationDelay: `${delay}ms` }}>
-      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(255,255,255,0.25)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+    <svg className="absolute inset-0 w-full h-full overflow-visible pointer-events-none" viewBox={`0 0 ${CARTE_L} ${CARTE_H}`}>
+      <defs>
+        <marker id="pointe" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10" fill="none" stroke="#AFDDFF" strokeWidth="1.5" />
+        </marker>
+      </defs>
+      {FLECHES.map((f) => (
+        <g key={f.nom} className="anim-fade-in" style={{ animationDelay: `${f.delay}ms` }}>
+          <line
+            x1={f.x1}
+            y1={f.y1}
+            x2={f.x2}
+            y2={f.y2}
+            pathLength={100}
+            stroke="#AFDDFF"
+            strokeWidth="1"
+            vectorEffect="non-scaling-stroke"
+            markerEnd="url(#pointe)"
+            className="anim-draw-line"
+            style={{ animationDelay: `${f.delay}ms` }}
+          />
+          {/* point de départ, au bord du logo */}
+          <circle cx={f.x1} cy={f.y1} r="2.5" fill="#AFDDFF" />
+        </g>
+      ))}
     </svg>
   );
 }
 
-const SQUARE = 'absolute w-[80px] h-[80px] lg:w-[100px] lg:h-[100px] border border-white/80 anim-scale-in overflow-hidden';
-
-function NodeLabel({ title, text, maxW, className, anim, delay }: {
-  title: string; text: string; maxW: string; className: string; anim: string; delay: number;
+function Destination({ titre, court, texte, className, anim, delay, align = 'left' }: {
+  titre: string; court: string; texte: string; className: string; anim: string; delay: number; align?: 'left' | 'right';
 }) {
   return (
-    <div className={`absolute ${className} ${anim}`} style={{ animationDelay: `${delay}ms` }}>
-      <span className="font-manrope text-white text-[13px] leading-[15.6px] whitespace-nowrap">{title}</span>
-      <p className={`font-manrope text-white/50 text-[11px] leading-[14px] mt-[4px] ${maxW}`}>{text}</p>
+    <div className={`absolute ${className} ${anim} ${align === 'right' ? 'text-right' : ''}`} style={{ animationDelay: `${delay}ms` }}>
+      <span className="font-manrope text-white text-[10px] md:text-[13px] leading-[15.6px] whitespace-nowrap">
+        <span className="hidden md:inline">{titre}</span>
+        <span className="md:hidden">{court}</span>
+      </span>
+      <p className="hidden md:block font-manrope text-white/50 text-[11px] leading-[14px] mt-[4px] max-w-[190px]">{texte}</p>
     </div>
   );
 }
 
-// Les trois « nœuds » : HOLENA (Guérande), le Pérou et le Chili
-function CentralNodes() {
+const CARRE = 'absolute w-[9%] aspect-square border border-white/80 anim-scale-in overflow-hidden';
+
+// Le centre de la page : le logo HOLENA et ses trois flèches
+function Carte({ logoVisible }: { logoVisible: boolean }) {
   return (
-    <div className="absolute inset-0 pointer-events-none hidden md:block">
-      {/* 1. HOLENA — le logo tourne lentement */}
-      <div className={`${SQUARE} top-[27%] left-[60%] bg-black/40`} style={{ animationDelay: '1500ms' }}>
-        <img src={logoHolena} alt="Logo HOLENA" className="w-full h-full object-contain anim-slow-spin" />
-      </div>
-      <NodeLabel
-        title="[ HOLENA — GUÉRANDE ]"
-        text="« Récolter le sel » en breton. Le terroir de départ de chaque pont."
-        maxW="max-w-[160px]"
-        className="top-[11%] left-[26%]"
-        anim="anim-slide-left"
-        delay={1100}
+    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(94vw,1100px,117.86vh)] aspect-[1000/560] pointer-events-none">
+      {/* le logo : il est déjà là, l'intro vient se poser exactement dessus */}
+      <img
+        src={logoHolenaHd}
+        alt="Logo HOLENA"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 aspect-[1040/940]"
+        style={{ width: `${PART_LOGO * 100}%`, opacity: logoVisible ? 1 : 0 }}
       />
 
-      {/* 2. Pérou — photo des salines de Maras */}
-      <div className={`${SQUARE} top-[58%] left-[32%]`} style={{ animationDelay: '1800ms' }}>
+      <Fleches />
+
+      {/* Pérou */}
+      <div className={CARRE} style={{ left: px(112), top: py(352), animationDelay: '1800ms' }}>
         <img src={photoMaras} alt="Chemin vers les salines de Maras, au Pérou" className="w-full h-full object-cover" />
       </div>
-      <NodeLabel
-        title="[ PÉROU — SEL DE MARAS ]"
-        text="Salines artisanales des Andes, un patrimoine vivant."
-        maxW="max-w-[160px]"
-        className="top-[76%] left-[3%]"
-        anim="anim-slide-left"
-        delay={1400}
-      />
 
-      {/* 3. Chili — label « La Mer en Commun » */}
-      <div className={`${SQUARE} top-[63%] left-[50%] bg-black/40`} style={{ animationDelay: '2100ms' }}>
+      {/* Chili */}
+      <div className={`${CARRE} bg-black/40`} style={{ left: px(795), top: py(338), animationDelay: '2000ms' }}>
         <img src={logoMer} alt="Label La Mer en Commun" className="w-full h-full object-contain" />
       </div>
-      <NodeLabel
-        title="[ CHILI — ZONE DE CAHUIL ]"
-        text="Action reconnue par le label national « La Mer en Commun »."
-        maxW="max-w-[180px]"
-        className="top-[50%] left-[78%]"
-        anim="anim-slide-right"
-        delay={1700}
-      />
+    </div>
+  );
+}
 
-      <ConnectorLine x1="38%" y1="14%" x2="52%" y2="14%" delay={1200} />
-      <ConnectorLine x1="52%" y1="14%" x2="60%" y2="27%" delay={1400} />
-      <ConnectorLine x1="32%" y1="58%" x2="20%" y2="74%" delay={1500} />
-      <ConnectorLine x1="20%" y1="74%" x2="6%" y2="74%" delay={1700} />
-      <ConnectorLine x1="78%" y1="53%" x2="63%" y2="53%" delay={1800} />
-      <ConnectorLine x1="63%" y1="53%" x2="50%" y2="63%" delay={2000} />
+// Les textes des trois destinations, placés dans la carte
+function TextesCarte() {
+  return (
+    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(94vw,1100px,117.86vh)] aspect-[1000/560] pointer-events-none">
+      <div className="absolute" style={{ left: px(700), top: py(48) }}>
+        <Destination
+          titre="[ GUÉRANDE — FRANCE ]"
+          court="[ GUÉRANDE ]"
+          texte="Le terroir de départ : l’expérience des paludiers de Guérande."
+          className="left-0 top-0"
+          anim="anim-slide-right"
+          delay={1500}
+        />
+      </div>
+      <div className="absolute" style={{ left: px(112), top: py(470) }}>
+        <Destination
+          titre="[ PÉROU — SEL DE MARAS ]"
+          court="[ PÉROU ]"
+          texte="Salines artisanales des Andes, un patrimoine vivant."
+          className="left-0 top-0"
+          anim="anim-slide-left"
+          delay={1700}
+        />
+      </div>
+      <div className="absolute" style={{ left: px(795), top: py(262) }}>
+        <Destination
+          titre="[ CHILI — ZONE DE CAHUIL ]"
+          court="[ CHILI ]"
+          texte="Action reconnue par le label national « La Mer en Commun »."
+          className="left-0 top-0"
+          anim="anim-slide-right"
+          delay={1900}
+        />
+      </div>
     </div>
   );
 }
@@ -172,7 +224,9 @@ const EASE = 'ease-[cubic-bezier(0.76,0,0.24,1)]';
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
-  // siteLance : le site commence ses animations (pendant que le logo s'efface)
+  // aproposOuvert : le panneau « Le collectif HOLENA, qui sommes-nous ? »
+  const [aproposOuvert, setAproposOuvert] = useState(false);
+  // siteLance : le site commence ses animations (pendant que l'intro s'efface)
   // introFinie : l'écran d'intro est retiré
   const [siteLance, setSiteLance] = useState(false);
   const [introFinie, setIntroFinie] = useState(false);
@@ -187,8 +241,14 @@ export default function App() {
 
   const revoirIntro = () => {
     setMenuOpen(false);
+    setAproposOuvert(false);
     setSiteLance(false);
     setIntroFinie(false);
+  };
+
+  const ouvrirApropos = () => {
+    setMenuOpen(false);
+    setAproposOuvert(true);
   };
 
   return (
@@ -205,16 +265,33 @@ export default function App() {
       <SaltGrains />
 
       <div className="relative z-10 w-full h-full">
+        <GridLines />
+        <Carte logoVisible={introFinie} />
+        <TextesCarte />
+
         <nav className="absolute top-0 left-0 w-full flex items-center px-5 md:px-[35px] py-5 md:py-[27px]">
-          <div className="flex items-center gap-[40px]">
+          <div className="flex items-center gap-[20px] xl:gap-[40px]">
             <span
               className="font-graphik text-white text-[18px] md:text-[21px] leading-[21px] whitespace-nowrap anim-fade-up"
               style={{ animationDelay: '200ms' }}
             >
-              HOLENA // PONTS DU SEL
+              HOLENA<span className="hidden sm:inline"> // PONTS DU SEL</span>
             </span>
+
+            {/* L'onglet « Le collectif HOLENA, qui sommes-nous ? » */}
+            <button
+              className="font-manrope text-white text-[12px] md:text-[13px] leading-[15.6px] whitespace-nowrap border border-[#AFDDFF]/70 px-[10px] py-[6px] hover:bg-[#AFDDFF] hover:text-black transition-colors anim-fade-up"
+              style={{ animationDelay: '350ms' }}
+              onClick={ouvrirApropos}
+            >
+              <span className="hidden md:inline">Le collectif HOLENA, qui sommes-nous ?</span>
+              <span className="md:hidden">Qui sommes-nous ?</span>
+            </button>
+
             <div className="hidden xl:flex items-center gap-[40px]">
-              {NAV.map((n) => <NavItem key={n.number} {...n} />)}
+              {NAV.map((n) => (
+                <NavItem key={n.number} {...n} onClick={n.apropos ? ouvrirApropos : undefined} />
+              ))}
             </div>
           </div>
 
@@ -222,9 +299,10 @@ export default function App() {
             className="ml-auto flex items-center gap-[6px] font-manrope text-white/60 text-[12px] leading-[15.6px] tracking-wide whitespace-nowrap hover:text-[#AFDDFF] transition-colors anim-fade-in"
             style={{ animationDelay: '700ms' }}
             onClick={revoirIntro}
+            aria-label="Revoir l'intro"
           >
             <RotateCcw className="w-[13px] h-[13px]" strokeWidth={1.5} />
-            <span className="hidden sm:inline">REVOIR L'INTRO</span>
+            <span className="hidden lg:inline">REVOIR L'INTRO</span>
           </button>
 
           <div className="hidden 2xl:flex items-center gap-[12px] ml-[32px] anim-slide-right" style={{ animationDelay: '600ms' }}>
@@ -265,13 +343,13 @@ export default function App() {
               <X className="w-[22px] h-[22px] text-white" strokeWidth={1.5} />
             </button>
             <div className="flex flex-col gap-8">
-              {NAV.map((n, i) => (
+              {[{ number: '00', label: 'QUI_SOMMES_NOUS', apropos: true }, ...NAV].map((n, i) => (
                 <div
                   key={n.number}
                   className={`transition-all duration-500 ${EASE} ${menuOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-6'}`}
                   style={{ transitionDelay: menuOpen ? `${150 + i * 75}ms` : '0ms' }}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 cursor-pointer" onClick={n.apropos ? ouvrirApropos : undefined}>
                     <span className="font-manrope text-[#AFDDFF]/80 text-[14px] leading-[1]">{n.number}.</span>
                     <span className="font-manrope text-white text-[28px] leading-[1.2] tracking-tight">{n.label}</span>
                   </div>
@@ -295,15 +373,13 @@ export default function App() {
           </div>
         </div>
 
-        <h1
-          className="font-graphik text-white font-normal leading-[1em] absolute anim-fade-up text-[30px] sm:text-[42px] md:text-[46px] xl:text-[58px] top-[140px] sm:top-[160px] md:top-[178px] left-5 md:left-[35px] max-w-[320px] sm:max-w-[480px] md:max-w-[600px] xl:max-w-[720px]"
+        {/* La citation : en italique, entre guillemets, en petit */}
+        <blockquote
+          className="font-graphik italic text-white/90 font-normal leading-[1.35] absolute anim-fade-up text-[16px] sm:text-[18px] md:text-[20px] xl:text-[22px] top-[96px] md:top-[118px] left-5 md:left-[35px] max-w-[300px] sm:max-w-[380px] xl:max-w-[440px]"
           style={{ animationDelay: '400ms' }}
         >
-          Quand le vent se lève, certains construisent des murs. Et d’autres des moulins.
-        </h1>
-
-        <GridLines />
-        <CentralNodes />
+          « Quand le vent se lève, certains construisent des murs. Et d’autres des moulins. »
+        </blockquote>
 
         <div className="absolute bottom-5 md:bottom-[35px] left-5 md:left-[35px] right-5 md:right-[35px] flex flex-col md:flex-row items-start md:items-end justify-between gap-5 md:gap-0">
           <a
@@ -319,7 +395,7 @@ export default function App() {
             </span>
           </a>
 
-          <div className="relative max-w-[280px] hidden sm:block anim-slide-right" style={{ animationDelay: '1100ms' }}>
+          <div className="relative max-w-[280px] hidden xl:block anim-slide-right" style={{ animationDelay: '1100ms' }}>
             <span className="font-manrope text-black text-[13px] leading-[15.6px] bg-[#AFDDFF] px-[6px] py-[2px] inline-block mb-[10px]">
               AOP · IGP — UN ACCOMPAGNEMENT À 360°
             </span>
@@ -337,18 +413,18 @@ export default function App() {
                 Conseil, expertise technique et juridique pour faire reconnaître les produits des producteurs
                 artisans et paysans, au service des communautés locales et des écosystèmes.
               </p>
-              <a
-                href={PAGE_PROJET}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                onClick={ouvrirApropos}
                 className="relative block font-manrope text-[#AFDDFF] text-[13px] leading-[15.6px] cursor-pointer hover:underline"
               >
-                VOIR_LE_PROJET_HOLENA
-              </a>
+                QUI_SOMMES_NOUS
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      <APropos ouvert={aproposOuvert} onFermer={() => setAproposOuvert(false)} />
       </>
       )}
     </section>
