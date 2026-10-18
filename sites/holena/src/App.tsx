@@ -3,6 +3,11 @@ import { MapPin, Menu, X } from 'lucide-react';
 import logoHolena from './assets/logo-holena.png';
 import logoMer from './assets/logo-mer-en-commun.png';
 import photoMaras from './assets/maras.jpg';
+import Intro from './Intro';
+
+// Si la personne a demandé moins d'animations, on saute l'intro
+const MOINS_DANIMATIONS =
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // Page d'origine du projet, ouverte par le bouton et le lien de la carte
 const PAGE_PROJET = 'https://www.piaf.solutions/fr/2023/03/11/le-pont-du-sel/';
@@ -170,9 +175,16 @@ const EASE = 'ease-[cubic-bezier(0.76,0,0.24,1)]';
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  // siteLance : le site commence ses animations (pendant que le logo s'efface)
+  // introFinie : l'écran d'intro est retiré
+  const [siteLance, setSiteLance] = useState(MOINS_DANIMATIONS);
+  const [introFinie, setIntroFinie] = useState(MOINS_DANIMATIONS);
 
   return (
     <section className="relative w-full h-screen overflow-hidden bg-black">
+      {!introFinie && <Intro onSortie={() => setSiteLance(true)} onFin={() => setIntroFinie(true)} />}
+      {siteLance && (
+      <>
       {/* Fond : photo de Maras, assombrie pour que le texte blanc reste lisible */}
       <div className="absolute inset-0 anim-fade-in">
         <img src={photoMaras} alt="" className="absolute inset-0 w-full h-full object-cover blur-[3px] anim-ken-burns" />
@@ -190,21 +202,21 @@ export default function App() {
             >
               HOLENA // PONTS DU SEL
             </span>
-            <div className="hidden lg:flex items-center gap-[40px]">
+            <div className="hidden xl:flex items-center gap-[40px]">
               {NAV.map((n) => <NavItem key={n.number} {...n} />)}
             </div>
           </div>
 
-          <div className="hidden lg:flex items-center gap-[12px] ml-auto anim-slide-right" style={{ animationDelay: '600ms' }}>
+          <div className="hidden 2xl:flex items-center gap-[12px] ml-auto anim-slide-right" style={{ animationDelay: '600ms' }}>
             <MapPin className="w-[15px] h-[15px] text-white" strokeWidth={1.5} />
-            <span className="font-manrope text-white text-[13px] leading-[15.6px]">Guérande, France</span>
-            <span className="font-manrope text-[#AFDDFF] text-[13px] leading-[15.6px]">[ EN COURS ]</span>
-            <span className="font-manrope text-white text-[13px] leading-[15.6px] ml-[20px]">LABEL :</span>
+            <span className="font-manrope text-white text-[13px] leading-[15.6px] whitespace-nowrap">Guérande, France</span>
+            <span className="font-manrope text-[#AFDDFF] text-[13px] leading-[15.6px] whitespace-nowrap">[ EN COURS ]</span>
+            <span className="font-manrope text-white text-[13px] leading-[15.6px] ml-[20px] whitespace-nowrap">LABEL :</span>
             <LabelChip />
           </div>
 
           <button
-            className="lg:hidden ml-auto relative w-[40px] h-[40px] flex items-center justify-center anim-fade-in"
+            className="xl:hidden ml-auto relative w-[40px] h-[40px] flex items-center justify-center anim-fade-in"
             style={{ animationDelay: '400ms' }}
             aria-label="Ouvrir ou fermer le menu"
             onClick={() => setMenuOpen((o) => !o)}
@@ -219,7 +231,7 @@ export default function App() {
         </nav>
 
         {/* Menu mobile */}
-        <div className={`fixed inset-0 z-50 lg:hidden transition-all duration-500 ${EASE} ${menuOpen ? 'visible' : 'invisible'}`}>
+        <div className={`fixed inset-0 z-50 xl:hidden transition-all duration-500 ${EASE} ${menuOpen ? 'visible' : 'invisible'}`}>
           <div
             className={`absolute inset-0 bg-black/90 backdrop-blur-md transition-opacity duration-500 ${EASE} ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
             onClick={() => setMenuOpen(false)}
@@ -252,8 +264,8 @@ export default function App() {
             >
               <div className="flex items-center gap-[10px] mb-3">
                 <MapPin className="w-[15px] h-[15px] text-white" strokeWidth={1.5} />
-                <span className="font-manrope text-white text-[13px] leading-[15.6px]">Guérande, France</span>
-                <span className="font-manrope text-[#AFDDFF] text-[13px] leading-[15.6px]">[ EN COURS ]</span>
+                <span className="font-manrope text-white text-[13px] leading-[15.6px] whitespace-nowrap">Guérande, France</span>
+                <span className="font-manrope text-[#AFDDFF] text-[13px] leading-[15.6px] whitespace-nowrap">[ EN COURS ]</span>
               </div>
               <div className="flex items-center gap-[8px]">
                 <span className="font-manrope text-white text-[13px] leading-[15.6px]">LABEL :</span>
@@ -317,6 +329,8 @@ export default function App() {
           </div>
         </div>
       </div>
+      </>
+      )}
     </section>
   );
 }
