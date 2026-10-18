@@ -40,7 +40,7 @@ body { background: #000; overflow-x: hidden; }
 .anim-slow-spin { animation: slowSpin 60s linear infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .anim-ken-burns, .anim-grain, .anim-slow-spin { animation: none; }
+  .anim-grain, .anim-slow-spin { animation: none; }
 }
 
 /* ---------- Intro : les bandes qui forment le logo HOLENA ---------- */
@@ -61,8 +61,8 @@ body { background: #000; overflow-x: hidden; }
 @keyframes logoSortie { to { opacity: 0; transform: scale(0.35); } }
 @keyframes introSortie { to { opacity: 0; visibility: hidden; } }
 
-.bande-in    { opacity: 0; animation: bandeIn 1.1s cubic-bezier(0.16,1,0.3,1) forwards; }
-.trait-in    { opacity: 0; animation: traitIn 1.1s cubic-bezier(0.16,1,0.3,1) forwards; }
+.bande-in    { opacity: 0; animation: bandeIn 1.4s cubic-bezier(0.16,1,0.3,1) forwards; }
+.trait-in    { opacity: 0; animation: traitIn 1.4s cubic-bezier(0.16,1,0.3,1) forwards; }
 .logo-eclat  { opacity: 0; animation: logoEclat 0.9s cubic-bezier(0.16,1,0.3,1) forwards; }
 .logo-sortie { animation: logoSortie 0.8s cubic-bezier(0.76,0,0.24,1) forwards; }
 .intro-sortie{ animation: introSortie 0.8s cubic-bezier(0.76,0,0.24,1) forwards; }

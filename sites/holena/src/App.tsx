@@ -1,13 +1,10 @@
-import { useState } from 'react';
-import { MapPin, Menu, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { MapPin, Menu, RotateCcw, X } from 'lucide-react';
 import logoHolena from './assets/logo-holena.png';
 import logoMer from './assets/logo-mer-en-commun.png';
 import photoMaras from './assets/maras.jpg';
 import Intro from './Intro';
 
-// Si la personne a demandé moins d'animations, on saute l'intro
-const MOINS_DANIMATIONS =
-  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // Page d'origine du projet, ouverte par le bouton et le lien de la carte
 const PAGE_PROJET = 'https://www.piaf.solutions/fr/2023/03/11/le-pont-du-sel/';
@@ -177,12 +174,26 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   // siteLance : le site commence ses animations (pendant que le logo s'efface)
   // introFinie : l'écran d'intro est retiré
-  const [siteLance, setSiteLance] = useState(MOINS_DANIMATIONS);
-  const [introFinie, setIntroFinie] = useState(MOINS_DANIMATIONS);
+  const [siteLance, setSiteLance] = useState(false);
+  const [introFinie, setIntroFinie] = useState(false);
+  // On attend que la page soit vraiment à l'écran avant de lancer l'intro
+  const [pageVisible, setPageVisible] = useState(!document.hidden);
+
+  useEffect(() => {
+    const quandVisible = () => !document.hidden && setPageVisible(true);
+    document.addEventListener('visibilitychange', quandVisible);
+    return () => document.removeEventListener('visibilitychange', quandVisible);
+  }, []);
+
+  const revoirIntro = () => {
+    setMenuOpen(false);
+    setSiteLance(false);
+    setIntroFinie(false);
+  };
 
   return (
     <section className="relative w-full h-screen overflow-hidden bg-black">
-      {!introFinie && <Intro onSortie={() => setSiteLance(true)} onFin={() => setIntroFinie(true)} />}
+      {pageVisible && !introFinie && <Intro onSortie={() => setSiteLance(true)} onFin={() => setIntroFinie(true)} />}
       {siteLance && (
       <>
       {/* Fond : photo de Maras, assombrie pour que le texte blanc reste lisible */}
@@ -207,7 +218,16 @@ export default function App() {
             </div>
           </div>
 
-          <div className="hidden 2xl:flex items-center gap-[12px] ml-auto anim-slide-right" style={{ animationDelay: '600ms' }}>
+          <button
+            className="ml-auto flex items-center gap-[6px] font-manrope text-white/60 text-[12px] leading-[15.6px] tracking-wide whitespace-nowrap hover:text-[#AFDDFF] transition-colors anim-fade-in"
+            style={{ animationDelay: '700ms' }}
+            onClick={revoirIntro}
+          >
+            <RotateCcw className="w-[13px] h-[13px]" strokeWidth={1.5} />
+            <span className="hidden sm:inline">REVOIR L'INTRO</span>
+          </button>
+
+          <div className="hidden 2xl:flex items-center gap-[12px] ml-[32px] anim-slide-right" style={{ animationDelay: '600ms' }}>
             <MapPin className="w-[15px] h-[15px] text-white" strokeWidth={1.5} />
             <span className="font-manrope text-white text-[13px] leading-[15.6px] whitespace-nowrap">Guérande, France</span>
             <span className="font-manrope text-[#AFDDFF] text-[13px] leading-[15.6px] whitespace-nowrap">[ EN COURS ]</span>
@@ -216,7 +236,7 @@ export default function App() {
           </div>
 
           <button
-            className="xl:hidden ml-auto relative w-[40px] h-[40px] flex items-center justify-center anim-fade-in"
+            className="xl:hidden ml-[12px] relative w-[40px] h-[40px] flex items-center justify-center anim-fade-in"
             style={{ animationDelay: '400ms' }}
             aria-label="Ouvrir ou fermer le menu"
             onClick={() => setMenuOpen((o) => !o)}

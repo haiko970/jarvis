@@ -20,13 +20,13 @@ const BANDES = Array.from({ length: NB_BANDES }, (_, i) => {
     fy: cote.y,
     rot: `${((i * 7) % 5 - 2) * 6}deg`,
     // ordre d'arrivée mélangé, pour que les bandes ne tombent pas dans l'ordre
-    delay: 150 + ((i * 5) % NB_BANDES) * 70,
+    delay: 400 + ((i * 5) % NB_BANDES) * 90,
   };
 });
 
 // Moments clés (en millisecondes)
-const FIN_BANDES = 150 + (NB_BANDES - 1) * 70 + 1100; // la dernière bande est en place
-const DEBUT_SORTIE = FIN_BANDES + 700; // le logo s'efface et le site commence
+const FIN_BANDES = 400 + (NB_BANDES - 1) * 90 + 1400; // la dernière bande est en place
+const DEBUT_SORTIE = FIN_BANDES + 900; // le logo s'efface et le site commence
 
 type Props = {
   onSortie: () => void; // le logo commence à s'effacer : on lance le site
