@@ -51,16 +51,6 @@ Il peut agir sur ton PC :
   (activé automatiquement sous Windows, désactivable dans ⚙️ Réglages → « Brief du jour »)
 - 💬 discuter, expliquer, rédiger, traduire…
 
-## 🌊 Bonus : le jeu de plongeon « Falaise »
-
-Un petit jeu 3D inspiré de Riders Republic, dans le dossier `plongeon` : saute des falaises d'un fjord
-norvégien (10, 20 ou 27 m), en **cliff diving** (saltos, vrilles, entrée bien droite) ou en **dødsing**
-(saut à plat en étoile, puis se replier au dernier moment). Rien à installer : double-clique sur
-`plongeon/jouer.bat` (ou ouvre `plongeon/index.html` dans Edge).
-
-Touches : `Espace` pour sauter · `↑` `↓` saltos · `←` `→` vrilles · `Espace` groupé / `Maj` carpé ·
-`C` change de caméra · `R` recommence · `Échap` revient au menu. Tes records sont gardés dans le navigateur.
-
 Il fonctionne sous Windows, macOS et Linux.
 
 ## 🚀 Démarrage rapide (le plus simple)
