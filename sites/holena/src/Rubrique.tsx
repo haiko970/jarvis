@@ -52,6 +52,22 @@ function AfficheBloc({ b }: { b: Bloc }) {
           {b.legende && <figcaption className="font-manrope text-white/45 text-[12px] mt-[8px]">{b.legende}</figcaption>}
         </figure>
       );
+    case 'programme':
+      return (
+        <section>
+          <h2 className={TITRE_BLOC}>{b.titre}</h2>
+          <ol className="mt-[14px] grid grid-cols-1 sm:grid-cols-2 gap-[12px]">
+            {b.dates.map((d) => (
+              <li key={d.quand + d.titre} className="border border-white/15 p-[16px] flex flex-col">
+                <span className="font-manrope text-[#AFDDFF] text-[12px] leading-[15.6px] uppercase tracking-wide">{d.quand}</span>
+                <span className="font-graphik text-white text-[17px] leading-[1.3] mt-[8px]">{d.titre}</span>
+                {d.detail && <span className="font-manrope text-white/60 text-[13px] leading-[19px] mt-[6px]">{d.detail}</span>}
+                <span className="font-manrope text-white/45 text-[12px] leading-[16px] mt-auto pt-[10px]">{d.lieu}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      );
     case 'aCompleter':
       return (
         <section className="border border-dashed border-[#AFDDFF]/50 p-[20px]">

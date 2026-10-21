@@ -16,6 +16,7 @@ export type Bloc =
   | { type: 'liste'; titre: string; elements: string[] }
   | { type: 'infos'; titre: string; lignes: { label: string; valeur: string }[] }
   | { type: 'image'; src: string; alt: string; legende?: string }
+  | { type: 'programme'; titre: string; dates: { quand: string; titre: string; detail?: string; lieu: string }[] }
   | { type: 'aCompleter'; titre: string; consigne: string };
 
 export type Rubrique = {
@@ -114,28 +115,78 @@ export const RUBRIQUES: Rubrique[] = [
     numero: '03',
     surtitre: '[ CHILI — ZONE DE CAHUIL ]',
     titre: 'Chili : Zone de Cahuil',
-    chapo: 'Accueil d’une délégation de paludiers chiliens sur la presqu’île guérandaise.',
+    chapo: 'Le Chili à l’honneur lors des Ponts du Sel 2025 : du 14 au 20 juillet, HOLENA accueille une délégation de paludiers chiliens dans la presqu’île de Guérande.',
     image: { src: photoChili, alt: 'Cabane à sel au bord de la lagune de Cahuil, au Chili' },
     blocs: [
       {
+        type: 'texte',
+        titre: 'Le Chili à l’honneur',
+        paragraphes: [
+          'Du 14 au 20 juillet 2025, HOLENA accueille une délégation de paludiers chiliens dans la presqu’île de Guérande. Cette rencontre s’inscrit dans le programme Les Ponts du Sel, porté par l’ONG PIAF, avec le soutien du Ministère des Cultures du Chili.',
+          'Après l’exposition Le Sel des Incas et la saison Sel Pérou ! en 2022, le programme Les Ponts du Sel du collectif HOLENA revient cette année en recevant une délégation de productrices et de producteurs du littoral du sud du Chili (zone de Cahuil, région O’Higgins).',
+          'Les Ponts du Sel visent à créer des échanges entre les écosystèmes du sel artisanal de Guérande et l’international. Le collectif HOLENA intervient sur les questions de valorisation culturelle et économique et de développement territorial durable.',
+        ],
+      },
+      {
         type: 'infos',
-        titre: 'Les Ponts du Sel — Chili',
+        titre: 'En bref',
         lignes: [
-          { label: 'Où', valeur: 'Presqu’île guérandaise' },
-          { label: 'Quand', valeur: 'Du 15 au 20 juillet 2025' },
-          { label: 'Au programme', valeur: 'Expositions · Projections · Rencontres' },
-          {
-            label: 'Organisé par',
-            valeur: 'HOLENA, avec le festival Les Nuits Salines et le soutien du Ministère des Cultures du Chili',
-          },
+          { label: 'Où', valeur: 'Presqu’île guérandaise : Guérande, Batz-sur-Mer, Le Pouliguen' },
+          { label: 'Quand', valeur: 'Du 14 au 20 juillet 2025 (parcours photographique du 7 au 20 juillet)' },
+          { label: 'Pour qui', valeur: 'Le grand public comme les professionnels' },
+          { label: 'Organisé par', valeur: 'HOLENA (ONG PIAF), en partenariat avec le festival Les Nuits Salines' },
+          { label: 'Avec le soutien de', valeur: 'Ministère des Cultures du Chili et de nombreux partenaires territoriaux' },
           { label: 'Distinction', valeur: 'Action reconnue par le label national « La Mer en Commun »' },
+        ],
+      },
+      {
+        type: 'programme',
+        titre: 'Le programme',
+        dates: [
+          { quand: 'Du 7 au 20 juillet', titre: 'Visages et paysages du sel chilien', detail: 'Parcours photographique en 3 étapes : Terre de Sel, Musée des Marais Salants, Chapelle du Mûrier.', lieu: 'Guérande et Batz-sur-Mer' },
+          { quand: '15 juillet, 11h', titre: 'Vernissage de l’exposition et accueil des paludiers chiliens', lieu: 'Terre de Sel (Guérande)' },
+          { quand: '15, 16 et 17 juillet', titre: 'Rencontres et visites professionnelles', detail: 'Un programme dédié à la délégation chilienne.', lieu: 'Presqu’île guérandaise' },
+          { quand: '16 juillet, 11h', titre: 'Projection du documentaire « Les Hommes du sel »', detail: 'Chili, 52 min, VOST. Rencontre entre paludiers du Chili et de la presqu’île, avec l’ONG UniverSel, suivie d’un verre de l’amitié. Entrée libre.', lieu: 'Cinéma Pax (Le Pouliguen)' },
+          { quand: '17 juillet, 20h', titre: 'Soirée documentaires et échanges', detail: '« Les Hommes du sel » (Chili, 52 min, VOST), suivi de « Guérande, un peu de la beauté du monde » (France, 52 min). Débat professionnel en présence des paludiers chiliens, puis verre de l’amitié. Tarifs habituels.', lieu: 'Cinéma Pax (Le Pouliguen)' },
+          { quand: '18, 19 et 20 juillet', titre: 'Stand chilien au festival Les Nuits Salines', detail: 'Sur le village du festival : vente de sel chilien et démonstrations de savoir-faire.', lieu: 'Batz-sur-Mer' },
+          { quand: '19 juillet, 11h', titre: 'Visite commentée de l’exposition par les paludiers chiliens', lieu: 'Chapelle Notre-Dame-du-Mûrier (Batz-sur-Mer)' },
+          { quand: '19 juillet, 16h', titre: 'Visages et paysages du sel du Chili : rencontre-conférence', detail: 'Rencontre publique avec les paludiers chiliens.', lieu: 'Musée des Marais Salants (Batz-sur-Mer)' },
+        ],
+      },
+      {
+        type: 'texte',
+        titre: 'Un projet international et solidaire',
+        paragraphes: [
+          'HOLENA poursuit ici sa mission de développement durable par l’appui aux organisations de petits producteurs. Après avoir mis en valeur les salines péruviennes de Maras, l’ONG met à l’honneur le sud du Chili, notamment la zone de Cahuil, Boyeruca, Lo Valdivia et La Villa, dans la région O’Higgins.',
+          'Le programme repose sur une idée simple : favoriser les échanges culturels et la transmission des savoirs pour une meilleure valorisation économique et un impact territorial durable. Ainsi, chaque édition des Ponts du Sel construit des ponts durables entre les territoires.',
         ],
       },
       { type: 'image', src: afficheChili, alt: 'Affiche « Les Ponts du Sel — Chili », juillet 2025', legende: 'L’affiche de l’édition 2025.' },
       {
-        type: 'aCompleter',
-        titre: 'Le projet au Chili',
-        consigne: 'Coller ici le texte de la sous-page « Chili : Zone de Cahuil » du site piaf.solutions.',
+        type: 'liste',
+        titre: 'Partenaires du projet 2025',
+        elements: [
+          'Ministère des Cultures du Chili',
+          'Festival Les Nuits Salines',
+          'Cap Atlantique La Baule-Guérande Agglo',
+          'Musée des Marais Salants',
+          'Terre de Sel',
+          'Coopérative Le Guérandais',
+          'Ville de Batz-sur-Mer',
+          'Ville du Pouliguen',
+          'Ciné Phare',
+          'Galerie Hasy',
+          'ONG UniverSel',
+          'APROSELA',
+          'Artisans du sel',
+          'EFEA formation paludiers',
+          'Groupe Westhotel',
+          'Les Jardins d’Aliwen',
+        ],
+      },
+      {
+        type: 'texte',
+        paragraphes: ['* HOLENA signifie en langue bretonne « récolter le sel ».'],
       },
     ],
   },
