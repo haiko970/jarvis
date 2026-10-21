@@ -127,7 +127,7 @@ export default function Rubrique({ id, onFermer, onAller }: {
 
         {/* haut de page : image + titre */}
         <header className="mt-[48px] md:mt-[72px] grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-[28px] md:gap-[48px] items-center anim-fade-up">
-          <div className={`aspect-square md:aspect-[4/3] border border-white/80 overflow-hidden ${r.image.contenir ? 'bg-[#05080a] p-[12%]' : ''}`}>
+          <div className={`aspect-square md:aspect-[4/3] border border-white/80 overflow-hidden ${r.image.contenir ? `bg-[#05080a] ${r.image.portrait ? 'p-[3%]' : 'p-[12%]'}` : ''}`}>
             <img src={r.image.src} alt={r.image.alt} className={`w-full h-full ${r.image.contenir ? 'object-contain' : 'object-cover'}`} />
           </div>
           <div className="min-w-0">

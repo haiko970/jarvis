@@ -1,4 +1,4 @@
-import logoHolenaHd from './assets/logo-holena-hd.png';
+import couvertureLivre from './assets/livre-une-autre-fois-dans-l-ouest.jpg';
 import logoMer from './assets/logo-mer-en-commun.png';
 import photoMaras from './assets/maras.jpg';
 import photoChili from './assets/chili-cahuil.jpg';
@@ -25,7 +25,7 @@ export type Rubrique = {
   surtitre: string;
   titre: string;
   chapo: string; // phrase d'introduction
-  image: { src: string; alt: string; contenir?: boolean };
+  image: { src: string; alt: string; contenir?: boolean; portrait?: boolean }; // portrait : image en hauteur (couverture)
   blocs: Bloc[];
 };
 
@@ -41,8 +41,15 @@ export const RUBRIQUES: Rubrique[] = [
     titre: 'HOLENA Guérande',
     chapo:
       'À partir du terroir et de l’expérience privilégiée de Guérande, HOLENA intervient dans plusieurs régions du monde.',
-    image: { src: logoHolenaHd, alt: 'Logo HOLENA', contenir: true },
+    image: { src: couvertureLivre, alt: 'Couverture du livre « Une autre fois dans l’Ouest »', contenir: true, portrait: true },
     blocs: [
+      {
+        type: 'texte',
+        titre: 'Le livre',
+        paragraphes: [
+          '« Une autre fois dans l’Ouest » : 50 années de renaissance du sel de Guérande. Un livre du collectif HOLENA.',
+        ],
+      },
       {
         type: 'texte',
         titre: 'Le projet',
