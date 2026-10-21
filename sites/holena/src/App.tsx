@@ -4,6 +4,7 @@ import logoHolena from './assets/logo-holena.png';
 import logoMer from './assets/logo-mer-en-commun.png';
 import photoMaras from './assets/maras.jpg';
 import Intro from './Intro';
+import Collectif from './Collectif';
 
 
 // Page d'origine du projet, ouverte par le bouton et le lien de la carte
@@ -105,7 +106,7 @@ function CentralNodes() {
         title="[ HOLENA — GUÉRANDE ]"
         text="« Récolter le sel » en breton. Le terroir de départ de chaque pont."
         maxW="max-w-[160px]"
-        className="top-[11%] left-[26%]"
+        className="top-[14%] left-[26%]"
         anim="anim-slide-left"
         delay={1100}
       />
@@ -136,8 +137,8 @@ function CentralNodes() {
         delay={1700}
       />
 
-      <ConnectorLine x1="38%" y1="14%" x2="52%" y2="14%" delay={1200} />
-      <ConnectorLine x1="52%" y1="14%" x2="60%" y2="27%" delay={1400} />
+      <ConnectorLine x1="38%" y1="17%" x2="52%" y2="17%" delay={1200} />
+      <ConnectorLine x1="52%" y1="17%" x2="60%" y2="27%" delay={1400} />
       <ConnectorLine x1="32%" y1="58%" x2="20%" y2="74%" delay={1500} />
       <ConnectorLine x1="20%" y1="74%" x2="6%" y2="74%" delay={1700} />
       <ConnectorLine x1="78%" y1="53%" x2="63%" y2="53%" delay={1800} />
@@ -178,6 +179,18 @@ export default function App() {
   const [introFinie, setIntroFinie] = useState(false);
   // On attend que la page soit vraiment à l'écran avant de lancer l'intro
   const [pageVisible, setPageVisible] = useState(!document.hidden);
+  // collectifOuvert : la sous-page « Le collectif HOLENA » (adresse de la page + #collectif)
+  const [collectifOuvert, setCollectifOuvert] = useState(() => window.location.hash === '#collectif');
+
+  const ouvrirCollectif = () => {
+    setMenuOpen(false);
+    setCollectifOuvert(true);
+    try { history.replaceState(null, '', '#collectif'); } catch { /* sans importance */ }
+  };
+  const fermerCollectif = () => {
+    setCollectifOuvert(false);
+    try { history.replaceState(null, '', ' '); } catch { /* sans importance */ }
+  };
 
   useEffect(() => {
     const quandVisible = () => !document.hidden && setPageVisible(true);
@@ -205,7 +218,20 @@ export default function App() {
       <SaltGrains />
 
       <div className="relative z-10 w-full h-full">
-        <nav className="absolute top-0 left-0 w-full flex items-center px-5 md:px-[35px] py-5 md:py-[27px]">
+        {/* Bandeau du haut : « Découvrir le collectif HOLENA » */}
+        <button
+          onClick={ouvrirCollectif}
+          className="group absolute top-0 left-0 w-full h-[36px] z-20 flex items-center justify-center gap-[10px] bg-[#AFDDFF] hover:bg-[#c8e8ff] transition-colors anim-fade-in"
+          style={{ animationDelay: '150ms' }}
+        >
+          <span className="text-black text-[12px] leading-none">&#10022;</span>
+          <span className="font-manrope text-black text-[12px] md:text-[13px] leading-[15.6px] uppercase tracking-wide">
+            Découvrir le collectif HOLENA
+          </span>
+          <span className="font-manrope text-black text-[13px] leading-none transition-transform group-hover:translate-x-[3px]">→</span>
+        </button>
+
+        <nav className="absolute top-[36px] left-0 w-full flex items-center px-5 md:px-[35px] py-5 md:py-[27px]">
           <div className="flex items-center gap-[40px]">
             <span
               className="font-graphik text-white text-[18px] md:text-[21px] leading-[21px] whitespace-nowrap anim-fade-up"
@@ -296,7 +322,7 @@ export default function App() {
         </div>
 
         <h1
-          className="font-graphik text-white font-normal leading-[1em] absolute anim-fade-up text-[32px] sm:text-[48px] md:text-[68px] top-[140px] sm:top-[160px] md:top-[178px] left-5 md:left-[35px] max-w-[300px] sm:max-w-[420px] md:max-w-[554px]"
+          className="font-graphik text-white font-normal leading-[1em] absolute anim-fade-up text-[32px] sm:text-[48px] md:text-[68px] top-[170px] sm:top-[190px] md:top-[208px] left-5 md:left-[35px] max-w-[300px] sm:max-w-[420px] md:max-w-[554px]"
           style={{ animationDelay: '400ms' }}
         >
           Récolter le sel. Bâtir des ponts.
@@ -349,6 +375,7 @@ export default function App() {
           </div>
         </div>
       </div>
+      <Collectif ouvert={collectifOuvert} onFermer={fermerCollectif} />
       </>
       )}
     </section>
