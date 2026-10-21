@@ -99,13 +99,61 @@ export const RUBRIQUES: Rubrique[] = [
     numero: '02',
     surtitre: '[ PÉROU — SEL DE MARAS ]',
     titre: 'Pérou : Sel de Maras',
-    chapo: 'Salines artisanales des Andes, un patrimoine vivant.',
+    chapo: 'Sel de Maras : un trésor des Andes protégé par une Indication Géographique, la première du Pérou.',
     image: { src: photoMaras, alt: 'Chemin vers les salines de Maras, au Pérou' },
     blocs: [
       {
-        type: 'aCompleter',
-        titre: 'Le projet au Pérou',
-        consigne: 'Coller ici le texte de la sous-page « Pérou : Sel de Maras » du site piaf.solutions.',
+        type: 'texte',
+        titre: 'Un trésor des Andes',
+        paragraphes: [
+          'Niché dans les hauteurs vertigineuses des Andes péruviennes, à plus de 3 000 mètres d’altitude, le Sel de Maras incarne une tradition millénaire, un savoir-faire ancestral et un produit d’exception.',
+          'Aujourd’hui, grâce à HOLENA, ce joyau de la gastronomie péruvienne bénéficie d’un statut officiel : l’Indication Géographique (IG) délivrée par l’INDECOPI, une première pour le Pérou et pour la communauté andine.',
+        ],
+      },
+      {
+        type: 'infos',
+        titre: 'En bref',
+        lignes: [
+          { label: 'Où', valeur: 'Maras, dans les Andes péruviennes, à plus de 3 000 m d’altitude' },
+          { label: 'Qui récolte', valeur: 'Les communautés de Maras Ayllu et Pinchingoto, regroupées dans l’entreprise sociale MARASAL' },
+          { label: 'Comment', valeur: 'Évaporation solaire de sources d’eau salée, dans plus de 4 000 bassins en terrasse' },
+          { label: 'Reconnaissance', valeur: 'Indication Géographique délivrée par l’INDECOPI en octobre 2024, la première du Pérou' },
+          { label: 'Avec le soutien de', valeur: 'Projet péruano-suisse PESIPRO (Coopération Économique Suisse, SECO) et appui technique de PIAF via HOLENA' },
+        ],
+      },
+      {
+        type: 'texte',
+        titre: 'Un héritage ancestral vivant',
+        paragraphes: [
+          'Le Sel de Maras est extrait à la main par les communautés de Maras Ayllu et Pinchingoto, regroupées au sein de l’entreprise sociale MARASAL. Leur méthode repose sur un procédé naturel d’évaporation solaire de sources d’eau salée. L’eau est répartie par gravité dans plus de 4 000 bassins construits en terrasse sur fonds d’argile, à flanc de montagne, où se forme le précieux cristal de sel.',
+          'Ce sel de source, unique en son genre, se distingue par sa richesse minérale et ses caractéristiques singulières :',
+        ],
+      },
+      {
+        type: 'liste',
+        titre: 'Ce qui le rend unique',
+        elements: [
+          'Origine de haute montagne',
+          'Procédé 100 % naturel par gravité et évaporation solaire',
+          'Extraction manuelle selon des techniques communautaires ancestrales',
+          'Production durable et équitable par des communautés locales',
+        ],
+      },
+      {
+        type: 'texte',
+        titre: 'Vers une protection internationale',
+        paragraphes: [
+          'Grâce au soutien du projet de coopération péruano-suisse PESIPRO, financé par la Coopération Économique Suisse (SECO), et avec l’appui technique de l’agence française PIAF via le programme HOLENA, le Sel de Maras s’est doté d’un solide cahier des charges. Celui-ci a porté la demande d’Indication Géographique officielle, obtenue auprès de l’INDECOPI en octobre 2024.',
+          'Ce signe officiel d’origine permet non seulement de garantir l’origine et la qualité du produit, mais aussi de renforcer sa protection contre les usages frauduleux sur les marchés nationaux et internationaux.',
+        ],
+      },
+      {
+        type: 'texte',
+        titre: 'Un sel, une identité, un avenir collectif',
+        paragraphes: [
+          'La reconnaissance IG ne protège pas seulement un produit : elle valorise un territoire, une culture, et soutient des centaines de familles qui perpétuent ce savoir-faire unique. Ce modèle de production communautaire inspire par son lien fort avec l’environnement, sa gouvernance collective et son ancrage local.',
+          'En tant que première Indication Géographique du Pérou, la Sal de Maras ouvre la voie à d’autres produits emblématiques du pays. Elle devient un emblème de qualité, d’authenticité et de développement durable. Elle incarne aussi une nouvelle forme de fierté nationale et d’engagement pour la valorisation du patrimoine immatériel péruvien.',
+        ],
       },
     ],
   },
