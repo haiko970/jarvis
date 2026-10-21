@@ -336,12 +336,13 @@ export default function App() {
           </div>
         </div>
 
-        <h1
-          className="font-graphik text-white font-normal leading-[1em] absolute anim-fade-up text-[32px] sm:text-[48px] md:text-[68px] top-[170px] sm:top-[190px] md:top-[208px] left-5 md:left-[35px] max-w-[300px] sm:max-w-[420px] md:max-w-[554px]"
+        {/* La citation, en petit et en italique, à la place du grand titre */}
+        <blockquote
+          className="font-graphik italic text-white/90 font-normal leading-[1.35] absolute anim-fade-up text-[17px] sm:text-[19px] md:text-[22px] top-[170px] sm:top-[190px] md:top-[208px] left-5 md:left-[35px] max-w-[300px] sm:max-w-[380px] md:max-w-[420px]"
           style={{ animationDelay: '400ms' }}
         >
-          Récolter le sel. Bâtir des ponts.
-        </h1>
+          « Quand le vent souffle, certains construisent des murs, d’autres fabriquent des moulins. »
+        </blockquote>
 
         <GridLines />
         <CentralNodes />
