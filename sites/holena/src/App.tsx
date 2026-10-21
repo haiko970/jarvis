@@ -6,6 +6,10 @@ import logoMer from './assets/logo-mer-en-commun.png';
 import photoMaras from './assets/maras.jpg';
 import Intro from './Intro';
 import Collectif from './Collectif';
+import Rubrique from './Rubrique';
+import { RUBRIQUES, type Rubrique as RubriqueType } from './rubriques';
+
+type IdRubrique = RubriqueType['id'];
 
 
 // Page d'origine du projet, ouverte par le bouton et le lien de la carte
@@ -84,27 +88,33 @@ function ConnectorLine({ x1, y1, x2, y2, delay }: { x1: string; y1: string; x2: 
 
 const SQUARE = 'absolute w-[80px] h-[80px] lg:w-[100px] lg:h-[100px] border border-white/80 anim-scale-in overflow-hidden';
 
-function NodeLabel({ title, text, maxW, className, anim, delay }: {
-  title: string; text: string; maxW: string; className: string; anim: string; delay: number;
+function NodeLabel({ title, text, maxW, className, anim, delay, onClick }: {
+  title: string; text: string; maxW: string; className: string; anim: string; delay: number; onClick: () => void;
 }) {
   return (
-    <div className={`absolute ${className} ${anim}`} style={{ animationDelay: `${delay}ms` }}>
-      <span className="font-manrope text-white text-[13px] leading-[15.6px] whitespace-nowrap">{title}</span>
+    <button
+      onClick={onClick}
+      className={`group absolute text-left pointer-events-auto ${className} ${anim}`}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <span className="font-manrope text-white text-[13px] leading-[15.6px] whitespace-nowrap group-hover:text-[#AFDDFF] transition-colors">{title}</span>
       <p className={`font-manrope text-white/50 text-[11px] leading-[14px] mt-[4px] ${maxW}`}>{text}</p>
-    </div>
+      <span className="inline-block font-manrope text-[#AFDDFF] text-[11px] leading-[14px] mt-[6px] group-hover:underline">EN_SAVOIR_PLUS →</span>
+    </button>
   );
 }
 
 // Les quatre « nœuds » : HOLENA (Guérande), le Pérou, le Chili et le label « La Mer en Commun »
-function CentralNodes() {
+function CentralNodes({ onOuvrir }: { onOuvrir: (id: IdRubrique) => void }) {
   return (
     <div className="absolute inset-0 pointer-events-none hidden md:block">
       {/* 1. HOLENA — le logo tourne lentement */}
-      <div className={`${SQUARE} top-[27%] left-[60%] bg-black/40`} style={{ animationDelay: '1500ms' }}>
+      <button onClick={() => onOuvrir('guerande')} className={`${SQUARE} top-[27%] left-[60%] bg-black/40 pointer-events-auto hover:border-[#AFDDFF] transition-colors`} style={{ animationDelay: '1500ms' }}>
         <img src={logoHolena} alt="Logo HOLENA" className="w-full h-full object-contain anim-slow-spin" />
-      </div>
+      </button>
       <NodeLabel
         title="[ HOLENA — GUÉRANDE ]"
+        onClick={() => onOuvrir('guerande')}
         text="« Récolter le sel » en breton. Le terroir de départ de chaque pont."
         maxW="max-w-[160px]"
         className="top-[14%] left-[26%]"
@@ -113,11 +123,12 @@ function CentralNodes() {
       />
 
       {/* 2. Pérou — photo des salines de Maras */}
-      <div className={`${SQUARE} top-[58%] left-[32%]`} style={{ animationDelay: '1800ms' }}>
+      <button onClick={() => onOuvrir('perou')} className={`${SQUARE} top-[58%] left-[32%] pointer-events-auto hover:border-[#AFDDFF] transition-colors`} style={{ animationDelay: '1800ms' }}>
         <img src={photoMaras} alt="Chemin vers les salines de Maras, au Pérou" className="w-full h-full object-cover" />
-      </div>
+      </button>
       <NodeLabel
         title="[ PÉROU — SEL DE MARAS ]"
+        onClick={() => onOuvrir('perou')}
         text="Salines artisanales des Andes, un patrimoine vivant."
         maxW="max-w-[160px]"
         className="top-[76%] left-[3%]"
@@ -126,11 +137,12 @@ function CentralNodes() {
       />
 
       {/* 3. Chili — la cabane à sel de Cahuil */}
-      <div className={`${SQUARE} top-[63%] left-[50%] bg-black/40`} style={{ animationDelay: '2100ms' }}>
+      <button onClick={() => onOuvrir('chili')} className={`${SQUARE} top-[63%] left-[50%] bg-black/40 pointer-events-auto hover:border-[#AFDDFF] transition-colors`} style={{ animationDelay: '2100ms' }}>
         <img src={photoChili} alt="Cabane à sel au bord de la lagune de Cahuil, au Chili" className="w-full h-full object-cover object-[22%_50%]" />
-      </div>
+      </button>
       <NodeLabel
         title="[ CHILI — ZONE DE CAHUIL ]"
+        onClick={() => onOuvrir('chili')}
         text="Action reconnue par le label national « La Mer en Commun »."
         maxW="max-w-[180px]"
         className="top-[50%] left-[78%]"
@@ -139,11 +151,12 @@ function CentralNodes() {
       />
 
       {/* 4. Label « La Mer en Commun » */}
-      <div className={`${SQUARE} top-[30%] left-[84%] bg-black/40`} style={{ animationDelay: '2300ms' }}>
+      <button onClick={() => onOuvrir('label')} className={`${SQUARE} top-[30%] left-[84%] bg-black/40 pointer-events-auto hover:border-[#AFDDFF] transition-colors`} style={{ animationDelay: '2300ms' }}>
         <img src={logoMer} alt="Label La Mer en Commun" className="w-full h-full object-contain" />
-      </div>
+      </button>
       <NodeLabel
         title="[ LABEL — LA MER EN COMMUN ]"
+        onClick={() => onOuvrir('label')}
         text="L’action « Les Ponts du Sel : Chili » reçoit le label national La Mer en Commun."
         maxW="max-w-[190px]"
         className="top-[14%] left-[68%]"
@@ -204,6 +217,21 @@ export default function App() {
   };
   const fermerCollectif = () => {
     setCollectifOuvert(false);
+    try { history.replaceState(null, '', ' '); } catch { /* sans importance */ }
+  };
+
+  // rubrique : la sous-page ouverte (Guérande, Pérou, Chili ou Label), aussi dans l'adresse (#chili…)
+  const [rubrique, setRubrique] = useState<IdRubrique | null>(() => {
+    const h = window.location.hash.slice(1);
+    return RUBRIQUES.some((r) => r.id === h) ? (h as IdRubrique) : null;
+  });
+  const ouvrirRubrique = (id: IdRubrique) => {
+    setMenuOpen(false);
+    setRubrique(id);
+    try { history.replaceState(null, '', `#${id}`); } catch { /* sans importance */ }
+  };
+  const fermerRubrique = () => {
+    setRubrique(null);
     try { history.replaceState(null, '', ' '); } catch { /* sans importance */ }
   };
 
@@ -306,16 +334,20 @@ export default function App() {
               <X className="w-[22px] h-[22px] text-white" strokeWidth={1.5} />
             </button>
             <div className="flex flex-col gap-8">
-              {NAV.map((n, i) => (
+              {/* sur téléphone, le menu donne accès aux 4 rubriques et au collectif */}
+              {[
+                ...RUBRIQUES.map((r) => ({ number: r.numero, label: r.court.toUpperCase(), ouvrir: () => ouvrirRubrique(r.id) })),
+                { number: '05', label: 'LE_COLLECTIF', ouvrir: ouvrirCollectif },
+              ].map((n, i) => (
                 <div
                   key={n.number}
                   className={`transition-all duration-500 ${EASE} ${menuOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-6'}`}
                   style={{ transitionDelay: menuOpen ? `${150 + i * 75}ms` : '0ms' }}
                 >
-                  <div className="flex items-center gap-3">
+                  <button className="flex items-center gap-3" onClick={n.ouvrir}>
                     <span className="font-manrope text-[#AFDDFF]/80 text-[14px] leading-[1]">{n.number}.</span>
                     <span className="font-manrope text-white text-[28px] leading-[1.2] tracking-tight">{n.label}</span>
-                  </div>
+                  </button>
                 </div>
               ))}
             </div>
@@ -345,7 +377,7 @@ export default function App() {
         </blockquote>
 
         <GridLines />
-        <CentralNodes />
+        <CentralNodes onOuvrir={ouvrirRubrique} />
 
         <div className="absolute bottom-5 md:bottom-[35px] left-5 md:left-[35px] right-5 md:right-[35px] flex flex-col md:flex-row items-start md:items-end justify-between gap-5 md:gap-0">
           <a
@@ -392,6 +424,7 @@ export default function App() {
         </div>
       </div>
       <Collectif ouvert={collectifOuvert} onFermer={fermerCollectif} />
+      <Rubrique id={rubrique} onFermer={fermerRubrique} onAller={ouvrirRubrique} />
       </>
       )}
     </section>
