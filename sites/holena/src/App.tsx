@@ -23,11 +23,11 @@ const NAV = [
   { number: '04', label: 'CONTACT', delay: 650 },
 ];
 
-function NavItem({ number, label, delay }: { number: string; label: string; delay: number }) {
+function NavItem({ number, label, delay, onClick }: { number: string; label: string; delay: number; onClick?: () => void }) {
   return (
     <div className="flex items-center gap-[3px] anim-fade-up" style={{ animationDelay: `${delay}ms` }}>
       <span className="font-manrope text-[#AFDDFF]/80 text-[13px] leading-[15.6px]">{number}.</span>
-      <span className="font-manrope text-white text-[13px] leading-[15.6px] cursor-pointer hover:text-[#AFDDFF] transition-colors">
+      <span onClick={onClick} className="font-manrope text-white text-[13px] leading-[15.6px] cursor-pointer hover:text-[#AFDDFF] transition-colors">
         {label}
       </span>
     </div>
@@ -205,7 +205,7 @@ export default function App() {
   // siteLance : le site commence ses animations (pendant que le logo s'efface)
   // introFinie : l'écran d'intro est retiré
   // Un lien qui ouvre directement une sous-page (#chili, #collectif…) saute l'intro
-  const lienDirect = ['collectif', 'guerande', 'perou', 'chili', 'label'].includes(window.location.hash.slice(1));
+  const lienDirect = ['collectif', 'guerande', 'perou', 'chili', 'label', 'livre'].includes(window.location.hash.slice(1));
   const [siteLance, setSiteLance] = useState(lienDirect);
   const [introFinie, setIntroFinie] = useState(lienDirect);
   // On attend que la page soit vraiment à l'écran avant de lancer l'intro
@@ -317,6 +317,8 @@ export default function App() {
             </span>
             <div className="hidden xl:flex items-center gap-[40px]">
               {NAV.map((n) => <NavItem key={n.number} {...n} />)}
+              {/* la souscription du livre, mise en avant */}
+              <NavItem number="05" label="SOUSCRIPTION_LIVRE" delay={750} onClick={() => ouvrirRubrique('livre')} />
             </div>
           </div>
 
@@ -370,7 +372,7 @@ export default function App() {
               {/* sur téléphone, le menu donne accès aux 4 rubriques et au collectif */}
               {[
                 ...RUBRIQUES.map((r) => ({ number: r.numero, label: r.court.toUpperCase(), ouvrir: () => ouvrirRubrique(r.id) })),
-                { number: '05', label: 'LE_COLLECTIF', ouvrir: ouvrirCollectif },
+                { number: '06', label: 'LE_COLLECTIF', ouvrir: ouvrirCollectif },
               ].map((n, i) => (
                 <div
                   key={n.number}
@@ -413,6 +415,7 @@ export default function App() {
         <CentralNodes onOuvrir={ouvrirRubrique} />
 
         <div className="absolute bottom-5 md:bottom-[35px] left-5 md:left-[35px] right-5 md:right-[35px] flex flex-col md:flex-row items-start md:items-end justify-between gap-5 md:gap-0 pointer-events-none">
+          <div className="flex flex-col sm:flex-row items-start gap-[10px]">
           <a
             href={PAGE_PROJET}
             target="_blank"
@@ -425,6 +428,17 @@ export default function App() {
               Découvrir les Ponts du Sel
             </span>
           </a>
+          <button
+            onClick={() => ouvrirRubrique('livre')}
+            className="border border-[#AFDDFF] bg-black/40 px-[16px] md:px-[20px] py-[9px] md:py-[11px] flex items-center gap-[10px] hover:bg-[#AFDDFF]/15 transition-colors anim-fade-up pointer-events-auto"
+            style={{ animationDelay: '1000ms' }}
+          >
+            <span className="text-[#AFDDFF] text-[16px] leading-none">&#10022;</span>
+            <span className="font-manrope text-white text-[12px] md:text-[13px] leading-[15.6px] uppercase tracking-wide">
+              Souscrire au livre · 10 €
+            </span>
+          </button>
+          </div>
 
           <div className="relative max-w-[280px] hidden sm:block anim-slide-right pointer-events-auto" style={{ animationDelay: '1100ms' }}>
             <span className="font-manrope text-black text-[13px] leading-[15.6px] bg-[#AFDDFF] px-[6px] py-[2px] inline-block mb-[10px]">

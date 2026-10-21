@@ -98,6 +98,22 @@ function AfficheBloc({ b }: { b: Bloc }) {
           </ul>
         </section>
       );
+    case 'bouton':
+      return (
+        <div className="flex flex-col items-start gap-[8px]">
+          <a
+            href={b.url}
+            target="_blank"
+            rel="noreferrer"
+            className="bg-[#AFDDFF] hover:bg-[#c8e8ff] transition-colors px-[22px] py-[14px] flex items-center gap-[10px]"
+          >
+            <span className="text-black text-[16px] leading-none">&#10022;</span>
+            <span className="font-manrope text-black text-[14px] leading-[16px] uppercase tracking-wide">{b.texte}</span>
+            <span className="text-black text-[14px] leading-none">↗</span>
+          </a>
+          {b.detail && <span className="font-manrope text-white/50 text-[12px] leading-[16px]">{b.detail}</span>}
+        </div>
+      );
     case 'aCompleter':
       return (
         <section className="border border-dashed border-[#AFDDFF]/50 p-[20px]">
@@ -196,7 +212,7 @@ export default function Rubrique({ id, onFermer, onAller }: {
             rel="noreferrer"
             className="self-start font-manrope text-[#AFDDFF] text-[13px] leading-[15.6px] hover:underline"
           >
-            VOIR_LA_PAGE_SUR_PIAF.SOLUTIONS ↗
+            {r.lienTexte ?? 'VOIR_LA_PAGE_SUR_PIAF.SOLUTIONS'} ↗
           </a>
         </div>
 

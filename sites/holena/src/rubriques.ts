@@ -18,21 +18,24 @@ export type Bloc =
   | { type: 'image'; src: string; alt: string; legende?: string }
   | { type: 'programme'; titre: string; dates: { quand: string; titre: string; detail?: string; lieu: string }[] }
   | { type: 'liens'; titre: string; liens: { texte: string; url: string }[] }
+  | { type: 'bouton'; texte: string; url: string; detail?: string }
   | { type: 'aCompleter'; titre: string; consigne: string };
 
 export type Rubrique = {
-  id: 'guerande' | 'perou' | 'chili' | 'label';
+  id: 'guerande' | 'perou' | 'chili' | 'label' | 'livre';
   numero: string;
   court: string; // nom court pour les menus
   surtitre: string;
   titre: string;
   chapo: string; // phrase d'introduction
   lien?: string; // la page d'origine sur piaf.solutions (sinon la page HOLENA)
+  lienTexte?: string; // le texte de ce lien (sinon « VOIR_LA_PAGE_SUR_PIAF.SOLUTIONS »)
   image: { src: string; alt: string; contenir?: boolean; portrait?: boolean }; // portrait : image en hauteur (couverture)
   blocs: Bloc[];
 };
 
 const PAGE_PROJET = 'https://www.piaf.solutions/fr/2023/03/11/le-pont-du-sel/';
+export const SOUSCRIPTION_LIVRE = 'https://www.helloasso.com/associations/les-amis-de-daendrevi/formulaires/3';
 const PAGE_CHILI = 'https://www.piaf.solutions/fr/2025/06/12/programme-holena-les-ponts-du-sel/';
 export { PAGE_PROJET };
 
@@ -51,9 +54,10 @@ export const RUBRIQUES: Rubrique[] = [
         type: 'texte',
         titre: 'Le livre',
         paragraphes: [
-          '« Une autre fois dans l’Ouest » : 50 années de renaissance du sel de Guérande. Un livre du collectif HOLENA.',
+          '« Une autre fois dans l’Ouest » : 50 ans de renaissance du sel de Guérande. Un livre du collectif HOLENA, réédition augmentée de la pièce de théâtre « Presqu’île à vendre ». Sortie prévue le 13 novembre 2026 : la souscription est ouverte.',
         ],
       },
+      { type: 'bouton', texte: 'Précommander le livre — 10 €', url: SOUSCRIPTION_LIVRE, detail: 'Souscription sur HelloAsso' },
       {
         type: 'texte',
         titre: 'Le projet',
@@ -294,6 +298,57 @@ export const RUBRIQUES: Rubrique[] = [
           { texte: 'Le programme HOLENA Les Ponts du Sel avec le Chili (piaf.solutions)', url: PAGE_CHILI },
         ],
       },
+    ],
+  },
+  {
+    id: 'livre',
+    court: 'Souscription',
+    numero: '05',
+    surtitre: '[ SOUSCRIPTION — LIVRE À PARAÎTRE ]',
+    titre: 'Une autre fois dans l’Ouest',
+    chapo: '50 ans de renaissance du sel de Guérande. Réédition augmentée de la pièce de théâtre « Presqu’île à vendre » des années 70 : la souscription est lancée.',
+    lien: SOUSCRIPTION_LIVRE,
+    lienTexte: 'PRÉCOMMANDER_SUR_HELLOASSO',
+    image: { src: couvertureLivre, alt: 'Couverture du livre « Une autre fois dans l’Ouest »', contenir: true, portrait: true },
+    blocs: [
+      { type: 'bouton', texte: 'Précommander le livre — 10 €', url: SOUSCRIPTION_LIVRE, detail: 'Souscription sur HelloAsso · sortie prévue le 13 novembre 2026' },
+      {
+        type: 'texte',
+        titre: 'Lancement de la souscription',
+        paragraphes: [
+          '« Une autre fois dans l’Ouest, 50 ans de renaissance du Sel de Guérande » est la réédition augmentée de la pièce de théâtre « Presqu’île à vendre », écrite dans les années 70.',
+          'Cette nouvelle édition l’accompagne d’une introduction historique, d’images d’époque, d’une postface écrite par un paludier d’aujourd’hui, ainsi que d’une note et d’un lexique sur le patrimoine culturel.',
+        ],
+      },
+      {
+        type: 'infos',
+        titre: 'Le livre',
+        lignes: [
+          { label: 'Titre', valeur: 'Une autre fois dans l’Ouest, 50 ans de renaissance du Sel de Guérande' },
+          { label: 'Éditeur', valeur: 'Éditions dændrevi, pour le compte du collectif HOLENA' },
+          { label: 'Format', valeur: 'A5, 150 pages' },
+          { label: 'Sortie prévue', valeur: '13 novembre 2026' },
+          { label: 'Prix', valeur: '10 €' },
+          { label: 'Images', valeur: 'Charles Chollet' },
+        ],
+      },
+      {
+        type: 'liste',
+        titre: 'Avec les contributions de',
+        elements: ['Gildas Buron', 'Anatole Danto', 'Armel Jorion-Delbos', 'Nicolas Mezzalira', 'Charles Perraud'],
+      },
+      {
+        type: 'liste',
+        titre: 'Dans cette édition',
+        elements: [
+          'La pièce « Presqu’île à vendre »',
+          'Une introduction historique',
+          'Des images d’époque',
+          'La postface d’un paludier d’aujourd’hui',
+          'Une note et un lexique sur le patrimoine culturel',
+        ],
+      },
+      { type: 'bouton', texte: 'Je précommande mon exemplaire', url: SOUSCRIPTION_LIVRE, detail: 'Paiement sécurisé sur HelloAsso' },
     ],
   },
 ];
