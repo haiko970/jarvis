@@ -33,16 +33,16 @@ export default function APropos({ ouvert, onFermer }: { ouvert: boolean; onFerme
   return (
     <div className={`fixed inset-0 z-[55] transition-all duration-500 ${EASE} ${ouvert ? 'visible' : 'invisible'}`}>
       <div
-        className={`absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-500 ${EASE} ${ouvert ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-black/70 backdrop-blur-md transition-opacity duration-500 ${EASE} ${ouvert ? 'opacity-100' : 'opacity-0'}`}
         onClick={onFermer}
       />
       <aside
-        className={`absolute top-0 right-0 h-full w-full md:w-[600px] bg-black border-l border-white/10 overflow-y-auto transition-transform duration-500 ${EASE} ${ouvert ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`absolute top-0 right-0 h-full w-full md:w-[600px] bg-[var(--noir)] border-l border-[var(--filet)] overflow-y-auto transition-transform duration-500 ${EASE} ${ouvert ? 'translate-x-0' : 'translate-x-full'}`}
         aria-label="Le collectif HOLENA, qui sommes-nous ?"
       >
         <div className="px-5 md:px-[40px] pt-[24px] pb-[48px]">
           <div className="flex items-start justify-between">
-            <span className="font-manrope text-[#AFDDFF] text-[13px] leading-[15.6px] tracking-wide pt-[12px]">
+            <span className="font-manrope text-[var(--sable)] text-[13px] leading-[15.6px] tracking-wide pt-[12px]">
               [ QUI SOMMES-NOUS ? ]
             </span>
             <button className="w-[40px] h-[40px] flex items-center justify-center" aria-label="Fermer" onClick={onFermer}>
@@ -52,7 +52,7 @@ export default function APropos({ ouvert, onFermer }: { ouvert: boolean; onFerme
 
           <div className="flex items-center gap-[20px] mt-[24px]">
             <img src={logoHolenaHd} alt="Logo HOLENA" className="w-[110px] shrink-0" />
-            <h2 className="font-graphik text-white text-[30px] md:text-[36px] leading-[1.1]">Le collectif HOLENA</h2>
+            <h2 className="font-serif-sel italic text-white text-[30px] md:text-[36px] leading-[1.1]">Le collectif HOLENA</h2>
           </div>
 
           <div className="font-manrope text-white/80 text-[14px] leading-[22px] mt-[32px] flex flex-col gap-[16px]">
@@ -82,13 +82,13 @@ export default function APropos({ ouvert, onFermer }: { ouvert: boolean; onFerme
           </h3>
           <ul className="flex flex-wrap gap-[8px] mt-[14px]">
             {EXPERTISES.map((e) => (
-              <li key={e} className="font-manrope text-[#AFDDFF] text-[12px] leading-[15.6px] border border-[#AFDDFF]/40 px-[8px] py-[5px]">
+              <li key={e} className="font-manrope text-[var(--sable)] text-[12px] leading-[15.6px] border border-[var(--filet)] px-[8px] py-[5px]">
                 {e}
               </li>
             ))}
           </ul>
 
-          <p className="font-manrope italic text-white/50 text-[12px] leading-[18px] mt-[32px] pt-[20px] border-t border-white/10">
+          <p className="font-manrope italic text-white/50 text-[12px] leading-[18px] mt-[32px] pt-[20px] border-t border-[var(--filet)]">
             * Holena : « récolter le sel » en breton. Un mot-racine pour un projet ancré dans la transmission des savoirs,
             des gestes, le développement durable des territoires et la juste rémunération du travail des producteurs.
           </p>

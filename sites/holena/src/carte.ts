@@ -1,13 +1,12 @@
-// Taille de la « carte » du centre (le logo et ses trois flèches).
-// Tout est dessiné dans un cadre de 1000 × 560, agrandi ou réduit selon l'écran.
-export const CARTE_L = 1000;
-export const CARTE_H = 560;
-// Le logo occupe 27 % de la largeur de la carte
-export const PART_LOGO = 0.27;
+// Tailles partagées entre l'intro et la page, pour que le logo de l'intro
+// se pose exactement sur le logo du site.
 
-// Même calcul que la classe CSS w-[min(94vw,1100px,117.86vh)]
-export function largeurCarte() {
-  return Math.min(window.innerWidth * 0.94, 1100, window.innerHeight * 1.1786);
+// Largeur du logo au centre du site : même calcul que la classe CSS
+// w-[min(24vw,32vh,340px)] (sur téléphone : w-[min(52vw,30vh)])
+export function largeurLogoSite() {
+  const L = window.innerWidth;
+  const H = window.innerHeight;
+  return L < 768 ? Math.min(L * 0.52, H * 0.3) : Math.min(L * 0.24, H * 0.32, 340);
 }
 
 // Taille du logo pendant l'intro : même calcul que w-[min(70vw,60vh,460px)]

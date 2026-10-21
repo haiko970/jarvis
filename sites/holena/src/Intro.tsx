@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import logoHolenaHd from './assets/logo-holena-hd.png';
-import { PART_LOGO, largeurCarte, largeurLogoIntro } from './carte';
+import { largeurLogoIntro, largeurLogoSite } from './carte';
 
 // ---------------------------------------------------------------
 // Intro : des fils fins qui ondulent (comme deux brins d'une corde)
@@ -58,10 +58,10 @@ export default function Intro({ onSortie, onFin }: Props) {
   const toile = useRef<HTMLCanvasElement>(null);
   const boite = useRef<HTMLDivElement>(null);
   // De combien le logo doit rétrécir pour se poser pile sur le logo du site
-  const [fin, setFin] = useState(() => (largeurCarte() * PART_LOGO) / largeurLogoIntro());
+  const [fin, setFin] = useState(() => largeurLogoSite() / largeurLogoIntro());
 
   useEffect(() => {
-    const calcul = () => setFin((largeurCarte() * PART_LOGO) / largeurLogoIntro());
+    const calcul = () => setFin(largeurLogoSite() / largeurLogoIntro());
     window.addEventListener('resize', calcul);
     return () => window.removeEventListener('resize', calcul);
   }, []);
@@ -148,7 +148,7 @@ export default function Intro({ onSortie, onFin }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black intro-sortie"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0B0B0A] intro-sortie"
       style={{ animationDelay: `${DEBUT_SORTIE}ms` }}
       onAnimationStart={(e) => e.animationName === 'introSortie' && onSortie()}
       onAnimationEnd={(e) => e.animationName === 'introSortie' && onFin()}
