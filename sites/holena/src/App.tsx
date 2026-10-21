@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MapPin, Menu, RotateCcw, X } from 'lucide-react';
 import logoHolena from './assets/logo-holena.png';
+import photoChili from './assets/chili-cahuil.jpg';
 import logoMer from './assets/logo-mer-en-commun.png';
 import photoMaras from './assets/maras.jpg';
 import Intro from './Intro';
@@ -94,7 +95,7 @@ function NodeLabel({ title, text, maxW, className, anim, delay }: {
   );
 }
 
-// Les trois « nœuds » : HOLENA (Guérande), le Pérou et le Chili
+// Les quatre « nœuds » : HOLENA (Guérande), le Pérou, le Chili et le label « La Mer en Commun »
 function CentralNodes() {
   return (
     <div className="absolute inset-0 pointer-events-none hidden md:block">
@@ -124,9 +125,9 @@ function CentralNodes() {
         delay={1400}
       />
 
-      {/* 3. Chili — label « La Mer en Commun » */}
+      {/* 3. Chili — la cabane à sel de Cahuil */}
       <div className={`${SQUARE} top-[63%] left-[50%] bg-black/40`} style={{ animationDelay: '2100ms' }}>
-        <img src={logoMer} alt="Label La Mer en Commun" className="w-full h-full object-contain" />
+        <img src={photoChili} alt="Cabane à sel au bord de la lagune de Cahuil, au Chili" className="w-full h-full object-cover object-[22%_50%]" />
       </div>
       <NodeLabel
         title="[ CHILI — ZONE DE CAHUIL ]"
@@ -137,12 +138,26 @@ function CentralNodes() {
         delay={1700}
       />
 
+      {/* 4. Label « La Mer en Commun » */}
+      <div className={`${SQUARE} top-[30%] left-[84%] bg-black/40`} style={{ animationDelay: '2300ms' }}>
+        <img src={logoMer} alt="Label La Mer en Commun" className="w-full h-full object-contain" />
+      </div>
+      <NodeLabel
+        title="[ LABEL — LA MER EN COMMUN ]"
+        text="L’action « Les Ponts du Sel : Chili » reçoit le label national La Mer en Commun."
+        maxW="max-w-[190px]"
+        className="top-[14%] left-[68%]"
+        anim="anim-slide-right"
+        delay={1900}
+      />
+
       <ConnectorLine x1="38%" y1="17%" x2="52%" y2="17%" delay={1200} />
       <ConnectorLine x1="52%" y1="17%" x2="60%" y2="27%" delay={1400} />
       <ConnectorLine x1="32%" y1="58%" x2="20%" y2="74%" delay={1500} />
       <ConnectorLine x1="20%" y1="74%" x2="6%" y2="74%" delay={1700} />
       <ConnectorLine x1="78%" y1="53%" x2="63%" y2="53%" delay={1800} />
       <ConnectorLine x1="63%" y1="53%" x2="50%" y2="63%" delay={2000} />
+      <ConnectorLine x1="79%" y1="23%" x2="84%" y2="30%" delay={2100} />
     </div>
   );
 }
