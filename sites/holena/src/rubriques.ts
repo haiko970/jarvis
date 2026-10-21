@@ -17,6 +17,7 @@ export type Bloc =
   | { type: 'infos'; titre: string; lignes: { label: string; valeur: string }[] }
   | { type: 'image'; src: string; alt: string; legende?: string }
   | { type: 'programme'; titre: string; dates: { quand: string; titre: string; detail?: string; lieu: string }[] }
+  | { type: 'liens'; titre: string; liens: { texte: string; url: string }[] }
   | { type: 'aCompleter'; titre: string; consigne: string };
 
 export type Rubrique = {
@@ -26,11 +27,13 @@ export type Rubrique = {
   surtitre: string;
   titre: string;
   chapo: string; // phrase d'introduction
+  lien?: string; // la page d'origine sur piaf.solutions (sinon la page HOLENA)
   image: { src: string; alt: string; contenir?: boolean; portrait?: boolean }; // portrait : image en hauteur (couverture)
   blocs: Bloc[];
 };
 
 const PAGE_PROJET = 'https://www.piaf.solutions/fr/2023/03/11/le-pont-du-sel/';
+const PAGE_CHILI = 'https://www.piaf.solutions/fr/2025/06/12/programme-holena-les-ponts-du-sel/';
 export { PAGE_PROJET };
 
 export const RUBRIQUES: Rubrique[] = [
@@ -164,6 +167,7 @@ export const RUBRIQUES: Rubrique[] = [
     surtitre: '[ CHILI — ZONE DE CAHUIL ]',
     titre: 'Chili : Zone de Cahuil',
     chapo: 'Le Chili à l’honneur lors des Ponts du Sel 2025 : du 14 au 20 juillet, HOLENA accueille une délégation de paludiers chiliens dans la presqu’île de Guérande.',
+    lien: PAGE_CHILI,
     image: { src: photoChili, alt: 'Cabane à sel au bord de la lagune de Cahuil, au Chili' },
     blocs: [
       {
@@ -244,13 +248,51 @@ export const RUBRIQUES: Rubrique[] = [
     numero: '04',
     surtitre: '[ LABEL — LA MER EN COMMUN ]',
     titre: 'Le label « La Mer en Commun »',
-    chapo: 'L’action d’HOLENA « Les Ponts du Sel : Chili » se voit décerner le label national La Mer en Commun.',
+    chapo: 'L’action d’HOLENA reconnue par le label national « La Mer en commun » : Les Ponts du Sel, exemple emblématique d’un patrimoine vivant relié à la mer.',
     image: { src: logoMer, alt: 'Label La Mer en Commun — Année de la mer', contenir: true },
     blocs: [
       {
-        type: 'aCompleter',
-        titre: 'À propos du label',
-        consigne: 'Coller ici le texte de l’article « L’action d’HOLENA reconnue par le label national La Mer en Commun » du site piaf.solutions.',
+        type: 'texte',
+        titre: '2025, l’Année de la Mer',
+        paragraphes: [
+          'En 2025, l’Année de la Mer place l’océan au centre des grands défis contemporains : climat, biodiversité, ressources, souveraineté, culture, échanges et transmission.',
+          'À travers le label « La Mer en commun », l’État valorise les initiatives qui participent à une meilleure compréhension du rôle fondamental de la mer dans nos vies, nos territoires et notre avenir collectif.',
+          'Dans ce cadre, le label décerné à HOLENA marque la reconnaissance du projet « Les Ponts du Sel » comme un exemple emblématique de patrimoine vivant, durable et universellement relié à la mer.',
+        ],
+      },
+      {
+        type: 'texte',
+        titre: 'L’action d’HOLENA labellisée « La Mer en commun » 2025',
+        paragraphes: [
+          'Le projet « Les Ponts du Sel », porté par HOLENA, a créé cette année un échange entre les traditions salicoles artisanales du Chili et celles des marais salants de Guérande.',
+          'Les salines artisanales chiliennes, dans des zones comme Cáhuil ou Barrancas, sont reconnues pour leurs techniques ancestrales : un savoir transmis de génération en génération, qui combine l’eau de mer, le vent, le soleil et le geste humain. Ce sel n’est pas un simple produit : il incarne un patrimoine immatériel, un lien fort entre l’homme et la mer.',
+        ],
+      },
+      {
+        type: 'liste',
+        titre: 'Pourquoi c’est important',
+        elements: [
+          'Cela valorise un patrimoine vivant souvent méconnu en Europe : les salines artisanales chiliennes dialoguent avec un patrimoine français et local, celui des marais salants de Guérande.',
+          'Le projet montre que la mer n’est pas un simple décor : c’est un objet culturel, social, économique et humain. Le sel n’est pas « qu’un condiment », mais un lien entre l’océan, le climat, les traditions et les communautés.',
+          'En labellisant un tel projet, La Mer en commun ouvre la voie à des coopérations internationales : échanges de savoir-faire et solidarités entre territoires littoraux, au-delà des frontières.',
+          'Cela sensibilise le grand public à des réalités parfois éloignées, et contribue à une éducation maritime, patrimoniale et citoyenne.',
+        ],
+      },
+      {
+        type: 'texte',
+        titre: 'Les Ponts du Sel Chili / Guérande : l’ambassadeur d’une mer partagée',
+        paragraphes: [
+          'Le label n’est pas seulement un logo : c’est une reconnaissance, un geste symbolique vers la mer, ses cultures, ses gens. En 2025, l’événement Les Ponts du Sel fait du sel chilien un messager de la mer.',
+          'Grâce à cette labellisation, HOLENA gagne une nouvelle visibilité pour son action en faveur d’un patrimoine vivant, mémoire de l’océan, et invitation à découvrir, respecter et partager.',
+        ],
+      },
+      {
+        type: 'liens',
+        titre: 'Pour aller plus loin',
+        liens: [
+          { texte: 'Le label « La Mer en commun » et l’Année de la Mer (mer.gouv.fr)', url: 'https://www.mer.gouv.fr/mer-en-commun/la-mer-en-commun' },
+          { texte: 'Le programme HOLENA Les Ponts du Sel avec le Chili (piaf.solutions)', url: PAGE_CHILI },
+        ],
       },
     ],
   },

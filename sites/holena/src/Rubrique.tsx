@@ -19,6 +19,21 @@ function AfficheBloc({ b }: { b: Bloc }) {
         </section>
       );
     case 'liste':
+      // éléments longs (des phrases) : une liste à puces ; éléments courts : des étiquettes
+      if (b.elements.some((e) => e.length > 70))
+        return (
+          <section>
+            <h2 className={TITRE_BLOC}>{b.titre}</h2>
+            <ul className="mt-[14px] flex flex-col gap-[12px]">
+              {b.elements.map((e) => (
+                <li key={e} className="flex gap-[12px] font-manrope text-white/75 text-[15px] leading-[24px]">
+                  <span className="text-[#AFDDFF] leading-[24px]">&#10022;</span>
+                  <span>{e}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
       return (
         <section>
           <h2 className={TITRE_BLOC}>{b.titre}</h2>
@@ -66,6 +81,21 @@ function AfficheBloc({ b }: { b: Bloc }) {
               </li>
             ))}
           </ol>
+        </section>
+      );
+    case 'liens':
+      return (
+        <section>
+          <h2 className={TITRE_BLOC}>{b.titre}</h2>
+          <ul className="mt-[14px] flex flex-col gap-[10px]">
+            {b.liens.map((l) => (
+              <li key={l.url}>
+                <a href={l.url} target="_blank" rel="noreferrer" className="font-manrope text-white text-[14px] leading-[21px] underline decoration-[#AFDDFF]/60 underline-offset-4 hover:text-[#AFDDFF]">
+                  {l.texte} ↗
+                </a>
+              </li>
+            ))}
+          </ul>
         </section>
       );
     case 'aCompleter':
@@ -161,7 +191,7 @@ export default function Rubrique({ id, onFermer, onAller }: {
             </div>
           ))}
           <a
-            href={PAGE_PROJET}
+            href={r.lien ?? PAGE_PROJET}
             target="_blank"
             rel="noreferrer"
             className="self-start font-manrope text-[#AFDDFF] text-[13px] leading-[15.6px] hover:underline"
