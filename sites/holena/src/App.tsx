@@ -5,6 +5,7 @@ import photoChili from './assets/chili-cahuil.jpg';
 import logoMer from './assets/logo-mer-en-commun.png';
 import photoMaras from './assets/maras.jpg';
 import Intro from './Intro';
+import logoHolenaFond from './assets/logo-holena-hd.png';
 import Collectif from './Collectif';
 import Rubrique from './Rubrique';
 import { RUBRIQUES, type Rubrique as RubriqueType } from './rubriques';
@@ -259,6 +260,13 @@ export default function App() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/80" />
       </div>
       <SaltGrains />
+      {/* Le logo assemblé par l'intro reste en toile de fond, au même endroit et à la même taille */}
+      <img
+        src={logoHolenaFond}
+        alt=""
+        aria-hidden="true"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(70vw,60vh,460px)] aspect-[1040/1102] opacity-[0.16] pointer-events-none"
+      />
 
       <div className="relative z-10 w-full h-full">
         {/* Bandeau du haut : « Découvrir le collectif HOLENA » */}
@@ -379,12 +387,12 @@ export default function App() {
         <GridLines />
         <CentralNodes onOuvrir={ouvrirRubrique} />
 
-        <div className="absolute bottom-5 md:bottom-[35px] left-5 md:left-[35px] right-5 md:right-[35px] flex flex-col md:flex-row items-start md:items-end justify-between gap-5 md:gap-0">
+        <div className="absolute bottom-5 md:bottom-[35px] left-5 md:left-[35px] right-5 md:right-[35px] flex flex-col md:flex-row items-start md:items-end justify-between gap-5 md:gap-0 pointer-events-none">
           <a
             href={PAGE_PROJET}
             target="_blank"
             rel="noreferrer"
-            className="bg-[#AFDDFF] px-[16px] md:px-[20px] py-[10px] md:py-[12px] flex items-center gap-[10px] hover:bg-[#c8e8ff] transition-colors anim-fade-up"
+            className="bg-[#AFDDFF] px-[16px] md:px-[20px] py-[10px] md:py-[12px] flex items-center gap-[10px] hover:bg-[#c8e8ff] transition-colors anim-fade-up pointer-events-auto"
             style={{ animationDelay: '900ms' }}
           >
             <span className="text-black text-[16px] leading-none">&#10022;</span>
@@ -393,7 +401,7 @@ export default function App() {
             </span>
           </a>
 
-          <div className="relative max-w-[280px] hidden sm:block anim-slide-right" style={{ animationDelay: '1100ms' }}>
+          <div className="relative max-w-[280px] hidden sm:block anim-slide-right pointer-events-auto" style={{ animationDelay: '1100ms' }}>
             <span className="font-manrope text-black text-[13px] leading-[15.6px] bg-[#AFDDFF] px-[6px] py-[2px] inline-block mb-[10px]">
               AOP · IGP — UN ACCOMPAGNEMENT À 360°
             </span>
