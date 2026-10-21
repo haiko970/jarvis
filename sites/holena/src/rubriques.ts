@@ -1,4 +1,5 @@
 import couvertureLivre from './assets/livre-une-autre-fois-dans-l-ouest.jpg';
+import photoGuerande from './assets/guerande-marais-salants.jpg';
 import logoMer from './assets/logo-mer-en-commun.png';
 import photoMaras from './assets/maras.jpg';
 import photoChili from './assets/chili-cahuil.jpg';
@@ -48,7 +49,7 @@ export const RUBRIQUES: Rubrique[] = [
     titre: 'HOLENA Guérande',
     chapo:
       'À partir du terroir et de l’expérience privilégiée de Guérande, HOLENA intervient dans plusieurs régions du monde.',
-    image: { src: couvertureLivre, alt: 'Couverture du livre « Une autre fois dans l’Ouest »', contenir: true, portrait: true },
+    image: { src: photoGuerande, alt: 'Marais salants de Guérande au coucher du soleil, avec les tas de sel' },
     blocs: [
       {
         type: 'texte',

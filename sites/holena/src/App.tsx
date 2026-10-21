@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { MapPin, Menu, RotateCcw, X } from 'lucide-react';
-import couvertureLivre from './assets/livre-une-autre-fois-dans-l-ouest.jpg';
+import photoGuerande from './assets/guerande-marais-salants.jpg';
 import photoChili from './assets/chili-cahuil.jpg';
 import logoMer from './assets/logo-mer-en-commun.png';
 import photoMaras from './assets/maras.jpg';
@@ -111,7 +111,7 @@ function CentralNodes({ onOuvrir }: { onOuvrir: (id: IdRubrique) => void }) {
     <div className="absolute inset-0 pointer-events-none hidden md:block">
       {/* 1. HOLENA — le logo tourne lentement */}
       <button onClick={() => onOuvrir('guerande')} className={`${SQUARE} top-[27%] left-[60%] bg-black/40 pointer-events-auto hover:border-[#AFDDFF] transition-colors`} style={{ animationDelay: '1500ms' }}>
-        <img src={couvertureLivre} alt="Couverture du livre « Une autre fois dans l’Ouest »" className="w-full h-full object-cover object-[50%_14%]" />
+        <img src={photoGuerande} alt="Marais salants de Guérande au coucher du soleil, avec les tas de sel" className="w-full h-full object-cover" />
       </button>
       <NodeLabel
         title="[ HOLENA — GUÉRANDE ]"
