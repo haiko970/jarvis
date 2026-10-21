@@ -9,15 +9,16 @@ import logoHolenaHd from './assets/logo-holena-hd.png';
 
 // Taille de l'image du logo (en pixels) et position de ses cercles
 const LOGO_L = 1040;
-const CENTRE_X = 631.5;
-const CENTRE_Y = 536;
+const CENTRE_X = 641.5;
+const CENTRE_Y = 543;
 // Les anneaux du logo : rayon, nombre de paires de fils, épaisseur du trait
-const ANNEAUX = [
-  { r: 70.5, paires: 3, trait: 1.4 },
-  { r: 150.5, paires: 4, trait: 1.4 },
-  { r: 193.5, paires: 4, trait: 1.4 },
-  { r: 239, paires: 5, trait: 1.4 },
-  { r: 482, paires: 6, trait: 1 },
+const ANNEAUX: { r: number; paires: number; trait: number; cx?: number; cy?: number }[] = [
+  { r: 76, paires: 3, trait: 1.4 },
+  { r: 162.5, paires: 4, trait: 1.4 },
+  { r: 209.5, paires: 4, trait: 1.4 },
+  { r: 259, paires: 5, trait: 1.4 },
+  // le grand arc fin n'a pas tout à fait le même centre que les autres cercles
+  { r: 546.3, paires: 6, trait: 1.2, cx: 520.9, cy: 550.3 },
 ];
 
 // Moments clés (en millisecondes)
@@ -82,8 +83,6 @@ export default function Intro({ onSortie, onFin }: Props) {
       // Où se trouvent les cercles du logo à l'écran
       const r = boite.current!.getBoundingClientRect();
       const echelle = r.width / LOGO_L;
-      const cx = r.left + CENTRE_X * echelle;
-      const cy = r.top + CENTRE_Y * echelle;
       const loin = Math.hypot(L, H) * 0.75; // assez loin pour partir hors de l'écran
 
       const phase = t * 0.0032; // le mouvement de torsion, comme dans la vidéo
@@ -122,8 +121,8 @@ export default function Intro({ onSortie, onFin }: Props) {
             const amp = (b === 0 ? 1 : 0.8) * ampl * env;
             const ecart = amp * Math.sin((s / onde) * Math.PI * 2 + phase + p.decalage + decal);
             const angFinal = ang + ecart / Math.max(dist, 1);
-            const x = cx + Math.cos(angFinal) * dist;
-            const y = cy + Math.sin(angFinal) * dist;
+            const x = r.left + (a.cx ?? CENTRE_X) * echelle + Math.cos(angFinal) * dist;
+            const y = r.top + (a.cy ?? CENTRE_Y) * echelle + Math.sin(angFinal) * dist;
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           }
@@ -148,7 +147,7 @@ export default function Intro({ onSortie, onFin }: Props) {
 
       <div
         ref={boite}
-        className="relative w-[min(70vw,60vh,460px)] aspect-[1040/940] logo-sortie"
+        className="relative w-[min(70vw,60vh,460px)] aspect-[1040/1102] logo-sortie"
         style={{ animationDelay: `${DEBUT_SORTIE}ms` }}
       >
         {/* le logo apparaît avec un éclat quand les fils ont formé les cercles */}
