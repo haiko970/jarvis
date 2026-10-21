@@ -204,8 +204,10 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   // siteLance : le site commence ses animations (pendant que le logo s'efface)
   // introFinie : l'écran d'intro est retiré
-  const [siteLance, setSiteLance] = useState(false);
-  const [introFinie, setIntroFinie] = useState(false);
+  // Un lien qui ouvre directement une sous-page (#chili, #collectif…) saute l'intro
+  const lienDirect = ['collectif', 'guerande', 'perou', 'chili', 'label'].includes(window.location.hash.slice(1));
+  const [siteLance, setSiteLance] = useState(lienDirect);
+  const [introFinie, setIntroFinie] = useState(lienDirect);
   // On attend que la page soit vraiment à l'écran avant de lancer l'intro
   const [pageVisible, setPageVisible] = useState(!document.hidden);
   // collectifOuvert : la sous-page « Le collectif HOLENA » (adresse de la page + #collectif)
@@ -231,6 +233,27 @@ export default function App() {
     setRubrique(id);
     try { history.replaceState(null, '', `#${id}`); } catch { /* sans importance */ }
   };
+  // Référencement : le titre de l'onglet et la description changent selon la page ouverte
+  useEffect(() => {
+    const r = RUBRIQUES.find((x) => x.id === rubrique);
+    const titre = r
+      ? `${r.titre} — HOLENA, Les Ponts du Sel`
+      : collectifOuvert
+        ? 'Le collectif HOLENA : les experts — Les Ponts du Sel'
+        : 'HOLENA — Les Ponts du Sel | Collectif d’experts du sel de Guérande';
+    const description = r
+      ? r.chapo
+      : collectifOuvert
+        ? 'Les sept experts du collectif HOLENA : SIQO, coopération internationale, stratégie économique, patrimoine immatériel, ethnohistoire, muséographie et valorisation visuelle.'
+        : null;
+    document.title = titre;
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) {
+      if (!meta.getAttribute('data-origine')) meta.setAttribute('data-origine', meta.getAttribute('content') ?? '');
+      meta.setAttribute('content', description ?? meta.getAttribute('data-origine') ?? '');
+    }
+  }, [rubrique, collectifOuvert]);
+
   const fermerRubrique = () => {
     setRubrique(null);
     try { history.replaceState(null, '', ' '); } catch { /* sans importance */ }
@@ -250,6 +273,8 @@ export default function App() {
 
   return (
     <section className="relative w-full h-screen overflow-hidden bg-black">
+      {/* Titre principal pour Google et les lecteurs d'écran (invisible à l'œil), présent dès le chargement */}
+      <h1 className="sr-only">HOLENA — Les Ponts du Sel : collectif d’experts du sel de Guérande, du Pérou et du Chili</h1>
       {pageVisible && !introFinie && <Intro onSortie={() => setSiteLance(true)} onFin={() => setIntroFinie(true)} />}
       {siteLance && (
       <>
