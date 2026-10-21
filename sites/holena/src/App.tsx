@@ -160,12 +160,12 @@ function CentralNodes({ onOuvrir }: { onOuvrir: (id: IdRubrique) => void }) {
         onClick={() => onOuvrir('label')}
         text="L’action « Les Ponts du Sel : Chili » reçoit le label national La Mer en Commun."
         maxW="max-w-[190px]"
-        className="top-[14%] left-[68%]"
+        className="top-[14%] left-[72%]"
         anim="anim-slide-right"
         delay={1900}
       />
 
-      <ConnectorLine x1="38%" y1="17%" x2="52%" y2="17%" delay={1200} />
+      <ConnectorLine x1="45%" y1="17%" x2="52%" y2="17%" delay={1200} />
       <ConnectorLine x1="52%" y1="17%" x2="60%" y2="27%" delay={1400} />
       <ConnectorLine x1="32%" y1="58%" x2="20%" y2="74%" delay={1500} />
       <ConnectorLine x1="20%" y1="74%" x2="6%" y2="74%" delay={1700} />
@@ -290,7 +290,7 @@ export default function App() {
         src={logoHolenaFond}
         alt=""
         aria-hidden="true"
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(70vw,60vh,460px)] aspect-[1040/1102] opacity-[0.16] pointer-events-none"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(70vw,60vh,460px)] aspect-[1040/1102] opacity-[0.10] pointer-events-none"
       />
 
       <div className="relative z-10 w-full h-full">
@@ -331,7 +331,7 @@ export default function App() {
             <span className="hidden sm:inline">REVOIR L'INTRO</span>
           </button>
 
-          <div className="hidden 2xl:flex items-center gap-[12px] ml-[32px] anim-slide-right" style={{ animationDelay: '600ms' }}>
+          <div className="hidden min-[1760px]:flex items-center gap-[12px] ml-[32px] anim-slide-right" style={{ animationDelay: '600ms' }}>
             <MapPin className="w-[15px] h-[15px] text-white" strokeWidth={1.5} />
             <span className="font-manrope text-white text-[13px] leading-[15.6px] whitespace-nowrap">Guérande, France</span>
             <span className="font-manrope text-[#AFDDFF] text-[13px] leading-[15.6px] whitespace-nowrap">[ EN COURS ]</span>
@@ -405,7 +405,7 @@ export default function App() {
 
         {/* La citation, en petit et en italique, à la place du grand titre */}
         <blockquote
-          className="font-graphik italic text-white/90 font-normal leading-[1.35] absolute anim-fade-up text-[17px] sm:text-[19px] md:text-[22px] top-[170px] sm:top-[190px] md:top-[208px] left-5 md:left-[35px] max-w-[300px] sm:max-w-[380px] md:max-w-[420px]"
+          className="font-graphik italic text-white/90 font-normal leading-[1.35] absolute anim-fade-up text-[17px] sm:text-[19px] md:text-[22px] top-[170px] sm:top-[190px] md:top-[calc(14%+112px)] left-5 md:left-[35px] max-w-[300px] sm:max-w-[380px] md:max-w-[420px]"
           style={{ animationDelay: '400ms' }}
         >
           « Quand le vent souffle, certains construisent des murs, d’autres fabriquent des moulins. »
@@ -415,7 +415,7 @@ export default function App() {
         <CentralNodes onOuvrir={ouvrirRubrique} />
 
         <div className="absolute bottom-5 md:bottom-[35px] left-5 md:left-[35px] right-5 md:right-[35px] flex flex-col md:flex-row items-start md:items-end justify-between gap-5 md:gap-0 pointer-events-none">
-          <div className="flex flex-col sm:flex-row items-start gap-[10px]">
+          <div className="flex flex-col md:flex-row items-start gap-[10px]">
           <a
             href={PAGE_PROJET}
             target="_blank"
@@ -424,7 +424,7 @@ export default function App() {
             style={{ animationDelay: '900ms' }}
           >
             <span className="text-black text-[16px] leading-none">&#10022;</span>
-            <span className="font-manrope text-black text-[12px] md:text-[13px] leading-[15.6px] uppercase tracking-wide">
+            <span className="font-manrope text-black text-[12px] md:text-[13px] leading-[15.6px] uppercase tracking-wide whitespace-nowrap">
               Découvrir les Ponts du Sel
             </span>
           </a>
@@ -434,13 +434,13 @@ export default function App() {
             style={{ animationDelay: '1000ms' }}
           >
             <span className="text-[#AFDDFF] text-[16px] leading-none">&#10022;</span>
-            <span className="font-manrope text-white text-[12px] md:text-[13px] leading-[15.6px] uppercase tracking-wide">
+            <span className="font-manrope text-white text-[12px] md:text-[13px] leading-[15.6px] uppercase tracking-wide whitespace-nowrap">
               Souscrire au livre · 10 €
             </span>
           </button>
           </div>
 
-          <div className="relative max-w-[280px] hidden sm:block anim-slide-right pointer-events-auto" style={{ animationDelay: '1100ms' }}>
+          <div className="relative max-w-[280px] hidden lg:block anim-slide-right pointer-events-auto" style={{ animationDelay: '1100ms' }}>
             <span className="font-manrope text-black text-[13px] leading-[15.6px] bg-[#AFDDFF] px-[6px] py-[2px] inline-block mb-[10px]">
               AOP · IGP — UN ACCOMPAGNEMENT À 360°
             </span>
