@@ -3,7 +3,7 @@ import { ArrowUpRight, RotateCcw } from 'lucide-react';
 import logoHolenaHd from './assets/logo-holena-hd.png';
 import Intro from './Intro';
 import APropos from './APropos';
-import Planete from './Planete';
+import Escales from './Escales';
 
 // Page d'origine du projet
 const PAGE_PROJET = 'https://www.piaf.solutions/fr/2023/03/11/le-pont-du-sel/';
@@ -148,7 +148,7 @@ export default function App() {
               <span className="font-serif-sel italic text-[16px] text-[var(--sel)]">Holena</span> : « récolter le sel » en breton.
             </p>
             <div className="w-full md:w-auto md:ml-auto anim-fade-up" style={{ animationDelay: '1200ms' }}>
-              <Planete />
+              <Escales />
             </div>
           </div>
 
