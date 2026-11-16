@@ -375,19 +375,19 @@ if(GL){
 /* --- forme : une seule forme partagée par toutes les couleurs (mesures en cm) --- */
 const lathe=(pts,seg=44)=>new THREE.LatheGeometry(pts.map(p=>new THREE.Vector2(p[0],p[1])),seg);
 const CUP=[[1.25,-0.25],[1.7,0.1],[2.2,0.6],[2.4,1.0],[2.33,1.08],[2.0,0.8],[1.2,0.45],[0,0.35]];
-const TC=new THREE.Vector3(0,16.6,0), TR=3;                  // centre et rayon de la boule
+const TC=new THREE.Vector3(0,15.3,0), TR=3;                  // centre et rayon de la boule
 const G={
-  handle:lathe([[0,0.5],[1.1,0.42],[1.6,0.16],[1.8,0],[1.93,0.12],[1.98,0.5],[1.98,1.9],[1.9,2.25],[1.55,2.5],[1.15,2.7],[1.0,3.1],[1.0,3.8],[1.06,5.5],[1.16,7.8],[1.3,10],[1.38,11.3]],56),
+  handle:lathe([[0,0.5],[1.0,0.42],[1.5,0.16],[1.7,0],[1.82,0.1],[1.88,0.45],[1.88,2.5],[1.8,2.95],[1.5,3.2],[1.05,3.3],[0.98,3.5],[1.1,3.7],[1.0,3.95],[0.92,4.6],[0.92,6],[1.0,7.4],[1.15,8.7],[1.2,9.2]],56),
   cup:lathe(CUP),
-  sarado:new THREE.CylinderGeometry(1.36,1.36,6.3,44,1,false),
-  spike:lathe([[1.36,12.4],[1.2,13.3],[1.0,14.4],[0.75,16],[0.48,17.2],[0.2,17.8],[0,17.9]]),
+  sarado:new THREE.CylinderGeometry(1.4,1.4,5.1,44,1,false),
+  spike:lathe([[1.4,10.6],[1.25,11.3],[1.05,12.2],[0.8,13.8],[0.5,15.2],[0.2,15.9],[0,16]]),
   tama:new THREE.SphereGeometry(TR,56,36),
   bead:new THREE.SphereGeometry(0.2,14,10),
   sticker:new THREE.PlaneGeometry(1.25,1.25),
 };
-const SPTS=[[-2.4,16.0,1.68],[-2.95,14.3,2.9],[-2.6,11.3,3.2],[-1.5,8.2,2.4],[-0.3,7.6,1.5],[0.25,9.4,1.3],[0.15,11.4,1.4]].map(p=>new THREE.Vector3(...p));
+const SPTS=[[-2.4,14.7,1.68],[-2.9,13.2,2.7],[-2.5,10.2,3.0],[-1.5,7.2,2.3],[-0.3,6.4,1.5],[0.3,7.8,1.4],[0.15,9.6,1.5]].map(p=>new THREE.Vector3(...p));
 G.string=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(SPTS),60,0.075,8,false);
-const BX0=-3.1-1.08, BX1=3.1+1.08*0.87, BY0=0, BY1=TC.y+TR;   // boîte du kendama vu de face
+const BX0=-2.55-1.08*.875, BX1=2.55+1.08*.81, BY0=0, BY1=TC.y+TR;   // boîte du kendama vu de face
 const BW=BX1-BX0, BH=BY1-BY0, KA=BW/BH;
 const CEN=new THREE.Vector3((BX0+BX1)/2,(BY0+BY1)/2,0);
 document.documentElement.style.setProperty('--ka',KA.toFixed(4));
@@ -444,10 +444,10 @@ class Bar{
     const add=(g,mat,f)=>{ const me=new THREE.Mesh(g,mat); f&&f(me); inner.add(me); return me; };
     this.kenParts=[
       add(G.handle,this.ken),
-      add(G.sticker,this.stickM,o=>o.position.set(0,1.2,2.0)),                         // autocollant du pied
-      add(G.sarado,this.ken,o=>{o.rotation.z=Math.PI/2;o.position.set(0,12,0)}),
-      add(G.cup,this.ken,o=>{o.rotation.z=Math.PI/2;o.position.set(-3.1,12,0)}),        // grande coupelle
-      add(G.cup,this.ken,o=>{o.rotation.z=-Math.PI/2;o.position.set(3.1,12,0);o.scale.setScalar(.87)}),
+      add(G.sticker,this.stickM,o=>o.position.set(0,1.5,1.9)),                         // autocollant du pied
+      add(G.sarado,this.ken,o=>{o.rotation.z=Math.PI/2;o.position.set(0,10,0)}),
+      add(G.cup,this.ken,o=>{o.rotation.z=Math.PI/2;o.position.set(-2.55,10,0);o.scale.setScalar(.875)}),        // grande coupelle
+      add(G.cup,this.ken,o=>{o.rotation.z=-Math.PI/2;o.position.set(2.55,10,0);o.scale.setScalar(.81)}),
       add(G.spike,this.ken),
       add(G.string,this.strM),
       add(G.bead,this.strM,o=>o.position.copy(SPTS[SPTS.length-1])),
