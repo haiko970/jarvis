@@ -340,16 +340,17 @@ function cv2d(w,h){ const c=document.createElement('canvas'); c.width=w; c.heigh
 
 /* ============ les cinq kendamas ============ */
 const M=[
-  {name:'Noyer Brut',   col:'#b79474', tama:'#5d3d29', ken:'#d2ab7f', stripe:'#f1e3cd', str:'#f3ece2'},
-  {name:'Lilas Pop',    col:'#ab9ac4', tama:'#6b4fa6', ken:'#ecdcc3', stripe:'#ffffff', str:'#ffffff'},
-  {name:'Miel Doré',    col:'#d1ad6c', tama:'#b9721c', ken:'#f0dcb8', stripe:'#3b2a19', str:'#3b2a19'},
-  {name:'Menthe Glace', col:'#94bdb4', tama:'#2c8573', ken:'#eadfc9', stripe:'#ffffff', str:'#ffffff'},
-  {name:'Rose Fraise',  col:'#d396a7', tama:'#c23a5d', ken:'#f1ddc8', stripe:'#ffffff', str:'#ffffff'},
+  {name:'Pop Orange', col:'#e6b386', tama:'#f2761c'},
+  {name:'Pop Violet', col:'#ab9ac4', tama:'#7345b6'},
+  {name:'Pop Jaune',  col:'#e0cb78', tama:'#f5c713'},
+  {name:'Pop Vert',   col:'#93c5a2', tama:'#25a548'},
+  {name:'Pop Rose',   col:'#e2a2bc', tama:'#ea5c9e'},
 ];
+const WOOD='#dbb88f', BAND='#f5f2ec', STR='#19191b';
 const SPEC=[['Bois','hêtre'],['Poids','68 g'],['Tama','Ø 60 mm'],['Ficelle','40 cm'],['Peinture','grip']];
 const STEPS=[
   {h:'Du vrai<br>hêtre',          c:'Du bois massif, tourné. <br>Rien de caché dedans.', a:0},
-  {h:'Peinture<br>grip',  c:'Une finition grip. <br>La boule reste posée.',      a:180},
+  {h:'Peinture<br>mate',  c:'Une couleur, une bande blanche. <br>La boule accroche.',      a:180},
   {h:'Monté<br>le jour même',     c:'Ficelé et contrôlé à la main. <br>Prêt à jouer.',   a:360},
   {h:null,                        c:'Ø 60 mm, 68 g. <br>Fait pour durer.',               a:720},
 ];
@@ -374,16 +375,17 @@ if(GL){
 /* --- forme : une seule forme partagée par toutes les couleurs (mesures en cm) --- */
 const lathe=(pts,seg=44)=>new THREE.LatheGeometry(pts.map(p=>new THREE.Vector2(p[0],p[1])),seg);
 const CUP=[[1.25,-0.25],[1.7,0.1],[2.2,0.6],[2.4,1.0],[2.33,1.08],[2.0,0.8],[1.2,0.45],[0,0.35]];
-const TC=new THREE.Vector3(0,17.3,0), TR=3;                  // centre et rayon de la boule
+const TC=new THREE.Vector3(0,16.6,0), TR=3;                  // centre et rayon de la boule
 const G={
-  handle:lathe([[0,0.4],[1.2,0.3],[1.78,0.06],[1.92,0],[1.8,0.5],[1.28,1.35],[1.02,2.3],[0.93,5],[0.96,8.5],[1.1,10],[1.28,10.9],[1.28,11.3]]),
+  handle:lathe([[0,0.5],[1.1,0.42],[1.6,0.16],[1.8,0],[1.93,0.12],[1.98,0.5],[1.98,1.9],[1.9,2.25],[1.55,2.5],[1.15,2.7],[1.0,3.1],[1.0,3.8],[1.06,5.5],[1.16,7.8],[1.3,10],[1.38,11.3]],56),
   cup:lathe(CUP),
-  sarado:new THREE.CylinderGeometry(1.28,1.28,6.3,44,1,false),
-  spike:lathe([[1.28,12.5],[1.1,13.2],[0.9,14.2],[0.7,16.2],[0.45,17.6],[0.2,18.2],[0,18.3]]),
+  sarado:new THREE.CylinderGeometry(1.36,1.36,6.3,44,1,false),
+  spike:lathe([[1.36,12.4],[1.2,13.3],[1.0,14.4],[0.75,16],[0.48,17.2],[0.2,17.8],[0,17.9]]),
   tama:new THREE.SphereGeometry(TR,56,36),
-  bead:new THREE.SphereGeometry(0.24,14,10),
+  bead:new THREE.SphereGeometry(0.2,14,10),
+  sticker:new THREE.PlaneGeometry(1.25,1.25),
 };
-const SPTS=[[-2.4,16.7,1.68],[-2.9,14.8,2.9],[-2.6,11.5,3.2],[-1.5,8.2,2.3],[-0.3,7.6,1.4],[0.25,9.4,1.2],[0.15,11.4,1.32]].map(p=>new THREE.Vector3(...p));
+const SPTS=[[-2.4,16.0,1.68],[-2.95,14.3,2.9],[-2.6,11.3,3.2],[-1.5,8.2,2.4],[-0.3,7.6,1.5],[0.25,9.4,1.3],[0.15,11.4,1.4]].map(p=>new THREE.Vector3(...p));
 G.string=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(SPTS),60,0.075,8,false);
 const BX0=-3.1-1.08, BX1=3.1+1.08*0.87, BY0=0, BY1=TC.y+TR;   // boîte du kendama vu de face
 const BW=BX1-BX0, BH=BY1-BY0, KA=BW/BH;
@@ -393,38 +395,33 @@ document.documentElement.style.setProperty('--ka',KA.toFixed(4));
 /* --- textures par couleur --- */
 const TEX=[];
 function woodTex(m){
-  const [c,x]=cv2d(256,256), r=rng(m.name.length*77+5);
-  x.fillStyle=m.ken; x.fillRect(0,0,256,256);
-  for(let i=0;i<70;i++){ const px=r()*256, w=1+r()*5; x.fillStyle=`rgba(${r()<.5?'90,55,20':'255,240,215'},${.03+r()*.07})`; x.fillRect(px,0,w,256); }
+  const [c,x]=cv2d(512,512), r=rng(1234);
+  x.fillStyle=WOOD; x.fillRect(0,0,512,512);
+  // veines du hêtre : traits fins dans le sens de la longueur
+  for(let i=0;i<260;i++){ const px=r()*512, w=.6+r()*2.4, dark=r()<.7;
+    x.fillStyle=dark?`rgba(120,74,30,${.04+r()*.12})`:`rgba(255,238,205,${.05+r()*.1})`; x.fillRect(px,0,w,512); }
+  for(let i=0;i<500;i++){ x.fillStyle=`rgba(110,65,25,${.08+r()*.14})`; x.fillRect(r()*512,r()*512,1,3+r()*9); }
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=8; t.wrapS=t.wrapT=THREE.RepeatWrapping; return t;
 }
 function tamaTex(m,i){
   const W=1024,H=512,[c,x]=cv2d(W,H);
   x.fillStyle=m.tama; x.fillRect(0,0,W,H);
-  // reflet doux du haut vers le bas
-  const g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,'rgba(255,255,255,.10)'); g.addColorStop(.5,'rgba(255,255,255,0)'); g.addColorStop(1,'rgba(0,0,0,.14)');
-  x.fillStyle=g; x.fillRect(0,0,W,H);
-  // deux anneaux peints
-  x.fillStyle=m.stripe; x.fillRect(0,H*.655,W,H*.05); x.globalAlpha=.55; x.fillRect(0,H*.725,W,H*.014); x.globalAlpha=1;
-  // devant : le nom de la marque
-  x.textAlign='center'; x.textBaseline='middle'; x.fillStyle=m.stripe;
-  x.font='400 96px "Archivo Black"'; x.fillText('KROM',W*.25,H*.44);
-  x.font='500 21px "DM Mono"'; x.fillText(m.name.toUpperCase()+' · Ø 60 MM',W*.25,H*.575);
-  // dos : la fiche technique
-  const ink=mix(m.tama,'#1c1a1f',.78), px=W*.75, pw=270, py=H*.2, ph=H*.415;
-  x.fillStyle='rgba(255,255,255,.92)'; x.beginPath(); x.roundRect(px-pw/2,py,pw,ph,16); x.fill();
-  x.fillStyle=ink; x.font='400 30px "Archivo Black"'; x.fillText('FICHE',px,py+30);
-  x.fillRect(px-pw/2+20,py+52,pw-40,3);
-  SPEC.forEach((s,k)=>{ const y=py+76+k*27;
-    x.font=(k<2?'500':'400')+' 19px "DM Mono"';
-    x.textAlign='left'; x.fillText(s[0],px-pw/2+20,y); x.textAlign='right'; x.fillText(s[1],px+pw/2-20,y);
-    x.globalAlpha=.25; x.fillRect(px-pw/2+20,y+13,pw-40,1); x.globalAlpha=1; });
-  x.textAlign='center'; x.fillStyle=m.stripe; x.font='500 19px "DM Mono"'; x.fillText('TOURNÉ, PAS MOULÉ',px,H*.845);
-  x.font='500 17px "DM Mono"'; x.fillText('N° 0'+(i+1)+' / 05',px,H*.13);
+  // bas de la boule : bande blanche avec « KROM » répété tout autour
+  const y0=H*.715; x.fillStyle=BAND; x.fillRect(0,y0,W,H-y0);
+  x.fillStyle='#17171a'; x.textAlign='center'; x.textBaseline='middle'; x.font='400 36px "Archivo Black"';
+  for(let k=0;k<5;k++){ x.save(); x.translate((k+.5)*W/5,H*.775); x.scale(1.4,1); x.fillText('KROM',0,0); x.restore(); }
   // petit trou de la ficelle
-  x.fillStyle='rgba(20,12,8,.85)'; x.beginPath(); x.arc(W*.095,H*.555,7,0,7); x.fill();
+  x.fillStyle='rgba(20,12,8,.9)'; x.beginPath(); x.arc(W*.095,H*.555,6,0,7); x.fill();
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=8; return t;
 }
+function stickerTex(){
+  const [c,x]=cv2d(128,128);
+  x.lineJoin='round'; x.beginPath(); x.moveTo(14,22); x.lineTo(114,22); x.lineTo(64,112); x.closePath();
+  x.fillStyle='#fdfdfb'; x.fill(); x.lineWidth=9; x.strokeStyle='#2a8fc9'; x.stroke();
+  x.beginPath(); x.moveTo(44,42); x.lineTo(84,42); x.lineTo(64,78); x.closePath(); x.fillStyle='#1b1b1d'; x.fill();
+  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=8; return t;
+}
+let stickerT;
 let shadowTex;
 function mkShadowTex(){
   const [c,x]=cv2d(128,256), g=x.createRadialGradient(64,128,0,64,128,64);
@@ -438,15 +435,16 @@ const shadowGeo=new THREE.PlaneGeometry(1.25*BW,1.04*BH);
 class Bar{
   constructor(){
     const pm=o=>new THREE.MeshPhysicalMaterial(Object.assign({transparent:true,metalness:0,envMapIntensity:.42},o));
-    this.ken=pm({roughness:.55,clearcoat:.3,clearcoatRoughness:.4,side:THREE.DoubleSide});
-    this.tamaM=pm({roughness:.45,clearcoat:.5,clearcoatRoughness:.32});
-    this.strM=pm({roughness:.9});
+    this.ken=pm({roughness:.72,clearcoat:.06,clearcoatRoughness:.6,side:THREE.DoubleSide});
+    this.tamaM=pm({roughness:.68,clearcoat:.08,clearcoatRoughness:.6});
+    this.stickM=new THREE.MeshBasicMaterial({map:stickerT,transparent:true,depthWrite:false});
+    this.strM=pm({roughness:.9,color:STR});
     this.group=new THREE.Group(); this.group.rotation.order='ZYX';
     const inner=new THREE.Group(); inner.position.copy(CEN).multiplyScalar(-1); this.group.add(inner);
     const add=(g,mat,f)=>{ const me=new THREE.Mesh(g,mat); f&&f(me); inner.add(me); return me; };
     this.kenParts=[
       add(G.handle,this.ken),
-      add(G.cup,this.ken,o=>{o.rotation.x=Math.PI}),                                   // coupelle du bas
+      add(G.sticker,this.stickM,o=>o.position.set(0,1.2,2.0)),                         // autocollant du pied
       add(G.sarado,this.ken,o=>{o.rotation.z=Math.PI/2;o.position.set(0,12,0)}),
       add(G.cup,this.ken,o=>{o.rotation.z=Math.PI/2;o.position.set(-3.1,12,0)}),        // grande coupelle
       add(G.cup,this.ken,o=>{o.rotation.z=-Math.PI/2;o.position.set(3.1,12,0);o.scale.setScalar(.87)}),
@@ -454,15 +452,14 @@ class Bar{
       add(G.string,this.strM),
       add(G.bead,this.strM,o=>o.position.copy(SPTS[SPTS.length-1])),
     ];
-    this.kenParts[1].position.y=0.35;
     this.tama=add(G.tama,this.tamaM,o=>o.position.copy(TC));
     this.group.traverse(o=>o.userData.bar=this);
     this.shadowM=new THREE.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false});
     this.shadow=new THREE.Mesh(shadowGeo,this.shadowM); this.shadow.renderOrder=-1;
     this.model=-1; this.k=0;
   }
-  setModel(i){ if(i===this.model)return; this.model=i; this.ken.map=TEX[i].wood; this.tamaM.map=TEX[i].tama; this.strM.color.set(M[i].str); this.ken.needsUpdate=this.tamaM.needsUpdate=true; }
-  setOp(o){ this.ken.opacity=this.tamaM.opacity=this.strM.opacity=o; }
+  setModel(i){ if(i===this.model)return; this.model=i; this.ken.map=TEX[i].wood; this.tamaM.map=TEX[i].tama; this.ken.needsUpdate=this.tamaM.needsUpdate=true; }
+  setOp(o){ this.ken.opacity=this.tamaM.opacity=this.strM.opacity=this.stickM.opacity=o; }
 }
 
 /* ============ planche d'images (fabriquée à partir du modèle 3D) ============ */
@@ -491,7 +488,7 @@ async function buildSheet(){
   }else{
     // secours sans 3D : dessins simples
     for(let i=0;i<5;i++){ const [bx,by,bw,bh]=KB[i], m=M[i];
-      x.fillStyle=m.ken; x.fillRect(bx+bw*.38,by+bh*.5,bw*.24,bh*.5); x.fillRect(bx,by+bh*.52,bw,bh*.13);
+      x.fillStyle=WOOD; x.fillRect(bx+bw*.38,by+bh*.5,bw*.24,bh*.5); x.fillRect(bx,by+bh*.52,bw,bh*.13);
       x.fillStyle=m.tama; x.beginPath(); x.arc(bx+bw/2,by+bh*.15,bh*.148,0,7); x.fill();
       x.beginPath(); x.arc(BB[i][0]+bs/2,BB[i][1]+bs/2,bs*.48,0,7); x.fill(); }
   }
@@ -862,7 +859,7 @@ setTimeout(enter,9000);
 (async function init(){
   try{ await Promise.all(['400 20px "Archivo Black"','400 20px "DM Mono"','500 20px "DM Mono"','700 20px Inter'].map(f=>document.fonts.load(f))); }catch(e){}
   M.forEach((m,i)=>TEX.push({wood:woodTex(m),tama:tamaTex(m,i)}));
-  shadowTex=mkShadowTex();
+  shadowTex=mkShadowTex(); stickerT=stickerTex();
   await buildSheet();
   if(GL){ for(let i=0;i<11;i++)pool.push(new Bar()); trav=new Bar(); [...pool,trav].forEach(b=>{ scene.add(b.shadow); scene.add(b.group); b.group.visible=b.shadow.visible=false; }); }
   mkBits(); mkStorm(); mkShop(); mkBuilder();
