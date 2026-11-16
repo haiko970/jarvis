@@ -359,7 +359,7 @@ const M=[
   {name:'Pop Vert',   col:'#93c5a2', tama:'#25a548'},
   {name:'Pop Rose',   col:'#e2a2bc', tama:'#ea5c9e'},
 ];
-const WOOD='#dcb98c', BAND='#f5f2ec', STR='#19191b';
+const WOOD='#d2a875', BAND='#f5f2ec', STR='#19191b';
 const SPEC=[['Bois','hêtre'],['Poids','68 g'],['Tama','Ø 60 mm'],['Ficelle','40 cm'],['Peinture','grip']];
 const STEPS=[
   {h:'Du vrai<br>hêtre',          c:'Du bois massif, tourné. <br>Rien de caché dedans.', a:0},
@@ -383,16 +383,16 @@ if(GL){
   renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   const pm=new THREE.PMREMGenerator(renderer);
   scene.environment=pm.fromScene(new RoomEnvironment(),0.04).texture;
-  scene.add(new THREE.AmbientLight(0xffffff,0.3));
+  scene.add(new THREE.AmbientLight(0xffffff,0.42));
   scene.add(new THREE.HemisphereLight(0xffffff,0xe8c9a0,0.45));
   // lumière principale : elle projette de vraies ombres (la boule sur le manche)
   key=new THREE.DirectionalLight(0xfff4e6,1.5); key.castShadow=true;
   key.shadow.mapSize.set(2048,2048); key.shadow.bias=-0.0006; key.shadow.normalBias=1.2; key.shadow.radius=5;
   scene.add(key);
   // contre-jour : un liseré clair sur les bords
-  rim=new THREE.DirectionalLight(0xffffff,1.0); rim.position.set(900,500,-900); scene.add(rim);
+  rim=new THREE.DirectionalLight(0xffffff,0.45); rim.position.set(900,500,-900); scene.add(rim);
   // petite lumière qui suit la souris (ou tourne toute seule)
-  spot=new THREE.PointLight(0xffffff,0.5,0,0); spot.position.set(0,200,500); scene.add(spot);
+  spot=new THREE.PointLight(0xffffff,0.28,0,0); spot.position.set(0,200,500); scene.add(spot);
 }
 function shadowBounds(w,h){ if(!key)return; const c=key.shadow.camera;
   c.left=-w*.7; c.right=w*.7; c.top=h*.75; c.bottom=-h*.75; c.near=1; c.far=6000; c.updateProjectionMatrix();
@@ -422,15 +422,18 @@ document.documentElement.style.setProperty('--ka',KA.toFixed(4));
 /* --- textures par couleur --- */
 const TEX=[];
 function woodCanvas(bump){
-  const [c,x]=cv2d(1024,512), r=rng(1234);
-  x.fillStyle=bump?'#808080':WOOD; x.fillRect(0,0,1024,512);
-  if(!bump) for(let i=0;i<26;i++){ const px=r()*1024, w=30+r()*120, g=x.createLinearGradient(px,0,px+w,0), a=.05+r()*.07, col=r()<.5?'150,96,44':'255,236,200';
-    g.addColorStop(0,`rgba(${col},0)`); g.addColorStop(.5,`rgba(${col},${a})`); g.addColorStop(1,`rgba(${col},0)`); x.fillStyle=g; x.fillRect(px,0,w,512); }
-  // veines fines du hêtre, dans le sens de la longueur
-  for(let i=0;i<520;i++){ const px=r()*1024, w=.5+r()*1.6, d=r()<.72;
-    x.fillStyle=bump?`rgba(${d?'0,0,0':'255,255,255'},${.05+r()*.12})`:(d?`rgba(128,80,36,${.03+r()*.09})`:`rgba(255,240,212,${.04+r()*.08})`); x.fillRect(px,0,w,512); }
+  const W=1024,H=512,[c,x]=cv2d(W,H), r=rng(1234);
+  x.fillStyle=bump?'#808080':WOOD; x.fillRect(0,0,W,H);
+  // larges bandes de teinte : le bois n'est jamais d'une seule couleur
+  if(!bump) for(let i=0;i<34;i++){ const px=r()*W, w=24+r()*110, g=x.createLinearGradient(px,0,px+w,0), a=.1+r()*.14, col=r()<.6?'138,84,36':'246,222,180';
+    g.addColorStop(0,`rgba(${col},0)`); g.addColorStop(.5,`rgba(${col},${a})`); g.addColorStop(1,`rgba(${col},0)`); x.fillStyle=g; x.fillRect(px,0,w,H); }
+  // veines qui ondulent légèrement, dans le sens de la longueur
+  for(let i=0;i<420;i++){ const px=r()*W, d=r()<.75, amp=1+r()*5, f=.004+r()*.012, ph=r()*7;
+    x.lineWidth=.6+r()*1.8;
+    x.strokeStyle=bump?`rgba(${d?'0,0,0':'255,255,255'},${.1+r()*.22})`:(d?`rgba(112,66,26,${.08+r()*.2})`:`rgba(250,230,196,${.06+r()*.12})`);
+    x.beginPath(); for(let y=0;y<=H;y+=16){ const xx=px+Math.sin(y*f+ph)*amp; y?x.lineTo(xx,y):x.moveTo(xx,y); } x.stroke(); }
   // petits traits foncés typiques du hêtre
-  for(let i=0;i<900;i++){ x.fillStyle=bump?`rgba(0,0,0,${.15+r()*.2})`:`rgba(112,66,26,${.1+r()*.16})`; x.fillRect(r()*1024,r()*512,1,3+r()*10); }
+  for(let i=0;i<1500;i++){ x.fillStyle=bump?`rgba(0,0,0,${.2+r()*.3})`:`rgba(96,54,20,${.14+r()*.22})`; x.fillRect(r()*W,r()*H,1+r()*.6,3+r()*11); }
   const t=new THREE.CanvasTexture(c); t.anisotropy=8; t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(2,1);
   if(!bump)t.colorSpace=THREE.SRGBColorSpace; return t;
 }
@@ -468,8 +471,8 @@ const shadowGeo=new THREE.PlaneGeometry(1.25*BW,1.04*BH);
 class Bar{
   constructor(){
     const pm=o=>new THREE.MeshPhysicalMaterial(Object.assign({transparent:true,metalness:0,envMapIntensity:.42},o));
-    this.ken=pm({roughness:.62,clearcoat:.12,clearcoatRoughness:.55,side:THREE.DoubleSide,bumpMap:WOODB,bumpScale:.6,envMapIntensity:.6});
-    this.tamaM=pm({roughness:.5,clearcoat:.35,clearcoatRoughness:.42,sheen:.5,sheenRoughness:.5,sheenColor:new THREE.Color(0xffffff),envMapIntensity:.7});
+    this.ken=pm({roughness:.92,clearcoat:0,side:THREE.DoubleSide,bumpMap:WOODB,bumpScale:1.4,envMapIntensity:.22});
+    this.tamaM=pm({roughness:.95,clearcoat:0,sheen:.25,sheenRoughness:.8,sheenColor:new THREE.Color(0xffffff),envMapIntensity:.2});
     this.stickM=new THREE.MeshBasicMaterial({map:stickerT,transparent:true,depthWrite:false});
     this.strM=pm({roughness:.9,color:STR});
     this.group=new THREE.Group(); this.group.rotation.order='ZYX';
