@@ -1,0 +1,35 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "biga/index.html"
+        ],
+        "createdAt": "2026-11-17T16:37:55.924Z",
+        "reason": "Claude: light text sits on the cobalt tab indicator and cursor disc, a sibling layer the detector cannot see; cobalt vs #f4ebdb is about 8:1"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "biga/index.html"
+        ],
+        "createdAt": "2026-11-17T16:37:55.932Z",
+        "reason": "Claude: only hit is the tracked tagline inside the BIGA logo lockup on mobile, not body text"
+      },
+      {
+        "rule": "repeating-stripes-gradient",
+        "value": "*",
+        "files": [
+          "biga/index.html"
+        ],
+        "createdAt": "2026-11-17T16:37:55.939Z",
+        "reason": "Claude: corrugated cardboard flutes on the pizza-box edges are the material itself"
+      }
+    ]
+  }
+}
