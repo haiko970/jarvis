@@ -22,7 +22,7 @@
   --box:#C8A672;        /* carton des boîtes */
   --ink:#17130F;
   --muted:#5E5141;
-  --cobalt:#1F3FB0;     /* encre d'impression des boîtes */
+  --cobalt:#1A36A0;     /* encre d'impression des boîtes */
   --rule:rgba(23,19,15,.9);
   --ease:cubic-bezier(.2,.8,.2,1);
   --H:min(46vh,31vw);
@@ -38,13 +38,14 @@
 
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{background:var(--kraft);color:var(--ink);font-family:var(--sans);overflow:hidden;user-select:none;-webkit-user-select:none;
+body{background:var(--kraft);color:var(--ink);font-family:var(--sans);overflow:hidden;
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;-webkit-tap-highlight-color:transparent}
 ::selection{background:var(--cobalt);color:var(--kraft)}
 a{color:inherit;text-decoration:none}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 :focus-visible{outline:2px solid var(--cobalt);outline-offset:3px}
 @media (pointer:fine){html,body,button,a{cursor:none}}
+.shelf,.tabs,.arr,.ring,.cap,.logo{user-select:none;-webkit-user-select:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* grain de carton, posé sur toute la page */
@@ -60,7 +61,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .top .hours{justify-self:end;text-align:right}
 .logo{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--cobalt)}
 .logo b{font-family:var(--stamp);font-weight:900;font-size:36px;line-height:.82;letter-spacing:.05em;padding-left:.05em}
-.logo i{font-style:normal;font-family:var(--sans);font-weight:600;font-size:8.5px;letter-spacing:.3em;padding-left:.3em}
+.logo i{font-style:normal;font-family:var(--sans);font-weight:600;font-size:10px;letter-spacing:.26em;padding-left:.26em}
 .call:hover,.foot a:hover,.foot button:hover{background:var(--ink);color:var(--kraft)}
 .call,.foot a,.foot button{transition:background .3s var(--ease),color .3s var(--ease)}
 
@@ -123,6 +124,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .foot{position:fixed;left:32px;right:32px;bottom:26px;display:flex;justify-content:space-between;align-items:center;z-index:30}
 .foot .rt{display:flex;gap:10px}
 .foot .addr{line-height:1.5}
+@media (pointer:coarse){.box,.tabs button{position:relative}.box::before,.tabs button::before{content:"";position:absolute;left:0;right:0;top:-12px;bottom:-12px}}
 
 /* 8. curseur */
 .cur{position:fixed;left:0;top:0;width:58px;height:58px;margin:-29px 0 0 -29px;z-index:100;pointer-events:none;display:none}
@@ -143,7 +145,6 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .d-logo{position:absolute;left:0;right:0;top:0;height:84px;justify-content:center;pointer-events:none}
 .d-txt{align-self:center;max-width:520px;display:flex;flex-direction:column;gap:18px}
 .d-txt .m{width:auto;text-align:left}
-.d-sub{color:var(--cobalt)}
 .d-title{font-family:var(--serif);font-weight:400;font-size:clamp(44px,5.4vw,84px);line-height:1;letter-spacing:-.025em;font-variation-settings:"opsz" 72;padding-bottom:.08em}
 .d-meta{color:var(--muted)}
 .d-syn{font-family:var(--serif);font-size:17px;line-height:1.5;max-width:42ch;font-variation-settings:"opsz" 16}
@@ -157,6 +158,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .d-cta:hover{background:var(--cobalt);color:#F4EBDB}
 .d-post{align-self:center;justify-self:center;height:min(100%,78vh);max-width:100%;aspect-ratio:1/1}
 .d-post svg{display:block;width:100%;height:100%}
+.detail.photo .d-post{height:auto;width:min(100%,450px);aspect-ratio:auto}
+.detail.photo .d-post svg{height:auto;aspect-ratio:900/404}
 .d-note{margin-top:8px;color:var(--muted);text-align:right}
 .detail [data-view]{display:none}
 .detail[data-v="pizza"] [data-view="pizza"],.detail[data-v="infos"] [data-view="infos"]{display:block}
@@ -164,16 +167,17 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
 @media (max-width:767px){
   .top{height:64px;padding:0 16px}
-  .logo b{font-size:28px}.logo i{font-size:8.5px}
-  .top .hours,.call .long{display:none}
+  .logo b{font-size:28px}.logo i{font-size:10px;letter-spacing:.08em;padding-left:.08em}
+  .call .long,.foot .long{display:none}
+  .top .hours{position:absolute;left:0;right:0;top:72px;text-align:center;justify-self:stretch}
   .tabs{top:calc(50% - var(--H)/2 - 70px)}
   .tabs button{padding:0 8px}
   .tabs .long{display:none}
   .c-t{font-size:24px}
   .arr.l{left:6px}.arr.r{right:6px}
   .foot{left:16px;right:16px;bottom:18px}
-  .foot .addr{display:none}
-  .foot{justify-content:center}
+  .foot{flex-direction:column;gap:12px}
+  .foot .addr{white-space:normal;text-align:center;line-height:1.5;max-width:44ch}
   .detail{grid-template-columns:1fr;gap:24px;padding:84px 22px 40px;overflow-y:auto;align-content:start}
   .d-post{order:-1;height:auto;width:100%;max-width:46svh;justify-self:center}
   .d-title{font-size:42px}.d-syn{font-size:16px}
@@ -186,7 +190,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 <div class="grain" aria-hidden="true"></div>
 
 <header class="top">
-  <a class="call lbl box" href="tel:+33971519542">Appeler<span class="long">&nbsp;· 09 71 51 95 42</span></a>
+  <a class="call lbl box" href="tel:+33971519542"><span class="long">Appeler&nbsp;·&nbsp;</span>09 71 51 95 42</a>
   <h1 class="logo" aria-label="Biga, pizzeria au Pouliguen"><b>BIGA</b><i>PIZZERIA · LE POULIGUEN</i></h1>
   <p class="hours lbl">Mar–sam · 12h–13h30 · 18h30–21h30</p>
 </header>
@@ -215,7 +219,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 <button class="arr r" aria-label="Pizza suivante"><svg viewBox="0 0 18 10" aria-hidden="true"><path d="M13 1 L17 5 L13 9 M17 5 H1" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
 
 <footer class="foot">
-  <p class="addr lbl">20 bd de l’Atlantique · Le Pouliguen · Sur place ou à emporter</p>
+  <p class="addr lbl">20 bd de l’Atlantique · Le Pouliguen<span class="long"> · Sur place ou à emporter</span></p>
   <div class="rt">
     <a class="lbl box" href="https://www.instagram.com/biga_pizza_44510/" target="_blank" rel="noopener">Instagram</a>
     <button class="lbl box" data-infos>Le midi &amp; infos</button>
@@ -229,7 +233,6 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   <button class="d-close lbl box">Fermer</button>
   <div class="d-logo logo" aria-hidden="true"><b>BIGA</b><i>PIZZERIA · LE POULIGUEN</i></div>
   <div class="d-txt">
-    <div class="m"><span class="lbl d-sub" id="d-sub"></span></div>
     <div class="m"><h2 class="d-title" id="d-title"></h2></div>
     <div class="m"><span class="lbl d-meta" id="d-meta"></span></div>
     <div class="m" data-view="pizza"><p class="d-syn" id="d-syn"></p></div>
@@ -246,15 +249,15 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
         </filter>
         <mask id="inkm" maskUnits="userSpaceOnUse" x="-200" y="-200" width="1000" height="1000">
           <g filter="url(#ink)" fill="#fff">
-            <circle cx="190" cy="220" r="0"/><circle cx="430" cy="400" r="0"/><circle cx="320" cy="80" r="0"/>
+            <circle cx="300" cy="300" r="0"/><circle cx="430" cy="400" r="0"/><circle cx="320" cy="80" r="0"/>
             <circle cx="110" cy="500" r="0"/><circle cx="500" cy="170" r="0"/><circle cx="330" cy="560" r="0"/><circle cx="290" cy="310" r="0"/>
           </g>
         </mask>
-        <clipPath id="pc"><rect width="600" height="600" rx="4"/></clipPath>
+        <clipPath id="pc"><rect id="d-clip" width="600" height="600" rx="4"/></clipPath>
       </defs>
       <g clip-path="url(#pc)" mask="url(#inkm)">
-        <rect width="600" height="600" fill="#CDAB76"/>
-        <rect x="27" y="27" width="546" height="546" fill="none" stroke="#1F3FB0" stroke-width="2"/>
+        <rect id="d-bg" width="600" height="600" fill="#CDAB76"/>
+        <rect id="d-frame" x="27" y="27" width="546" height="546" fill="none" stroke="#1A36A0" stroke-width="2"/>
         <image id="d-img" x="0" y="0" width="600" height="600" preserveAspectRatio="xMidYMid slice"/>
       </g>
     </svg>
@@ -385,7 +388,7 @@ function pizzaSVG(p) {
 function wrap(S) {
   const fills = S.map(s => `<path d="${s.d}" fill="${s.fill}"${s.stroke ? ` stroke="${s.stroke}" stroke-width="${s.sw}" stroke-linecap="round"` : ""}${s.tf ? ` transform="${s.tf}"` : ""}/>`).join("");
   const lines = S.filter(s => s.line).map(s => `<path d="${s.d}"${s.tf ? ` transform="${s.tf}"` : ""}/>`).join("");
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="600" height="600">${fills}<g fill="none" stroke="${INK}" stroke-width=".55" stroke-linejoin="round" transform="translate(.7 .45)">${lines}</g></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="600" height="600">${fills}<g fill="none" stroke="${INK}" stroke-width=".55" stroke-linejoin="round" transform="translate(1.3 .9)">${lines}</g></svg>`;
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 }
 const ART = PIZZAS.map(pizzaSVG);
@@ -568,22 +571,29 @@ function frame(now) {
 const det = $(".detail"), img = $("#d-img"), blobs = [...det.querySelectorAll("mask circle")];
 const DELAYS = [0, 120, 220, 300, 360, 420, 180];
 let inkRAF = 0, opener = null;
+// photo : cadre paysage à sa taille d'origine (900 × 404) ; dessin : couvercle carré
+function poster(src, photo) {
+  const w = photo ? 900 : 600, h = photo ? 404 : 600;
+  $(".d-post svg").setAttribute("viewBox", `0 0 ${w} ${h}`);
+  for (const id of ["d-clip", "d-bg"]) { $("#" + id).setAttribute("width", w); $("#" + id).setAttribute("height", h); }
+  $("#d-frame").style.display = photo ? "none" : "";
+  det.classList.toggle("photo", photo);
+  img.setAttribute("href", src);
+  img.setAttribute("x", photo ? 0 : 60); img.setAttribute("y", photo ? 0 : 66);
+  img.setAttribute("width", photo ? 900 : 480); img.setAttribute("height", photo ? 404 : 480);
+}
 function fill(view) {
   det.dataset.v = view;
   if (view === "pizza") {
     const p = PIZZAS[active];
-    $("#d-sub").textContent = `N°${String(active + 1).padStart(2, "0")} · ${BASES[p.base]}`;
     $("#d-title").textContent = p.name;
-    $("#d-meta").textContent = `${fmtPrice(p.price)} · Sur place ou à emporter`;
+    $("#d-meta").textContent = `${fmtPrice(p.price)} · ${BASES[p.base]} · Sur place ou à emporter`;
     $("#d-syn").textContent = p.ing + ".";
     $("#d-cred").textContent = "Suppléments : burrata 5 €, œuf ou légume 1 €, viande ou fromage 1,50 €.";
     const ph = PHOTO[p.id];
-    img.setAttribute("href", ph || ART[active]);
-    img.setAttribute("x", ph ? 0 : 60); img.setAttribute("y", ph ? 0 : 66);
-    img.setAttribute("width", ph ? 600 : 480); img.setAttribute("height", ph ? 600 : 480);
+    poster(ph || ART[active], !!ph);
     $("#d-note").textContent = ph ? "La Parme, en photo" : "";
   } else {
-    $("#d-sub").textContent = "Mardi au samedi · 12h–13h30 · 18h30–21h30";
     $("#d-title").textContent = "Le midi & infos";
     $("#d-meta").textContent = "Formule du midi 11 € · une boisson et un sandwich";
     $("#d-list").innerHTML = [
@@ -592,9 +602,8 @@ function fill(view) {
       ["Légumes marinés", "pesto, stracciatella, tomates confites, poivrons, courgettes, olives, roquette"],
       ["Mortadelle", "pesto, stracciatella, mortadelle, tomates confites, roquette"],
     ].map(([n, i]) => `<div><b>${n}</b><em>8,50 €</em><span>${i}</span></div>`).join("");
-    $("#d-cred").textContent = "Sandwichs uniquement le midi. Formule tous les midis de la semaine. 20 boulevard de l’Atlantique, Le Pouliguen. Sur place ou à emporter.";
-    img.setAttribute("href", PHOTO.parme);
-    img.setAttribute("x", 0); img.setAttribute("y", 0); img.setAttribute("width", 600); img.setAttribute("height", 600);
+    $("#d-cred").textContent = "Sandwichs uniquement le midi. Formule tous les midis de la semaine. Ouvert du mardi au samedi, 12h–13h30 et 18h30–21h30. 20 boulevard de l’Atlantique, Le Pouliguen. Sur place ou à emporter.";
+    poster(PHOTO.parme, true);
     $("#d-note").textContent = "Chez Biga";
   }
 }
@@ -628,7 +637,7 @@ function openDetail(view = "pizza", fromEl = null) {
     inner.animate([{ transform: "translateY(110%)" }, { transform: "translateY(0)" }],
       { duration: reduce ? 1 : 900, delay: reduce ? 0 : 620 + i * 75, easing: "cubic-bezier(.2,.8,.2,1)", fill: "both" });
   });
-  const t0 = performance.now() + (reduce ? -5000 : 520);
+  const t0 = performance.now() + (reduce ? -5000 : 120);
   cancelAnimationFrame(inkRAF);
   const ink = now => {
     const el = now - t0;
