@@ -1,0 +1,334 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-17T16:52:06+00:00",
+  "title": "Design System: Biga",
+  "extensions": {
+    "colorMeta": {
+      "kraft": {
+        "role": "neutral",
+        "displayName": "Kraft Ground",
+        "canonical": "#D6BF98",
+        "tonalRamp": [
+          "oklch(15% 0.016 81)",
+          "oklch(26% 0.023 81)",
+          "oklch(37% 0.030 81)",
+          "oklch(48% 0.037 81)",
+          "oklch(59% 0.044 81)",
+          "oklch(70% 0.051 81)",
+          "oklch(82% 0.058 81)",
+          "oklch(95% 0.050 81)"
+        ]
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Open Sheet",
+        "canonical": "#E4D3B4",
+        "tonalRamp": [
+          "oklch(15% 0.011 83)",
+          "oklch(26% 0.015 83)",
+          "oklch(37% 0.020 83)",
+          "oklch(48% 0.026 83)",
+          "oklch(59% 0.031 83)",
+          "oklch(70% 0.037 83)",
+          "oklch(82% 0.043 83)",
+          "oklch(95% 0.042 83)"
+        ]
+      },
+      "box-kraft": {
+        "role": "neutral",
+        "displayName": "Box Board",
+        "canonical": "#C8A672",
+        "tonalRamp": [
+          "oklch(15% 0.028 78)",
+          "oklch(26% 0.037 78)",
+          "oklch(37% 0.047 78)",
+          "oklch(48% 0.056 78)",
+          "oklch(59% 0.066 78)",
+          "oklch(70% 0.076 78)",
+          "oklch(82% 0.073 78)",
+          "oklch(95% 0.061 78)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Printer's Ink",
+        "canonical": "#17130F",
+        "tonalRamp": [
+          "oklch(15% 0.010 67)",
+          "oklch(26% 0.009 67)",
+          "oklch(37% 0.008 67)",
+          "oklch(48% 0.007 67)",
+          "oklch(59% 0.006 67)",
+          "oklch(70% 0.005 67)",
+          "oklch(82% 0.005 67)",
+          "oklch(95% 0.005 67)"
+        ]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Faded Ink",
+        "canonical": "#5E5141",
+        "tonalRamp": [
+          "oklch(15% 0.021 73)",
+          "oklch(26% 0.024 73)",
+          "oklch(37% 0.028 73)",
+          "oklch(48% 0.029 73)",
+          "oklch(59% 0.026 73)",
+          "oklch(70% 0.022 73)",
+          "oklch(82% 0.018 73)",
+          "oklch(95% 0.013 73)"
+        ]
+      },
+      "cobalt": {
+        "role": "primary",
+        "displayName": "Cobalt Stamp Ink",
+        "canonical": "#1A36A0",
+        "tonalRamp": [
+          "oklch(15% 0.128 266)",
+          "oklch(26% 0.149 266)",
+          "oklch(37% 0.170 266)",
+          "oklch(48% 0.157 266)",
+          "oklch(59% 0.136 266)",
+          "oklch(70% 0.115 266)",
+          "oklch(82% 0.092 266)",
+          "oklch(95% 0.067 266)"
+        ]
+      },
+      "cream-print": {
+        "role": "neutral",
+        "displayName": "Cream Print",
+        "canonical": "#F4EBDB",
+        "tonalRamp": [
+          "oklch(15% 0.006 82)",
+          "oklch(26% 0.006 82)",
+          "oklch(37% 0.009 82)",
+          "oklch(48% 0.011 82)",
+          "oklch(59% 0.014 82)",
+          "oklch(70% 0.017 82)",
+          "oklch(82% 0.020 82)",
+          "oklch(95% 0.023 82)"
+        ]
+      },
+      "sauce-vermilion": {
+        "role": "tertiary",
+        "displayName": "Sauce Vermilion",
+        "canonical": "#C8402A",
+        "tonalRamp": [
+          "oklch(15% 0.096 32)",
+          "oklch(26% 0.117 32)",
+          "oklch(37% 0.139 32)",
+          "oklch(48% 0.160 32)",
+          "oklch(59% 0.171 32)",
+          "oklch(70% 0.150 32)",
+          "oklch(82% 0.127 32)",
+          "oklch(95% 0.101 32)"
+        ]
+      },
+      "basil-green": {
+        "role": "tertiary",
+        "displayName": "Basil Green",
+        "canonical": "#6F8A3C",
+        "tonalRamp": [
+          "oklch(15% 0.056 126)",
+          "oklch(26% 0.069 126)",
+          "oklch(37% 0.083 126)",
+          "oklch(48% 0.096 126)",
+          "oklch(59% 0.109 126)",
+          "oklch(70% 0.097 126)",
+          "oklch(82% 0.083 126)",
+          "oklch(95% 0.067 126)"
+        ]
+      },
+      "mozzarella-cream": {
+        "role": "tertiary",
+        "displayName": "Mozzarella Cream",
+        "canonical": "#F2E7CF",
+        "tonalRamp": [
+          "oklch(15% 0.008 86)",
+          "oklch(26% 0.009 86)",
+          "oklch(37% 0.013 86)",
+          "oklch(48% 0.017 86)",
+          "oklch(59% 0.021 86)",
+          "oklch(70% 0.025 86)",
+          "oklch(82% 0.030 86)",
+          "oklch(95% 0.033 86)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Pizza name on the open sheet."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Pizza name in the shelf caption."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Ingredient prose and infos on the open sheet."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Every boxed control, tab, hours, address and meta line."
+      },
+      "stamp": {
+        "displayName": "Stamp",
+        "purpose": "Box lettering: logo, spines, lid header and footer."
+      },
+      "script": {
+        "displayName": "Script",
+        "purpose": "The menu's 'Best pizza in town' only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "board",
+        "value": "0 30px 60px -28px rgba(30,18,6,.6)",
+        "purpose": "Under a box lid in the 3D shelf; chrome stays flat."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(.2,.8,.2,1)",
+        "purpose": "Hovers (0.3s), tab indicator (0.6s), caption ticker (650ms), cursor states."
+      },
+      {
+        "name": "ease-sheet",
+        "value": "cubic-bezier(.76,0,.18,1)",
+        "purpose": "Lid-to-sheet open (1050ms) and close (850ms) clip-path transition."
+      },
+      {
+        "name": "ink-reveal-stagger",
+        "value": "900ms, delay 620ms + 75ms per blot",
+        "purpose": "Ink-blot mask reveal of the illustration on the open sheet."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "1ms",
+        "purpose": "All durations collapse under prefers-reduced-motion; ticker swaps in place."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "max-width: 767px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Label Box",
+      "kind": "button",
+      "refersTo": "label-box",
+      "description": "Square 1px-ruled catalogue label used for every small control and link (Appeler, Instagram, Fermer).",
+      "html": "<a class=\"ds-label-box\" href=\"#\">Appeler · 09 71 51 95 42</a>",
+      "css": ".ds-label-box{display:inline-flex;align-items:center;height:21px;padding:0 8px;border:1px solid rgba(23,19,15,.9);color:var(--ink,#17130F);background:transparent;text-decoration:none;font-family:var(--sans,'Inter Tight',system-ui,sans-serif);font-weight:600;font-size:11px;line-height:1;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;transition:background .3s cubic-bezier(.2,.8,.2,1),color .3s cubic-bezier(.2,.8,.2,1)} .ds-label-box:hover{background:var(--ink,#17130F);color:var(--kraft,#D6BF98)} .ds-label-box:focus-visible{outline:2px solid var(--cobalt,#1A36A0);outline-offset:3px}"
+    },
+    {
+      "name": "Base Tabs",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Joined label boxes filtering the shelf by base; a cobalt block marks the active tab.",
+      "html": "<nav class=\"ds-tabs\"><button>Toutes</button><button class=\"on\">Base tomate</button><button>Base crème</button><button>Pesto &amp; épinard</button></nav>",
+      "css": ".ds-tabs{display:flex} .ds-tabs button{font-family:var(--sans,'Inter Tight',system-ui,sans-serif);font-weight:600;font-size:11px;line-height:1;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;height:23px;padding:0 11px;margin-left:-1px;border:1px solid rgba(23,19,15,.9);background:transparent;color:var(--ink,#17130F);cursor:pointer;transition:background .45s cubic-bezier(.2,.8,.2,1),color .45s cubic-bezier(.2,.8,.2,1)} .ds-tabs button.on{background:var(--cobalt,#1A36A0);color:#F4EBDB} .ds-tabs button:hover:not(.on){background:rgba(26,54,160,.1)} .ds-tabs button:focus-visible{outline:2px solid var(--cobalt,#1A36A0);outline-offset:3px}"
+    },
+    {
+      "name": "Call to Order",
+      "kind": "button",
+      "refersTo": "button-call",
+      "description": "The cobalt-ruled 44px call button on the open sheet; fills cobalt on hover.",
+      "html": "<a class=\"ds-call\" href=\"tel:+33971519542\">Appeler pour commander · 09 71 51 95 42</a>",
+      "css": ".ds-call{display:inline-flex;align-items:center;height:44px;padding:0 20px;border:1px solid var(--cobalt,#1A36A0);color:var(--cobalt,#1A36A0);text-decoration:none;font-family:var(--sans,'Inter Tight',system-ui,sans-serif);font-weight:600;font-size:11px;line-height:1;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;transition:background .3s cubic-bezier(.2,.8,.2,1),color .3s cubic-bezier(.2,.8,.2,1)} .ds-call:hover{background:var(--cobalt,#1A36A0);color:#F4EBDB} .ds-call:focus-visible{outline:2px solid var(--cobalt,#1A36A0);outline-offset:3px}"
+    },
+    {
+      "name": "Logo Stamp",
+      "kind": "custom",
+      "description": "Cobalt BIGA in Big Shoulders 900 over a tracked Inter Tight line.",
+      "html": "<div class=\"ds-logo\"><b>BIGA</b><i>PIZZERIA · LE POULIGUEN</i></div>",
+      "css": ".ds-logo{display:inline-flex;flex-direction:column;align-items:center;gap:4px;color:var(--cobalt,#1A36A0)} .ds-logo b{font-family:'Big Shoulders','Arial Narrow',sans-serif;font-weight:900;font-size:36px;line-height:.82;letter-spacing:.05em} .ds-logo i{font-style:normal;font-family:'Inter Tight',system-ui,sans-serif;font-weight:600;font-size:10px;letter-spacing:.26em}"
+    },
+    {
+      "name": "Box Spine",
+      "kind": "custom",
+      "description": "A pizza box on edge: board gradient, scalloped edges, stamped price, vertical cobalt name, base dot, BIGA stamp.",
+      "html": "<div class=\"ds-spine\"><span class=\"pr\">15€</span><span class=\"nm\">Pesto</span><span class=\"dot\"></span><span class=\"bg\">BIGA</span></div>",
+      "css": ".ds-spine{width:64px;height:420px;border-radius:2px;color:#1A36A0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:20px 0 18px;background:repeating-radial-gradient(circle at 50% -1px,transparent 0 1.6px,rgba(70,45,15,.55) 1.6px 2.4px) top/5px 4px repeat-x,repeating-radial-gradient(circle at 50% 5px,transparent 0 1.6px,rgba(70,45,15,.55) 1.6px 2.4px) bottom/5px 4px repeat-x,linear-gradient(90deg,#A9844F,#C9A670 22%,#CFAE79 60%,#B58F58);font-family:'Big Shoulders','Arial Narrow',sans-serif;transition:transform .5s cubic-bezier(.2,.8,.2,1)} .ds-spine:hover{transform:translateY(-6px)} .ds-spine .pr{font-weight:800;font-size:19px;line-height:1} .ds-spine .nm{flex:1;display:flex;align-items:center;writing-mode:vertical-rl;transform:rotate(180deg);font-weight:900;font-size:32px;letter-spacing:.06em;text-transform:uppercase;margin:14px 0} .ds-spine .dot{width:13px;height:13px;border-radius:50%;border:1px solid #17130F;background:#6F8A3C;margin-top:12px} .ds-spine .bg{font-weight:900;font-size:15px;letter-spacing:.12em;line-height:1;border:1px solid #1A36A0;padding:3px 3px 2px 4px}"
+    },
+    {
+      "name": "Box Lid",
+      "kind": "card",
+      "description": "The printed lid of the active box: cobalt frame, BIGA and script tagline, name and price stamped at the foot, board shadow.",
+      "html": "<div class=\"ds-lid\"><div class=\"fr\"></div><div class=\"hd\"><span>Biga</span><small>Best pizza in town</small></div><div class=\"ft\"><span>Noname</span><span>14€</span></div></div>",
+      "css": ".ds-lid{position:relative;width:320px;height:320px;border-radius:2px;color:#1A36A0;background:radial-gradient(120% 90% at 40% 35%,#D6B887,#C7A36D 70%,#B89260);box-shadow:0 30px 60px -28px rgba(30,18,6,.6);transform:rotate(-4.5deg);transition:transform .6s cubic-bezier(.2,.8,.2,1)} .ds-lid:hover{transform:rotate(0)} .ds-lid .fr{position:absolute;inset:4.5%;border:1px solid #1A36A0} .ds-lid .hd,.ds-lid .ft{position:absolute;left:8%;right:8%;display:flex;justify-content:space-between;align-items:baseline;font-family:'Big Shoulders','Arial Narrow',sans-serif;font-weight:900;line-height:1;text-transform:uppercase} .ds-lid .hd{top:7.5%;font-size:20px;letter-spacing:.08em} .ds-lid .hd small{font-family:'Caveat Brush',cursive;font-weight:400;text-transform:none;font-size:16px;letter-spacing:0} .ds-lid .ft{bottom:7%;font-size:27px;letter-spacing:.04em} .ds-lid .ft span:last-child{font-size:.7em}"
+    },
+    {
+      "name": "View Ring",
+      "kind": "button",
+      "refersTo": "ring-view",
+      "description": "42px cobalt-ruled round '+' marking the active lid.",
+      "html": "<button class=\"ds-ring\" aria-label=\"Voir la pizza\"><svg viewBox=\"0 0 13 13\" width=\"13\" height=\"13\"><path d=\"M6.5 0v13M0 6.5h13\" stroke=\"currentColor\" stroke-width=\"1.3\"/></svg></button>",
+      "css": ".ds-ring{width:42px;height:42px;border-radius:50%;border:1px solid #1A36A0;color:#1A36A0;background:rgba(228,211,180,.8);display:grid;place-items:center;cursor:pointer;transition:transform .4s cubic-bezier(.2,.8,.2,1)} .ds-ring:hover{transform:scale(1.12)} .ds-ring:focus-visible{outline:2px solid #1A36A0;outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Flexo-Printed Pizza Box",
+    "overview": "Everything on Biga is printed, not rendered. The page is a sheet of kraft cardboard; the only colours that touch it are the ones a one-colour flexo press and a cheap screen print would lay down: a near-black ink, a cobalt stamp ink, and, inside the lid illustrations only, sauce vermilion, mozzarella cream and basil green. Fibre grain sits over every surface (a fixed SVG turbulence layer in multiply), so even the open sheet reads as paper, never as a screen.\n\nDensity is low and the composition is fixed to the viewport: a thin bar of boxed labels at the top and bottom, the shelf of boxes across the middle, a caption beneath it. Hierarchy comes from material (spine, lid, sheet) and from three typographic voices, not from colour fills or cards. Motion is physical: boxes slide on the shelf, the active one turns out and tilts, the lid opens into a full sheet with an ink-blot reveal.",
+    "keyCharacteristics": [
+      "Kraft ground with a permanent grain layer; no flat white anywhere.",
+      "One printing ink per job: ink for information, cobalt for the brand and the call to order.",
+      "Boxed catalogue labels (1px ink rule, uppercase Inter Tight) as the only chrome.",
+      "Serif names and ingredient prose, condensed stamp lettering on the boxes.",
+      "Illustrations as offset screen prints: flat colour fills with the ink line knocked slightly out of register."
+    ],
+    "rules": [
+      {
+        "name": "The One Press Rule",
+        "body": "Interface text and chrome use only ink and cobalt on kraft. Cobalt marks the brand and the act of ordering; ink carries everything else.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink Stays in the Lid Rule",
+        "body": "Vermilion, basil and cream are illustration inks. They appear inside lid art and as the small base dot on a spine, and nowhere in the interface.",
+        "section": "colors"
+      },
+      {
+        "name": "The Sheet Owns the Faded Ink Rule",
+        "body": "Faded ink sits on the sheet (5.2:1), not on the kraft ground, where it drops to 4.3:1.",
+        "section": "colors"
+      },
+      {
+        "name": "The Three Voices Rule",
+        "body": "Serif for what a pizza is, tracked sans for how to find and reach it, stamp lettering for what is printed on cardboard. Do not swap them.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tagline Only Rule",
+        "body": "Caveat Brush sets the menu's own \"Best pizza in town\" and nothing else.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Chrome Rule",
+        "body": "Labels, tabs, buttons and the sheet carry no shadow. Only cardboard objects in the 3D shelf cast one.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** keep every surface on kraft or sheet with the grain layer over it.",
+      "**Do** set interface text in ink or cobalt only, and reserve cobalt for the brand mark, the active state, the ingredient line and calling to order.",
+      "**Do** draw controls as 1px-ruled square label boxes in Inter Tight 600 11px uppercase at 0.09em.",
+      "**Do** set pizza names and ingredient prose in Newsreader with the optical-size axis matched to size.",
+      "**Do** keep illustration inks (vermilion, basil, cream) inside lid art and spine base dots.",
+      "**Do** honour `prefers-reduced-motion` by collapsing durations to 1ms and dropping ticker slides.",
+      "**Do** keep a 44px target (or a 12px coarse-pointer hit extension) on every control."
+    ],
+    "donts": [
+      "**Don't** introduce white, grey or a second accent hue in the interface; the press has ink and cobalt.",
+      "**Don't** put faded ink (muted-ink) text on the kraft ground.",
+      "**Don't** add shadows, rounded corners or filled cards to chrome; only shelf boxes cast a shadow.",
+      "**Don't** use Caveat Brush for anything but \"Best pizza in town\".",
+      "**Don't** use Big Shoulders for prose or labels; it is box lettering."
+    ]
+  }
+}
