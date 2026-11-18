@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KV Freight Services</title>
+<link rel="preload" href="fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* Polices hébergées avec la page (sous-ensemble latin) */
+@font-face { font-family: "Anton"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url(fonts/anton-latin.woff2) format("woff2"); }
+@font-face { font-family: "Archivo"; font-style: normal; font-weight: 400 600; font-display: swap;
+  src: url(fonts/archivo-latin.woff2) format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url(fonts/jetbrainsmono-latin-400.woff2) format("woff2"); }
+
+:root {
+  --white: #fff;
+  --ink: #111;
+  --cobalt: #2f63ff;
+  --giant: #e9e9e9;
+  --u: min(calc(100vw / 1440), calc(100vh / 960));
+  color-scheme: light;
+}
+@media (max-width: 767px), (orientation: portrait) {
+  :root { --u: min(calc(100vw / 430), 1.4px); }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--white); }
+body {
+  background: var(--white);
+  color: var(--ink);
+  font-family: "Archivo", system-ui, sans-serif;
+  overflow-x: hidden;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Piste de défilement : sa hauteur est fixée par le JS */
+.track { position: relative; background: var(--white); height: 460vh; }
+
+/* Barre de navigation : défile avec la page */
+.nav {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: calc(22 * var(--u)) calc(26 * var(--u));
+}
+.nav .logo {
+  font-weight: 600; font-size: calc(30 * var(--u)); letter-spacing: -.06em;
+  line-height: 1; color: var(--ink); text-decoration: none;
+}
+.nav .links { display: flex; align-items: center; gap: calc(34 * var(--u)); }
+.nav .links a, .nav .pill {
+  font-weight: 500; font-size: calc(10 * var(--u)); text-transform: uppercase;
+  letter-spacing: .1em; color: var(--ink); text-decoration: none; white-space: nowrap;
+}
+.nav .pill {
+  border: 1px solid var(--ink); border-radius: 999px;
+  padding: calc(10 * var(--u)) calc(18 * var(--u));
+}
+.nav a:focus-visible, .band-pill:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 3px; }
+
+/* Scène collante : un seul écran */
+.scene {
+  --edge-px: 80vh;
+  --ph: 0;
+  position: sticky; top: 0;
+  height: 100vh; height: 100lvh;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(to bottom, var(--white) var(--edge-px), var(--ink) var(--edge-px));
+}
+
+/* 1. La vidéo, dimensionnée par le JS */
+.clip {
+  position: absolute; left: 0; top: 0; width: 100vw; height: 56.25vw;
+  object-fit: fill; display: block; background: transparent;
+  pointer-events: none;
+}
+
+/* 2. Lettres géantes, derrière le camion grâce au mode « darken » */
+.giant {
+  position: absolute; left: 0; top: var(--edge-px);
+  font-family: "Anton", Impact, sans-serif; font-weight: 400;
+  font-size: calc(330 * var(--u)); line-height: .8;
+  color: var(--giant); white-space: nowrap; text-transform: uppercase;
+  mix-blend-mode: darken;
+  transform: translate3d(100vw, -100%, 0);
+  will-change: transform;
+  pointer-events: none; user-select: none;
+}
+
+/* 3. Compteur de vitesse */
+.speed {
+  position: absolute; left: calc(26 * var(--u)); top: calc(52 * var(--u)); z-index: 5;
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 400;
+  font-size: calc(10.5 * var(--u)); letter-spacing: .04em; color: var(--ink);
+  opacity: var(--ph); transition: opacity .5s ease;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 4. Bande noire : de l'horizon final jusqu'en bas */
+.band {
+  position: absolute; left: 0; right: 0; top: var(--edge-px); bottom: 0; z-index: 4;
+  color: var(--white);
+}
+.band-pill {
+  position: absolute; left: 50%; bottom: calc(36 * var(--u));
+  transform: translate(-50%, calc((1 - var(--ph)) * 24px));
+  opacity: var(--ph);
+  transition: opacity .6s ease, transform .6s cubic-bezier(.2,.7,.2,1);
+  border: 1px solid rgba(255,255,255,.55); border-radius: 999px;
+  padding: calc(10 * var(--u)) calc(20 * var(--u));
+  font-weight: 500; font-size: calc(10 * var(--u)); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--white); text-decoration: none; white-space: nowrap;
+}
+
+/* La bande défilante */
+.strip {
+  position: absolute; left: 0; top: calc(76 * var(--u));
+  display: flex; align-items: flex-start; gap: calc(120 * var(--u));
+  transform: translate3d(100vw, 0, 0);
+  will-change: transform;
+}
+.lead { display: flex; align-items: flex-start; gap: calc(64 * var(--u)); flex: none; }
+.lead h2 {
+  font-family: "Anton", Impact, sans-serif; font-weight: 400;
+  font-size: calc(64 * var(--u)); line-height: .98; text-transform: uppercase;
+  white-space: nowrap; color: var(--white);
+}
+.lead h2 .blue { color: var(--cobalt); }
+.lead .copy {
+  width: calc(250 * var(--u)); flex: none;
+  display: grid; gap: calc(12 * var(--u)); padding-top: calc(4 * var(--u));
+}
+.lead .copy p {
+  font-size: calc(12 * var(--u)); line-height: 1.5; color: rgba(255,255,255,.62);
+}
+
+.cards { display: flex; flex: none; }
+.card {
+  width: calc(270 * var(--u)); flex: none;
+  padding: 0 calc(30 * var(--u));
+  border-left: 1px solid rgba(255,255,255,.12);
+  --s: -40%;
+}
+.card:first-child { border-left: 0; }
+.card svg {
+  width: calc(38 * var(--u)); height: calc(38 * var(--u)); display: block;
+  margin-bottom: calc(22 * var(--u));
+  fill: none; stroke: var(--white); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round;
+}
+.card h3, .card p {
+  background-image: linear-gradient(90deg,
+    var(--white) calc(var(--s) - 34%),
+    var(--cobalt) calc(var(--s) - 6%),
+    transparent calc(var(--s) + 26%));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.card h3 {
+  font-family: "Anton", Impact, sans-serif; font-weight: 400;
+  font-size: calc(26 * var(--u)); line-height: 1.02; text-transform: uppercase;
+  margin-bottom: calc(14 * var(--u));
+}
+.card p { font-size: calc(12.4 * var(--u)); line-height: 1.5; }
+
+.rec-driver { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+/* Téléphones et écrans en portrait */
+@media (max-width: 767px), (orientation: portrait) {
+  .giant { font-size: calc(180 * var(--u)); }
+  .speed { font-size: 11px; left: 20px; top: 22px; }
+  .nav .follow { display: none; }
+  .nav .links { gap: calc(18 * var(--u)); }
+  .strip { top: calc(44 * var(--u)); gap: calc(56 * var(--u)); padding-left: 22px; }
+  .lead { flex-direction: column; gap: calc(22 * var(--u)); }
+  .lead h2 { font-size: calc(46 * var(--u)); }
+  .lead .copy { width: calc(300 * var(--u)); }
+  .lead .copy p { font-size: calc(13 * var(--u)); }
+  .card { width: calc(250 * var(--u)); }
+  .card p { font-size: calc(13 * var(--u)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .speed, .band-pill { transition: none; }
+}
+</style>
+</head>
+<body>
+<div class="track" id="track">
+  <header class="nav">
+    <a class="logo" href="#" aria-label="KV home">KV</a>
+    <nav class="links" aria-label="Main">
+      <a href="#">&rarr; Menu</a>
+      <a class="follow" href="#">Follow</a>
+      <a class="pill" href="#">Work with us</a>
+    </nav>
+  </header>
+
+  <section class="scene" id="scene" aria-label="KV freight services">
+    <video class="clip" id="clip" muted playsinline preload="auto" disablepictureinpicture
+      poster="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/2307e4bf-be39-42b4-b579-e168aeccabf0.jpg"
+      aria-hidden="true"></video>
+
+    <div class="giant" id="giant" aria-hidden="true">Our services</div>
+
+    <div class="speed" id="speed" aria-hidden="true"><span id="kmh">00</span> KM/H</div>
+
+    <div class="band">
+      <div class="strip" id="strip">
+        <div class="lead">
+          <h2>Everything your<br>freight needs.<br><span class="blue">Under one group.</span></h2>
+          <div class="copy">
+            <p>From air to sea, from customs clearance to the last mile, we bring decades of practice to every freight discipline.</p>
+            <p>One integrated network means one partner, one point of contact and full visibility from origin to destination.</p>
+          </div>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <svg viewBox="0 0 38 38" aria-hidden="true"><path d="M17 5.5c0-1.4.9-2.5 2-2.5s2 1.1 2 2.5V15l12 7v3.2l-12-3.6v7.3l3.8 2.8V34L19 32.6 15.2 34v-2.3l3.8-2.8v-7.3L7 25.2V22l10-7z" transform="translate(-0 0)"/></svg>
+            <h3>Air<br>freight</h3>
+            <p>Express, priority and deferred options across global lanes, booked and tracked end to end.</p>
+          </article>
+          <article class="card">
+            <svg viewBox="0 0 38 38" aria-hidden="true"><path d="M4 23h30l-3.5 7.5H8.5z"/><path d="M9 23v-6h20v6"/><path d="M14 17v-5h8v5"/><path d="M17 12V7"/><path d="M3 34c2 0 2.5-1 4-1s2 1 4 1 2.5-1 4-1 2 1 4 1 2.5-1 4-1 2 1 4 1 2.5-1 4-1 2 1 4 1"/></svg>
+            <h3>Ocean<br>freight</h3>
+            <p>FCL and LCL sailings on every major trade lane, with carrier choice based on cost and transit time.</p>
+          </article>
+          <article class="card">
+            <svg viewBox="0 0 38 38" aria-hidden="true"><path d="M23 3H9a2 2 0 0 0-2 2v28a2 2 0 0 0 2 2h20a2 2 0 0 0 2-2V11z"/><path d="M23 3v8h8"/><path d="M12 15h10M12 20h14"/><path d="m13 27 3.5 3.5L24 23"/></svg>
+            <h3>Customs<br>brokerage</h3>
+            <p>Licensed in-house brokers for classification, duties and inspections, so goods clear first time.</p>
+          </article>
+          <article class="card">
+            <svg viewBox="0 0 38 38" aria-hidden="true"><path d="M3 15 19 5l16 10v19H3z"/><path d="M9 34V20h20v14"/><path d="M9 25h20M9 30h20"/><path d="M16 12.5h6"/></svg>
+            <h3>Warehousing<br>and 3PL</h3>
+            <p>Bonded and general storage, pick and pack, and distribution that plugs straight into transport.</p>
+          </article>
+          <article class="card">
+            <svg viewBox="0 0 38 38" aria-hidden="true"><path d="M19 2v8"/><path d="M15.5 10h7v3h-7z"/><path d="M19 13v3.5a3 3 0 1 1-3 3"/><path d="M19 22.5 9 27M19 22.5 29 27"/><path d="M7 27h24v8H7z"/><path d="M15 27v8M23 27v8"/></svg>
+            <h3>Project<br>cargo</h3>
+            <p>Oversized and heavy-lift moves, engineered, permitted and escorted from factory to foundation.</p>
+          </article>
+        </div>
+      </div>
+
+      <a class="band-pill" href="#">Our services</a>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // --- Réglages ---------------------------------------------------------
+  const SRC_1080 = "https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/409763c0-95f4-49d3-a601-dc564d55072b.mp4";
+  const SRC_720  = "https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/b3718419-7a0a-478d-bfb0-0ff8bef7f3f7.mp4";
+  const CLIP_W = 1920, CLIP_H = 1080;
+  const CLIP_DUR = 4.04;          // durée connue du plan
+  const EDGE_END = 0.448;         // bord de la bande noire à la fin du plan
+  const A = 2.4;                  // écrans de défilement pour le plan
+  const SETTLED_Q = 0.94;
+
+  const track = document.getElementById("track");
+  const scene = document.getElementById("scene");
+  const video = document.getElementById("clip");
+  const giant = document.getElementById("giant");
+  const strip = document.getElementById("strip");
+  const kmh   = document.getElementById("kmh");
+  const cards = Array.from(strip.querySelectorAll(".card"));
+
+  const clamp = (v, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
+  const params = new URLSearchParams(location.search);
+  const REC = params.get("rec") === "1";
+  const TEST_SRC = params.get("src"); // pour tester avec un autre fichier
+
+  // --- Chargement de la vidéo (jamais jouée, seulement positionnée) -----
+  const src = TEST_SRC || (window.innerWidth <= 900 ? SRC_720 : SRC_1080);
+  video.muted = true;
+  video.src = src;
+  video.load();
+
+  // --- Mesures ------------------------------------------------------------
+  let vw = 0, vh = 0, sceneH = 0, B = 1, stripW = 0, lettersW = 0, cardLefts = [];
+
+  function frameClip() {
+    vw = document.documentElement.clientWidth;
+    vh = window.innerHeight;
+    sceneH = scene.clientHeight || vh;
+    const portrait = vw < 768 || vw <= sceneH;
+    let w, h, left, top;
+    if (portrait) {
+      w = vw * 1.55;
+      h = w * CLIP_H / CLIP_W;
+      left = vw / 2 - 0.4 * w;
+      top = 0.36 * sceneH - EDGE_END * h;
+    } else {
+      const s = Math.max(vw / CLIP_W, sceneH / CLIP_H);
+      w = CLIP_W * s; h = CLIP_H * s;
+      left = (vw - w) / 2; top = (sceneH - h) / 2;
+    }
+    Object.assign(video.style, { width: w + "px", height: h + "px", left: left + "px", top: top + "px" });
+    scene.style.setProperty("--edge-px", (top + EDGE_END * h).toFixed(2) + "px");
+  }
+
+  function measure() {
+    frameClip();
+    stripW = strip.scrollWidth;
+    lettersW = giant.offsetWidth;
+    // positions des cartes dans la bande (sans la translation)
+    cardLefts = cards.map(c => {
+      let x = 0, el = c;
+      while (el && el !== strip) { x += el.offsetLeft; el = el.offsetParent; }
+      return x;
+    });
+    B = (stripW + 0.45 * vw) / vw * 1.1;
+    track.style.height = ((1 + A + B) * vh).toFixed(0) + "px";
+  }
+
+  // --- État ---------------------------------------------------------------
+  let cur = 0, target = 0;
+  let speed = 0, lastY = window.scrollY, lastT = performance.now();
+  let lastPh = -1, lastKmh = "";
+  let recSpeed = null;
+
+  const duration = () => (isFinite(video.duration) && video.duration > 0 ? video.duration : CLIP_DUR);
+
+  function seek() {
+    if (video.readyState < 1 || video.seeking) return;
+    if (Math.abs(video.currentTime - cur) > 1 / 60) video.currentTime = cur;
+  }
+  video.addEventListener("seeked", seek);
+  video.addEventListener("loadedmetadata", seek);
+
+  function setKmh(v) {
+    const t = String(Math.min(99, Math.round(v))).padStart(2, "0");
+    if (t !== lastKmh) { kmh.textContent = t; lastKmh = t; }
+  }
+
+  // Place tout selon la position de défilement y
+  function render(y, exact) {
+    const q = clamp(y / (A * vh));
+    target = q * (duration() - 1 / 48);
+    if (exact) cur = target;
+    else {
+      cur += (target - cur) * 0.2;
+      if (Math.abs(target - cur) < 1e-4) cur = target;
+    }
+    seek();
+
+    const ph = q >= SETTLED_Q ? 1 : 0;
+    if (ph !== lastPh) { scene.style.setProperty("--ph", ph); lastPh = ph; }
+
+    const r = clamp((y - A * vh) / (B * vh));
+    const sx = vw - r * (stripW + 0.45 * vw);
+    strip.style.transform = `translate3d(${sx.toFixed(2)}px,0,0)`;
+    giant.style.transform = `translate3d(${(vw - r * (lettersW + vw)).toFixed(2)}px,-100%,0)`;
+
+    for (let i = 0; i < cards.length; i++) {
+      const left = sx + cardLefts[i];
+      const s = clamp((0.98 - left / vw) / 0.3, -0.4, 1.6) * 100;
+      cards[i].style.setProperty("--s", s.toFixed(2) + "%");
+    }
+    return cur;
+  }
+
+  // --- Boucle principale ---------------------------------------------------
+  function tick(now) {
+    const y = window.scrollY;
+    if (recSpeed === null) {
+      const dt = Math.max(1, now - lastT);
+      const inst = Math.abs(y - lastY) / (dt / 1000) / 32;
+      speed += (inst - speed) * 0.12;
+      if (speed < 0.05) speed = 0;
+      setKmh(speed);
+    }
+    lastY = y; lastT = now;
+    if (!REC || !recDriven) render(y, false);
+    requestAnimationFrame(tick);
+  }
+
+  // --- Mode enregistrement (?rec=1) ---------------------------------------
+  let recAnim = null, recDriven = false;
+  if (REC) {
+    document.documentElement.style.scrollBehavior = "auto";
+    const driver = document.createElement("div");
+    driver.className = "rec-driver";
+    document.body.appendChild(driver);
+    recAnim = driver.animate([
+      { opacity: 0, offset: 0 },
+      { opacity: 0, offset: 0.04, easing: "cubic-bezier(.4,.05,.55,.95)" },
+      { opacity: 1, offset: 0.96 },
+      { opacity: 1, offset: 1 }
+    ], { duration: 11000, fill: "forwards" });
+
+    const maxScroll = () => Math.max(0, track.offsetHeight - vh);
+    const progressAt = (t) => {
+      recAnim.currentTime = clamp(t, 0, 11) * 1000;
+      return parseFloat(getComputedStyle(driver).opacity) || 0;
+    };
+
+    // Lecture libre : l'animation fait défiler la page
+    const follow = () => {
+      if (recDriven) return;
+      const p = parseFloat(getComputedStyle(driver).opacity) || 0;
+      window.scrollTo(0, p * maxScroll());
+      if (recAnim.playState !== "finished") requestAnimationFrame(follow);
+    };
+    requestAnimationFrame(follow);
+
+    // Enregistreur image par image : déterministe
+    window.__recTime = (v, t) => {
+      recDriven = true;
+      recAnim.pause();
+      const dt = 1 / 24;
+      const m = maxScroll();
+      const p0 = progressAt(t - dt), p1 = progressAt(t);
+      const y = p1 * m;
+      window.scrollTo(0, y);
+      recSpeed = Math.abs(p1 - p0) * m / dt / 32;
+      setKmh(recSpeed);
+      const time = render(y, true);
+      const vid = v || video;
+      if (vid && vid.readyState >= 1 && Math.abs(vid.currentTime - time) > 1e-3) vid.currentTime = time;
+      return time;
+    };
+  }
+
+  // --- Démarrage ----------------------------------------------------------
+  let resizeRaf = 0;
+  const onResize = () => {
+    cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(measure);
+  };
+  window.addEventListener("resize", onResize);
+  window.addEventListener("orientationchange", onResize);
+  if ("ResizeObserver" in window) new ResizeObserver(onResize).observe(strip);
+
+  measure();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
