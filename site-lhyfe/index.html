@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lhyfe — Hydrogène vert</title>
+<meta name="description" content="De l'électrolyse à la livraison : l'hydrogène vert, de la source jusqu'à vous. Maquette de démonstration.">
+<link rel="preload" href="assets/fonts/anton.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* ---------- Polices (hébergées localement, jeu latin) ---------- */
+@font-face{font-family:"Anton";src:url(assets/fonts/anton.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Archivo";src:url(assets/fonts/archivo.woff2) format("woff2");font-weight:400 600;font-display:swap}
+@font-face{font-family:"JetBrains Mono";src:url(assets/fonts/jetbrains-mono.woff2) format("woff2");font-weight:400;font-display:swap}
+
+/* ---------- Couleurs et unité ---------- */
+:root{
+  --white:#fff; --ink:#111; --cobalt:#2f63ff; --giant:#e9e9e9;
+  --u:1px;            /* écrit par le JS : min(100vw/1440, 100vh/960) */
+  --edge-px:50vh;     /* bord final de la bande noire, écrit par le JS */
+  --split:60vh;       /* ligne blanc/noir derrière la vidéo */
+  --ph:0;             /* 1 quand le camion est posé */
+  --sx:100vw; --gx:100vw;
+}
+*{box-sizing:border-box}
+html{background:#fff;-webkit-text-size-adjust:100%}
+body{margin:0;background:#fff;color:var(--ink);font-family:"Archivo",system-ui,sans-serif;font-weight:400;overflow-x:clip}
+a{color:inherit;text-decoration:none}
+
+/* ================= ACTE 1 : manutention + services ================= */
+.track{position:relative;background:#fff}
+.nav{position:absolute;z-index:30;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;
+  padding:calc(30*var(--u)) calc(40*var(--u))}
+.logo{font-weight:600;font-size:calc(30*var(--u));letter-spacing:-.06em;line-height:1}
+.nav-r{display:flex;align-items:center;gap:calc(34*var(--u))}
+.nav-r a{font-weight:500;font-size:calc(10*var(--u));text-transform:uppercase;letter-spacing:.1em}
+.nav-r .outline{border:1px solid var(--ink);border-radius:999px;padding:calc(11*var(--u)) calc(20*var(--u))}
+.nav-r a:hover{color:var(--cobalt)}
+
+.scene{position:sticky;top:0;height:100vh;height:100lvh;overflow:hidden;isolation:isolate;
+  background:linear-gradient(#fff 0 var(--split),#111 var(--split) 100%)}
+.scene video{position:absolute;left:0;top:0;display:block;pointer-events:none}
+
+.giant{position:absolute;left:0;top:var(--edge-px);margin:0;font-family:"Anton",sans-serif;font-weight:400;
+  font-size:calc(330*var(--u));line-height:.8;color:var(--giant);white-space:nowrap;mix-blend-mode:darken;
+  transform:translate3d(var(--gx),calc(-100% + .06em),0);will-change:transform;pointer-events:none;user-select:none}
+
+.speed{position:absolute;left:calc(26*var(--u));top:calc(52*var(--u));font-family:"JetBrains Mono",monospace;
+  font-size:calc(10.5*var(--u));letter-spacing:.04em;color:var(--ink);opacity:var(--ph);transition:opacity .45s}
+
+.band{position:absolute;left:0;right:0;top:var(--edge-px);bottom:0;overflow:hidden}
+.strip{position:absolute;top:calc(76*var(--u));left:0;display:flex;align-items:flex-start;gap:calc(120*var(--u));
+  color:#fff;transform:translate3d(var(--sx),0,0);will-change:transform}
+.lead{display:flex;gap:calc(64*var(--u));flex:none}
+.lead h2{margin:0;font-family:"Anton",sans-serif;font-weight:400;font-size:calc(64*var(--u));line-height:.98;
+  text-transform:uppercase;white-space:nowrap}
+.lead h2 .c{color:var(--cobalt)}
+.lead .copy{width:calc(250*var(--u));flex:none;font-size:calc(12*var(--u));line-height:1.5;color:rgba(255,255,255,.62)}
+.lead .copy p{margin:0 0 1em}
+.cards{display:flex;flex:none}
+.card{--s:-40%;width:calc(270*var(--u));padding:0 calc(30*var(--u));border-left:1px solid rgba(255,255,255,.12);flex:none}
+.card:first-child{border-left:0}
+.card svg{width:calc(38*var(--u));height:calc(38*var(--u));display:block;margin-bottom:calc(26*var(--u));
+  fill:none;stroke:#fff;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.card h3,.card p{background:linear-gradient(90deg,#fff calc(var(--s) - 34%),var(--cobalt) calc(var(--s) - 6%),transparent calc(var(--s) + 26%));
+  -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.card h3{margin:0 0 calc(14*var(--u));font-family:"Anton",sans-serif;font-weight:400;font-size:calc(26*var(--u));
+  line-height:1.02;text-transform:uppercase}
+.card p{margin:0;font-size:calc(12.4*var(--u));line-height:1.5}
+
+.pill{position:absolute;left:50%;bottom:calc(36*var(--u));border:1px solid rgba(255,255,255,.55);color:#fff;border-radius:999px;
+  padding:calc(11*var(--u)) calc(22*var(--u));font-weight:500;font-size:calc(10*var(--u));letter-spacing:.1em;text-transform:uppercase;
+  opacity:var(--ph);transform:translate(-50%,calc((1 - var(--ph))*24px));transition:opacity .5s,transform .5s;white-space:nowrap}
+
+/* ---------- Téléphones et écrans en portrait ---------- */
+.is-phone .nav{padding:20px 20px}
+.is-phone .nav-r{gap:16px}
+.is-phone .nav-r .follow{display:none}
+.is-phone .logo{font-size:26px}
+.is-phone .nav-r a{font-size:10px}
+.is-phone .nav-r .outline{padding:9px 14px}
+.is-phone .giant{font-size:calc(180*var(--u))}
+.is-phone .speed{font-size:11px;left:20px;top:22px}
+.is-phone .strip{top:calc(44*var(--u));gap:calc(56*var(--u));padding-left:22px}
+.is-phone .lead{flex-direction:column;gap:calc(22*var(--u))}
+.is-phone .lead h2{font-size:calc(46*var(--u))}
+.is-phone .lead .copy{width:calc(300*var(--u));font-size:calc(13*var(--u))}
+.is-phone .card{width:calc(250*var(--u))}
+.is-phone .card h3{font-size:calc(26*var(--u))}
+.is-phone .card p{font-size:calc(13*var(--u))}
+
+/* ================= Transition vers le port ================= */
+.bridge{background:#111;color:#fff;padding:calc(140*var(--u)) calc(40*var(--u)) calc(160*var(--u));position:relative}
+.kicker{font-family:"JetBrains Mono",monospace;font-size:calc(11*var(--u));letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.bridge h2{font-family:"Anton",sans-serif;font-weight:400;text-transform:uppercase;font-size:calc(120*var(--u));line-height:.9;margin:calc(20*var(--u)) 0 calc(36*var(--u))}
+.bridge h2 .c{color:var(--cobalt)}
+.bridge p{max-width:calc(520*var(--u));font-size:calc(15*var(--u));line-height:1.55;color:rgba(255,255,255,.7);margin:0}
+.is-phone .bridge{padding:90px 22px 110px}
+.is-phone .bridge h2{font-size:calc(64*var(--u))}
+.is-phone .bridge p,.is-phone .kicker{font-size:14px}
+.is-phone .kicker{font-size:11px}
+
+/* ================= ACTE 2 : le port en 3D ================= */
+.port-track{position:relative;background:#fff}
+.port{position:sticky;top:0;height:100vh;height:100lvh;overflow:hidden;background:#fff}
+.port canvas{position:absolute;inset:0;width:100%!important;height:100%!important;display:block}
+.port .speed{opacity:1;z-index:2}
+.steps{position:absolute;z-index:2;left:calc(40*var(--u));bottom:calc(46*var(--u));width:min(calc(420*var(--u)),80vw);height:calc(170*var(--u))}
+.step{position:absolute;left:0;bottom:0;background:rgba(255,255,255,.94);padding:calc(20*var(--u)) calc(24*var(--u)) calc(22*var(--u));border-radius:4px;box-shadow:0 10px 40px rgba(0,0,0,.12);opacity:0;transform:translateY(18px);transition:opacity .5s,transform .5s;pointer-events:none}
+.step.on{opacity:1;transform:none}
+.step .n{font-family:"JetBrains Mono",monospace;font-size:calc(11*var(--u));color:var(--cobalt);letter-spacing:.06em}
+.step h3{font-family:"Anton",sans-serif;font-weight:400;text-transform:uppercase;font-size:calc(46*var(--u));line-height:.95;margin:calc(8*var(--u)) 0 calc(12*var(--u));color:var(--ink)}
+.step p{margin:0;font-size:calc(13*var(--u));line-height:1.5;color:#444;max-width:calc(360*var(--u))}
+.progress{position:absolute;z-index:2;right:calc(40*var(--u));bottom:calc(52*var(--u));display:flex;gap:6px}
+.progress i{display:block;width:calc(34*var(--u));height:2px;background:rgba(17,17,17,.15);overflow:hidden;position:relative}
+.progress i b{position:absolute;inset:0;background:var(--ink);transform-origin:left;transform:scaleX(0)}
+.is-phone .steps{left:20px;right:20px;width:auto;bottom:30px;height:200px}
+.is-phone .step h3{font-size:36px}
+.is-phone .step p{font-size:14px;max-width:none}
+.is-phone .step .n{font-size:11px}
+.is-phone .progress{right:auto;left:20px;bottom:auto;top:50px}
+.is-phone .progress i{width:24px}
+
+/* ================= Chiffres, sites, contact ================= */
+.sec{padding:calc(130*var(--u)) calc(40*var(--u))}
+.sec-dark{background:#111;color:#fff}
+.sec h2{font-family:"Anton",sans-serif;font-weight:400;text-transform:uppercase;font-size:calc(88*var(--u));line-height:.92;margin:calc(18*var(--u)) 0 calc(70*var(--u))}
+.sec h2 .c{color:var(--cobalt)}
+.sec-dark .kicker{color:rgba(255,255,255,.55)}
+.sec:not(.sec-dark) .kicker{color:#777}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(255,255,255,.14)}
+.stat{padding:calc(34*var(--u)) calc(30*var(--u)) calc(40*var(--u)) 0;border-bottom:1px solid rgba(255,255,255,.14)}
+.stat b{display:block;font-family:"Anton",sans-serif;font-weight:400;font-size:calc(96*var(--u));line-height:1;letter-spacing:.005em}
+.stat b small{font-size:.42em;margin-left:.12em;color:var(--cobalt)}
+.stat span{display:block;margin-top:calc(12*var(--u));font-size:calc(13*var(--u));line-height:1.5;color:rgba(255,255,255,.62);max-width:calc(300*var(--u))}
+.sites{list-style:none;margin:0;padding:0;border-top:1px solid #111}
+.site{display:grid;grid-template-columns:1.3fr 1fr .6fr 2fr;gap:calc(24*var(--u));align-items:baseline;padding:calc(26*var(--u)) 0;border-bottom:1px solid #ddd;transition:background .25s,padding .25s}
+.site:hover{background:#f6f7fb;padding-left:calc(14*var(--u))}
+.site .nm{font-family:"Anton",sans-serif;font-size:calc(34*var(--u));text-transform:uppercase;line-height:1}
+.site .pl,.site .ds{font-size:calc(13*var(--u));color:#555;line-height:1.5}
+.site .mw{font-family:"JetBrains Mono",monospace;font-size:calc(14*var(--u))}
+.tag{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:calc(9.5*var(--u));letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 8px;border-radius:999px;border:1px solid currentColor;margin-left:10px;vertical-align:middle;color:var(--cobalt)}
+.tag.grey{color:#999}
+.cta{background:var(--cobalt);color:#fff;padding:calc(130*var(--u)) calc(40*var(--u)) calc(50*var(--u))}
+.cta h2{font-family:"Anton",sans-serif;font-weight:400;text-transform:uppercase;font-size:calc(150*var(--u));line-height:.88;margin:0 0 calc(50*var(--u))}
+.cta .row{display:flex;gap:calc(50*var(--u));align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+.cta p{max-width:calc(460*var(--u));font-size:calc(15*var(--u));line-height:1.55;margin:0}
+.btn{display:inline-flex;align-items:center;gap:12px;background:#fff;color:#111;border-radius:999px;padding:calc(18*var(--u)) calc(30*var(--u));
+  font-weight:600;font-size:calc(12*var(--u));letter-spacing:.1em;text-transform:uppercase;transition:transform .2s}
+.btn:hover{transform:translateY(-2px)}
+.foot{margin-top:calc(110*var(--u));padding-top:calc(22*var(--u));border-top:1px solid rgba(255,255,255,.35);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  font-size:calc(11*var(--u));color:rgba(255,255,255,.8)}
+.is-phone .sec{padding:80px 22px}
+.is-phone .sec h2{font-size:calc(52*var(--u));margin-bottom:40px}
+.is-phone .stats{grid-template-columns:1fr 1fr}
+.is-phone .stat{padding-right:12px}
+.is-phone .stat b{font-size:calc(58*var(--u))}
+.is-phone .stat span,.is-phone .site .pl,.is-phone .site .ds{font-size:13px}
+.is-phone .site{grid-template-columns:1fr auto;gap:6px 12px}
+.is-phone .site .nm{font-size:26px}
+.is-phone .site .pl,.is-phone .site .ds{grid-column:1/-1}
+.is-phone .site .mw{grid-row:1;grid-column:2;font-size:13px}
+.is-phone .tag{font-size:9px}
+.is-phone .cta{padding:90px 22px 30px}
+.is-phone .cta h2{font-size:calc(76*var(--u))}
+.is-phone .cta p,.is-phone .btn{font-size:14px}
+.is-phone .btn{padding:16px 24px;font-size:12px}
+.is-phone .foot{font-size:11px;margin-top:70px}
+@media (prefers-reduced-motion:reduce){.step,.pill,.speed{transition:none}}
+</style>
+</head>
+<body>
+
+<!-- ================= ACTE 1 ================= -->
+<section class="track" id="track">
+  <nav class="nav">
+    <a class="logo" href="#">Lhyfe</a>
+    <div class="nav-r">
+      <a href="#chiffres">→ Menu</a>
+      <a class="follow" href="#contact">Nous suivre</a>
+      <a class="outline" href="#contact">Travailler avec nous</a>
+    </div>
+  </nav>
+
+  <div class="scene" id="scene">
+    <video id="clip" muted playsinline preload="auto" disablepictureinpicture
+      poster="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/2307e4bf-be39-42b4-b579-e168aeccabf0.jpg"></video>
+
+    <p class="giant" id="giant" aria-hidden="true">HYDROGÈNE VERT</p>
+
+    <div class="speed" id="speed1">00 KM/H</div>
+
+    <div class="band">
+      <div class="strip" id="strip">
+        <div class="lead">
+          <h2>L'hydrogène vert<br>de la source<br><span class="c">jusqu'à vous.</span></h2>
+          <div class="copy">
+            <p>De l'eau, du vent, du soleil : nous produisons un hydrogène 100&nbsp;% renouvelable par électrolyse, au plus près des sources d'énergie.</p>
+            <p>Un seul partenaire pour produire, stocker et livrer, de nos sites jusqu'aux usines, aux stations et aux ports d'Europe.</p>
+          </div>
+        </div>
+        <div class="cards">
+          <article class="card">
+            <svg viewBox="0 0 38 38"><path d="M19 36V17"/><path d="M15 36h8"/><circle cx="19" cy="14" r="2"/><path d="M19 12V2.5c2 2.5 2.6 6 .8 9.6"/><path d="M20.7 15.2l8.4 4.7c-1 -3 -3.6 -5.4 -7.4 -5.9"/><path d="M17.3 15.2l-8.3 4.8c3-.8 6.2-2.4 8.2-5.5"/></svg>
+            <h3>Production<br>renouvelable</h3>
+            <p>Électrolyse de l'eau alimentée par l'éolien et le solaire, sur des sites reliés directement aux parcs.</p>
+          </article>
+          <article class="card">
+            <svg viewBox="0 0 38 38"><rect x="2" y="10" width="22" height="15" rx="1"/><path d="M7 10v15M12 10v15M17 10v15"/><path d="M24 15h6l5 5v5h-11z"/><circle cx="9" cy="29" r="3"/><circle cx="29" cy="29" r="3"/></svg>
+            <h3>Livraison<br>en conteneurs</h3>
+            <p>Une flotte de conteneurs haute pression et des transporteurs spécialisés, partout en Europe.</p>
+          </article>
+          <article class="card">
+            <svg viewBox="0 0 38 38"><path d="M2 30c3 0 3-2 6-2s3 2 6 2 3-2 6-2 3 2 6 2 3-2 6-2 2 1 4 1.5"/><path d="M8 25h22l-3-5H11z"/><rect x="14" y="13" width="9" height="7"/><path d="M27 20V4M24 6l3-2 3 2"/></svg>
+            <h3>Hydrogène<br>en mer</h3>
+            <p>Produire au large, au pied des éoliennes : une première mondiale testée au large de la côte atlantique.</p>
+          </article>
+          <article class="card">
+            <svg viewBox="0 0 38 38"><path d="M9 3h14l7 7v25H9z"/><path d="M23 3v7h7"/><path d="M14 22l4 4 7-8"/><path d="M14 15h6"/></svg>
+            <h3>Origine<br>certifiée</h3>
+            <p>Un hydrogène certifié RFNBO, avec la traçabilité de chaque kilo, de la production à la livraison.</p>
+          </article>
+          <article class="card">
+            <svg viewBox="0 0 38 38"><path d="M3 35V18l8 5v-5l8 5v-5l8 5V6h6v29z"/><path d="M3 35h32"/><path d="M8 29h3M15 29h3M22 29h3"/></svg>
+            <h3>Sur mesure<br>pour l'industrie</h3>
+            <p>Volumes, pression, cadence : une offre adaptée à l'industrie, à la mobilité lourde et aux ports.</p>
+          </article>
+        </div>
+      </div>
+      <div class="pill">Nos services</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= Transition ================= -->
+<section class="bridge">
+  <div class="kicker">Étape suivante · Le transport</div>
+  <h2>Prochain arrêt :<br><span class="c">le port.</span></h2>
+  <p>Le conteneur est chargé. Le camion prend la route vers le terminal portuaire, où une grue le dépose sur un porte-conteneurs, direction le large et les éoliennes en mer.</p>
+</section>
+
+<!-- ================= ACTE 2 : le port en 3D ================= -->
+<section class="port-track" id="portTrack">
+  <div class="port" id="port">
+    <div class="speed" id="speed2">00 KM/H</div>
+    <div class="progress" id="progress"><i><b></b></i><i><b></b></i><i><b></b></i><i><b></b></i><i><b></b></i></div>
+    <div class="steps">
+      <div class="step" data-a="0" data-b=".27"><div class="n">01 / 05 — Sur la route</div><h3>Des éoliennes<br>jusqu'au quai</h3><p>Le conteneur quitte le site de production, alimenté par le parc éolien voisin, et file vers le terminal.</p></div>
+      <div class="step" data-a=".27" data-b=".42"><div class="n">02 / 05 — Au terminal</div><h3>Le camion se place<br>sous la grue</h3><p>Il s'arrête au pied du portique. Le palonnier descend et se verrouille sur les quatre coins du conteneur.</p></div>
+      <div class="step" data-a=".42" data-b=".62"><div class="n">03 / 05 — Chargement</div><h3>Du quai<br>au navire</h3><p>Levage, translation, dépose : le conteneur rejoint sa place à bord du porte-conteneurs.</p></div>
+      <div class="step" data-a=".62" data-b=".8"><div class="n">04 / 05 — Départ</div><h3>Le camion repart,<br>le navire appareille</h3><p>Le camion retourne chercher le prochain chargement. Le navire, lui, prend la mer.</p></div>
+      <div class="step" data-a=".8" data-b="1.01"><div class="n">05 / 05 — Au large</div><h3>Cap sur<br>l'hydrogène en mer</h3><p>Au milieu des éoliennes offshore, une plateforme flottante produit l'hydrogène directement en mer.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= Chiffres ================= -->
+<section class="sec sec-dark" id="chiffres">
+  <div class="kicker">Lhyfe en chiffres</div>
+  <h2>Un réseau déjà<br><span class="c">en marche.</span></h2>
+  <div class="stats">
+    <div class="stat"><b>21<small>MW</small></b><span>de capacité d'électrolyse certifiée RFNBO sur quatre sites en Europe.</span></div>
+    <div class="stat"><b>8,3<small>t/jour</small></b><span>d'hydrogène renouvelable que ces quatre sites peuvent produire.</span></div>
+    <div class="stat"><b>84<small>conteneurs</small></b><span>haute pression dédiés au transport de l'hydrogène (juillet 2026).</span></div>
+    <div class="stat"><b>1 000<small>+</small></b><span>livraisons dépassées en 2025, dont plus de 850 sur l'année.</span></div>
+    <div class="stat"><b>9<small>pays</small></b><span>européens livrés, avec 15 sites de stockage de conteneurs.</span></div>
+    <div class="stat"><b>2017</b><span>création à Nantes. Premier site de production inauguré en 2021 à Bouin, en Vendée.</span></div>
+  </div>
+</section>
+
+<!-- ================= Sites ================= -->
+<section class="sec" id="sites">
+  <div class="kicker">Nos sites</div>
+  <h2>Produire au plus près<br>de l'<span class="c">énergie.</span></h2>
+  <ul class="sites">
+    <li class="site"><span class="nm">Bouin</span><span class="pl">Vendée, France</span><span class="mw">1 MW</span><span class="ds">Le premier site, ouvert en 2021, directement relié à un parc éolien.</span></li>
+    <li class="site"><span class="nm">Bessières</span><span class="pl">Haute-Garonne, France</span><span class="mw">5 MW</span><span class="ds">Inauguré fin 2023, jusqu'à 2 tonnes d'hydrogène par jour.</span></li>
+    <li class="site"><span class="nm">Buléon</span><span class="pl">Morbihan, France</span><span class="mw">5 MW</span><span class="ds">Inauguré fin 2023, l'un des plus grands sites de production de France.</span></li>
+    <li class="site"><span class="nm">Schwäbisch Gmünd</span><span class="pl">Bade-Wurtemberg, Allemagne</span><span class="mw">10 MW</span><span class="ds">Le plus grand site du groupe, environ 4 tonnes par jour.</span></li>
+    <li class="site"><span class="nm">Le Cheylas <span class="tag grey">Chantier</span></span><span class="pl">Isère, France</span><span class="mw">10 MW</span><span class="ds">Jusqu'à 4 tonnes par jour, raccordements en cours.</span></li>
+    <li class="site"><span class="nm">Croixrault <span class="tag grey">Chantier</span></span><span class="pl">Somme, France</span><span class="mw">5 MW</span><span class="ds">Jusqu'à 2 tonnes d'hydrogène vert par jour.</span></li>
+    <li class="site"><span class="nm">Sealhyfe <span class="tag">En mer</span></span><span class="pl">Au large du Croisic</span><span class="mw">1 MW</span><span class="ds">Plateforme flottante à 20 km des côtes : premiers kilos produits en mer en juin 2023, 14 mois de tests réussis.</span></li>
+  </ul>
+</section>
+
+<!-- ================= Contact ================= -->
+<section class="cta" id="contact">
+  <h2>Passons<br>à l'hydrogène<br>vert.</h2>
+  <div class="row">
+    <p>Industrie, mobilité lourde, ports : parlons de vos volumes et de votre calendrier. Nous construisons l'offre avec vous.</p>
+    <a class="btn" href="#contact">Travailler avec nous →</a>
+  </div>
+  <div class="foot">
+    <span>Lhyfe · Hydrogène vert et renouvelable</span>
+    <span>Maquette de démonstration non officielle · chiffres publics, novembre 2026</span>
+  </div>
+</section>
+
+<script src="assets/three.min.js"></script>
+<script>
+/* ============================================================
+   Acte 1 : vidéo pilotée par le défilement + bandeau des services
+   ============================================================ */
+(function(){
+  const root = document.documentElement;
+  const track = document.getElementById('track');
+  const scene = document.getElementById('scene');
+  const video = document.getElementById('clip');
+  const giant = document.getElementById('giant');
+  const strip = document.getElementById('strip');
+  const cards = [...strip.querySelectorAll('.card')];
+  const speedEls = [document.getElementById('speed1'), document.getElementById('speed2')];
+
+  const SRC_1080 = 'https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/409763c0-95f4-49d3-a601-dc564d55072b.mp4';
+  const SRC_720  = 'https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/b3718419-7a0a-478d-bfb0-0ff8bef7f3f7.mp4';
+  const A = 2.4;              // viewports pour la vidéo
+  const EDGE_END = 0.448;     // bord de la bande noire à la fin de la vidéo
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+
+  video.src = innerWidth <= 900 ? SRC_720 : SRC_1080;
+  video.load();
+
+  let vw, vh, phone, B = 1, stripW = 0, lettersW = 0, edgePx = 0;
+  let duration = 4.04, cur = 0, target = 0;
+
+  function layout(){
+    vw = innerWidth; vh = innerHeight;
+    phone = vw < 768 || vw <= vh;
+    root.classList.toggle('is-phone', phone);
+    const u = phone ? Math.min(vw / 430, 1.4) : Math.min(vw / 1440, vh / 960);
+    root.style.setProperty('--u', u + 'px');
+
+    let w, h, left, top;
+    if (!phone){
+      const s = Math.max(vw / 1920, vh / 1080);
+      w = 1920 * s; h = 1080 * s; left = (vw - w) / 2; top = (vh - h) / 2;
+    } else {
+      w = 1.55 * vw; h = w * 9 / 16; left = vw / 2 - 0.4 * w; top = 0.36 * vh - EDGE_END * h;
+    }
+    Object.assign(video.style, {width: w + 'px', height: h + 'px', left: left + 'px', top: top + 'px'});
+    edgePx = top + EDGE_END * h;
+    root.style.setProperty('--edge-px', edgePx + 'px');
+    root.style.setProperty('--split', (top + 0.62 * h) + 'px');
+
+    stripW = strip.scrollWidth;
+    lettersW = giant.scrollWidth;
+    B = (stripW + 0.45 * vw) / vw * 1.1;
+    track.style.height = ((1 + A + B) * vh) + 'px';
+    window.dispatchEvent(new Event('jarvis:layout'));
+  }
+
+  /* Vitesse affichée (km/h) : vitesse de défilement lissée */
+  let lastY = scrollY, lastT = performance.now(), speed = 0, scripted = null;
+  function showSpeed(v){
+    const t = String(Math.min(99, Math.round(v))).padStart(2, '0') + ' KM/H';
+    for (const el of speedEls) if (el.textContent !== t) el.textContent = t;
+  }
+  window.__scrollSpeed = () => speed;
+
+  /* Recherche d'image dans la vidéo : jamais de lecture, seulement des sauts */
+  function seek(){
+    if (!video.seeking && Math.abs(video.currentTime - cur) > 1 / 60){
+      try { video.currentTime = cur; } catch(e){}
+    }
+  }
+  video.addEventListener('seeked', seek);
+  video.addEventListener('loadedmetadata', () => { if (isFinite(video.duration)) duration = video.duration; });
+
+  function update(y, now, snap){
+    const q = clamp(y / (A * vh));
+    target = q * (duration - 1 / 48);
+    cur = snap ? target : cur + (target - cur) * 0.2;
+    seek();
+    root.style.setProperty('--ph', q >= 0.94 ? 1 : 0);
+
+    const r = clamp((y - A * vh) / (B * vh));
+    root.style.setProperty('--sx', (vw - r * (stripW + 0.45 * vw)) + 'px');
+    root.style.setProperty('--gx', (vw - r * (lettersW + vw)) + 'px');
+
+    for (const c of cards){
+      const left = c.getBoundingClientRect().left;
+      const s = clamp((0.98 - left / vw) / 0.3, -0.4, 1.6) * 100;
+      c.style.setProperty('--s', s.toFixed(2) + '%');
+    }
+  }
+
+  function frame(now){
+    const y = scrollY, dt = Math.max(1, now - lastT);
+    if (scripted === null){
+      const inst = Math.abs(y - lastY) / (dt / 1000) / 32;
+      speed += (inst - speed) * 0.12;
+      if (speed < 0.05) speed = 0;
+      showSpeed(speed);
+    }
+    lastY = y; lastT = now;
+    update(y, now, false);
+    requestAnimationFrame(frame);
+  }
+
+  /* Mode enregistrement (?rec=1) : une animation de 11 s pilote la progression */
+  if (new URLSearchParams(location.search).has('rec')){
+    const dummy = document.createElement('i');
+    dummy.style.cssText = 'position:fixed;left:-10px;top:0;width:1px;height:1px;';
+    document.body.appendChild(dummy);
+    const anim = dummy.animate([
+      {transform:'translateX(0px)', offset:0},
+      {transform:'translateX(0px)', offset:.04, easing:'cubic-bezier(.4,.05,.55,.95)'},
+      {transform:'translateX(1000px)', offset:.96},
+      {transform:'translateX(1000px)', offset:1}
+    ], {duration:11000, fill:'both'});
+    const progAt = t => { anim.currentTime = clamp(t, 0, 11) * 1000; return new DOMMatrix(getComputedStyle(dummy).transform).m41 / 1000; };
+    const totalPx = () => (A + B) * vh;
+    window.__recTime = (v, t) => {
+      anim.pause();
+      const p = progAt(t), p2 = progAt(t + 1 / 24);
+      const y = p * totalPx();
+      scripted = Math.abs(p2 - p) * totalPx() * 24 / 32;
+      speed = scripted; showSpeed(scripted);
+      scrollTo(0, y);
+      update(y, performance.now(), true);
+      (v || video).currentTime = cur;
+      return cur;
+    };
+    (function drive(){ if (anim.playState === 'running'){ scrollTo(0, progAt(anim.currentTime / 1000) * totalPx()); } requestAnimationFrame(drive); })();
+  }
+
+  addEventListener('resize', layout);
+  document.fonts && document.fonts.ready.then(layout);
+  layout();
+  requestAnimationFrame(frame);
+})();
+</script>
+
+<script>
+/* ============================================================
+   Acte 2 : le port en 3D (Three.js)
+   Le camion arrive, la grue dépose le conteneur sur le navire,
+   le camion repart, le navire part vers l'hydrogène en mer.
+   ============================================================ */
+(function(){
+  if (!window.THREE) return;
+  const T = THREE;
+  const root = document.documentElement;
+  const track = document.getElementById('portTrack');
+  const host = document.getElementById('port');
+  const steps = [...host.querySelectorAll('.step')];
+  const bars = [...host.querySelectorAll('.progress b')];
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const sm = t => { t = clamp(t); return t * t * (3 - 2 * t); };
+  const seg = (p, a, b) => sm((p - a) / (b - a));
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  /* ---------- Rendu ---------- */
+  const renderer = new T.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = T.PCFSoftShadowMap;
+  host.prepend(renderer.domElement);
+
+  const scene = new T.Scene();
+  scene.background = new T.Color('#ffffff');
+  scene.fog = new T.Fog('#ffffff', 160, 820);
+  const camera = new T.PerspectiveCamera(32, 1, 0.5, 2000);
+
+  scene.add(new T.HemisphereLight('#ffffff', '#9aa0aa', 1.25));
+  const sun = new T.DirectionalLight('#ffffff', 2.1);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, {left:-70, right:70, top:70, bottom:-70, near:1, far:400});
+  sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
+  scene.add(sun, sun.target);
+
+  /* ---------- Matériaux ---------- */
+  const M = (c, o = {}) => new T.MeshStandardMaterial(Object.assign({color:c, roughness:.55, metalness:.05}, o));
+  const mat = {
+    ground: M('#111111', {roughness:.95}),
+    line: M('#f2f2f2', {roughness:.9}),
+    black: M('#151517', {roughness:.35, metalness:.25}),
+    glass: M('#2a3038', {roughness:.08, metalness:.6}),
+    chrome: M('#d8dce2', {roughness:.2, metalness:.9}),
+    tyre: M('#0c0c0c', {roughness:.85}),
+    hub: M('#9aa0a8', {roughness:.3, metalness:.8}),
+    teal: M('#13a197', {roughness:.45, metalness:.2}),
+    tealDark: M('#0d7d75', {roughness:.5, metalness:.2}),
+    white: M('#f4f5f7', {roughness:.5}),
+    grey: M('#8d939c', {roughness:.6}),
+    hull: M('#1b2442', {roughness:.5, metalness:.1}),
+    hullRed: M('#a3342c', {roughness:.6}),
+    deck: M('#c9ced6', {roughness:.7}),
+    water: M('#c4d1e4', {roughness:.3, metalness:.05}),
+    amber: M('#ffb21e', {emissive:'#ff9a00', emissiveIntensity:.6}),
+    red: M('#e2382b', {emissive:'#c01f14', emissiveIntensity:.5})
+  };
+  const box = (w, h, d, m, x = 0, y = 0, z = 0, parent) => {
+    const o = new T.Mesh(new T.BoxGeometry(w, h, d), m);
+    o.position.set(x, y, z); o.castShadow = o.receiveShadow = true;
+    if (parent) parent.add(o); return o;
+  };
+  const cyl = (r, h, m, seg = 24) => { const o = new T.Mesh(new T.CylinderGeometry(r, r, h, seg), m); o.castShadow = o.receiveShadow = true; return o; };
+
+  /* Texture ondulée du conteneur */
+  function containerTexture(base, text){
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 256;
+    const g = c.getContext('2d');
+    g.fillStyle = base; g.fillRect(0, 0, 1024, 256);
+    for (let x = 0; x < 1024; x += 16){
+      g.fillStyle = 'rgba(255,255,255,.07)'; g.fillRect(x, 0, 6, 256);
+      g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(x + 9, 0, 4, 256);
+    }
+    g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, 0, 1024, 10); g.fillRect(0, 246, 1024, 10);
+    if (text){
+      g.fillStyle = '#1c2d5a'; g.font = '600 64px Archivo, sans-serif'; g.textBaseline = 'middle';
+      g.fillText(text, 60, 128);
+      g.font = '400 26px "JetBrains Mono", monospace'; g.fillStyle = 'rgba(17,17,17,.7)';
+      g.fillText('HYDROGÈNE VERT · 350 BAR', 60, 190);
+    }
+    const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.anisotropy = 8; return t;
+  }
+
+  /* ---------- Sol, quai, mer ---------- */
+  const water = new T.Mesh(new T.PlaneGeometry(4000, 4000), mat.water);
+  water.rotation.x = -Math.PI / 2; water.position.y = -1.4; water.receiveShadow = true; scene.add(water);
+  box(400, 2, 320, mat.ground, -240, -1, -100, scene);          // terre (côté éoliennes)
+  box(460, 2, 80, mat.ground, 190, -1, 32, scene);              // quai
+  box(460, .3, .5, mat.line, 190, .05, -7.6, scene);            // bord du quai
+  for (let x = -420; x < 420; x += 9) box(4.5, .04, .25, mat.line, x, .02, 7.2, scene); // pointillés de la route
+  box(840, .04, .2, mat.line, 0, .02, -2.8, scene);
+  for (let x = -30; x < 400; x += 14){ const b = cyl(.35, .7, mat.grey, 12); b.position.set(x, .35, -6.6); scene.add(b); }
+
+  /* ---------- Éoliennes ---------- */
+  const rotors = [];
+  function turbine(x, z, s = 1, base = 0){
+    const g = new T.Group();
+    const tower = new T.Mesh(new T.CylinderGeometry(.9 * s, 1.6 * s, 60 * s, 20), mat.white);
+    tower.position.y = 30 * s; tower.castShadow = true; g.add(tower);
+    box(3 * s, 3 * s, 7 * s, mat.white, 0, 61 * s, 1 * s, g);
+    const rotor = new T.Group(); rotor.position.set(0, 61 * s, 4.8 * s); g.add(rotor);
+    const hubM = new T.Mesh(new T.SphereGeometry(1.4 * s, 16, 12), mat.white); rotor.add(hubM);
+    for (let i = 0; i < 3; i++){
+      const bl = new T.Mesh(new T.BoxGeometry(1.6 * s, 26 * s, .35 * s), mat.white);
+      bl.geometry.translate(0, 13 * s, 0); bl.rotation.z = i * Math.PI * 2 / 3; bl.castShadow = true; rotor.add(bl);
+    }
+    rotor.rotation.z = Math.random() * 6;
+    rotors.push(rotor);
+    g.position.set(x, base, z); g.rotation.y = .5; scene.add(g); return g;
+  }
+  [[-300,-60],[-245,-95],[-190,-58],[-140,-110],[-95,-70],[-330,-140],[-60,-150]].forEach(([x,z]) => turbine(x, z, 1));
+  // Le petit site de production à côté du parc
+  const plant = new T.Group(); plant.position.set(-215, 0, -24); scene.add(plant);
+  box(16, 5, 9, mat.white, 0, 2.5, 0, plant); box(7, 3, 3, mat.grey, 12, 1.5, -2, plant);
+  for (let i = 0; i < 4; i++){ const tk = cyl(1.2, 6, mat.white, 16); tk.position.set(-12 + i * 3, 3, 2); plant.add(tk); }
+
+  /* ---------- Camion ---------- */
+  const truck = new T.Group(); scene.add(truck);
+  const wheels = [];
+  (function buildTruck(){
+    box(19, .45, 1.3, mat.black, .3, 1.05, 0, truck);                         // châssis
+    box(13.6, .35, 2.5, mat.black, -1, 1.45, 0, truck);                       // plateau de la remorque
+    box(.2, 1.2, 2.3, mat.black, -7.6, 1.0, 0, truck);
+    const cab = new T.Group(); cab.position.set(8.4, 0, 0); truck.add(cab);
+    box(3.2, 3.1, 2.5, mat.black, 0, 2.75, 0, cab);                           // cabine
+    box(2.6, .7, 2.4, mat.black, -.2, 4.6, 0, cab);                           // déflecteur
+    box(.06, 1.25, 2.2, mat.glass, 1.62, 3.45, 0, cab);                       // pare-brise
+    box(1.2, .9, .06, mat.glass, .8, 3.5, 1.26, cab); box(1.2, .9, .06, mat.glass, .8, 3.5, -1.26, cab);
+    box(.25, .45, 2.5, mat.chrome, 1.65, 1.45, 0, cab);                       // pare-chocs
+    box(.1, .9, 1.6, mat.black, 1.66, 2.2, 0, cab);                           // calandre
+    box(.06, .16, .4, mat.amber, 1.7, 1.9, 1.0, cab); box(.06, .16, .4, mat.amber, 1.7, 1.9, -1.0, cab);
+    box(.08, .5, .08, mat.chrome, 1.4, 3.9, 1.35, cab); box(.08, .5, .08, mat.chrome, 1.4, 3.9, -1.35, cab);
+    const ex = cyl(.13, 3.2, mat.chrome, 12); ex.position.set(-1.75, 3.4, 1.05); cab.add(ex);
+    box(.06, .2, .5, mat.red, -7.68, 1.25, .9, truck); box(.06, .2, .5, mat.red, -7.68, 1.25, -.9, truck);
+    const wGeo = new T.CylinderGeometry(.55, .55, .42, 28); wGeo.rotateX(Math.PI / 2);
+    const hGeo = new T.CylinderGeometry(.3, .3, .44, 16); hGeo.rotateX(Math.PI / 2);
+    for (const x of [9.2, 6.6, 5.3, -4.6, -5.85, -7.1]) for (const z of [1.05, -1.05]){
+      const w = new T.Group(); w.position.set(x, .55, z);
+      const t = new T.Mesh(wGeo, mat.tyre); t.castShadow = true; w.add(t);
+      const h = new T.Mesh(hGeo, mat.hub); w.add(h);
+      box(.62, .08, .46, mat.hub, 0, 0, 0, w);                                // repère visible de rotation
+      truck.add(w); wheels.push(w);
+    }
+  })();
+
+  /* ---------- Conteneur (le héros) ---------- */
+  const heroTex = containerTexture('#b9bec6', 'H₂');
+  const sideMat = new T.MeshStandardMaterial({map:heroTex, roughness:.45, metalness:.35});
+  const plainNavy = M('#b4b9c1', {roughness:.45, metalness:.35});
+  const hero = new T.Mesh(new T.BoxGeometry(12.2, 2.6, 2.44), [plainNavy, plainNavy, plainNavy, plainNavy, sideMat, sideMat]);
+  hero.castShadow = hero.receiveShadow = true; scene.add(hero);
+
+  /* ---------- Portique (grue de quai) ---------- */
+  const crane = new T.Group(); crane.position.set(0, 0, 0); scene.add(crane);
+  const LEG_H = 36, BOOM_Y = 38;
+  for (const x of [-9, 9]) for (const z of [11, -6.5]) box(1.4, LEG_H, 1.4, mat.teal, x, LEG_H / 2, z, crane);
+  for (const x of [-9, 9]){
+    box(1.6, 1.6, 19, mat.teal, x, 12, 2.25, crane);                          // traverse basse
+    box(2.2, 2.4, 1.6, mat.tealDark, x, 1.2, 11, crane); box(2.2, 2.4, 1.6, mat.tealDark, x, 1.2, -6.5, crane);
+  }
+  for (const z of [11, -6.5]) box(19.4, 2, 1.8, mat.teal, 0, LEG_H, z, crane);
+  for (const x of [-3.2, 3.2]) box(1.3, 2.2, 78, mat.teal, x, BOOM_Y, -12, crane); // flèche
+  for (let z = -48; z <= 24; z += 6) box(7.7, .5, .5, mat.teal, 0, BOOM_Y - 1, z, crane);
+  box(9, 5, 9, mat.white, 0, BOOM_Y + 3.6, 16, crane);                        // salle des machines
+  for (const x of [-3.2, 3.2]){                                               // haubans
+    const stay = box(.5, .5, 30, mat.teal, x, BOOM_Y + 10, -22, crane); stay.rotation.x = -0.42;
+    box(.9, 14, .9, mat.teal, x, BOOM_Y + 7, 4, crane);
+    const back = box(.5, .5, 16, mat.teal, x, BOOM_Y + 7.5, 11, crane); back.rotation.x = 0.7;
+  }
+  const trolley = new T.Group(); crane.add(trolley);
+  box(8, 1.8, 4, mat.white, 0, BOOM_Y - 2, 0, trolley);
+  box(2.2, 1.6, 2.2, mat.glass, 2.4, BOOM_Y - 3.6, 1.2, trolley);            // cabine du grutier
+  const spreader = new T.Group(); crane.add(spreader);
+  box(12.4, .45, 2.6, mat.amber, 0, 0, 0, spreader);
+  box(3, .8, 2, mat.tealDark, 0, .55, 0, spreader);
+  for (const sx of [-6, 6]) box(.4, .5, 2.7, mat.black, sx, -.3, 0, spreader);
+  const cables = [];
+  for (const [x, z] of [[-1.2,.7],[1.2,.7],[-1.2,-.7],[1.2,-.7]]){
+    const c = new T.Mesh(new T.CylinderGeometry(.06, .06, 1, 6), mat.black); c.userData = {x, z}; crane.add(c); cables.push(c);
+  }
+  // Une deuxième grue plus loin, pour l'ambiance du terminal
+  const crane2 = crane.clone(true); crane2.position.x = 70; scene.add(crane2);
+  crane2.children[crane.children.indexOf(spreader)].position.set(0, 24, 4);
+  crane2.children[crane.children.indexOf(trolley)].position.z = 4;
+  for (const c of cables) crane2.children[crane.children.indexOf(c)].visible = false;
+
+  /* ---------- Conteneurs empilés sur le quai ---------- */
+  const palette = ['#d9dde3', '#b8bec7', '#1c2d5a', '#eceef1', '#13a197', '#8a929e', '#2f63ff', '#5b6470'];
+  const cGeo = new T.BoxGeometry(12.2, 2.6, 2.44);
+  function stackInstanced(slots, parent){
+    const im = new T.InstancedMesh(cGeo, M('#ffffff', {roughness:.55, metalness:.1}), slots.length);
+    const m4 = new T.Matrix4(), col = new T.Color();
+    slots.forEach((s, i) => { m4.makeTranslation(s[0], s[1], s[2]); im.setMatrixAt(i, m4); im.setColorAt(i, col.set(palette[s[3]])); });
+    im.castShadow = im.receiveShadow = true; parent.add(im); return im;
+  }
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const yard = [];
+  for (let bx = 0; bx < 4; bx++) for (let row = 0; row < 5; row++){
+    const n = 1 + Math.floor(rnd() * 4);
+    for (let t = 0; t < n; t++) yard.push([30 + bx * 13.2, 1.3 + t * 2.6, 18 + row * 2.6, Math.floor(rnd() * palette.length)]);
+  }
+  for (let bx = 0; bx < 3; bx++) for (let row = 0; row < 4; row++){
+    const n = 1 + Math.floor(rnd() * 3);
+    for (let t = 0; t < n; t++) yard.push([-40 - bx * 13.2, 1.3 + t * 2.6, 20 + row * 2.6, Math.floor(rnd() * palette.length)]);
+  }
+  stackInstanced(yard, scene);
+
+  /* ---------- Porte-conteneurs ---------- */
+  const ship = new T.Group(); scene.add(ship);
+  const SHIP0 = new T.Vector3(8, 0, -23);
+  (function buildShip(){
+    const L = 130, W = 24;
+    const sh = new T.Shape();
+    sh.moveTo(-L / 2, -W / 2); sh.lineTo(L / 2 - 16, -W / 2); sh.quadraticCurveTo(L / 2 + 2, -W / 4, L / 2 + 4, 0);
+    sh.quadraticCurveTo(L / 2 + 2, W / 4, L / 2 - 16, W / 2); sh.lineTo(-L / 2, W / 2); sh.lineTo(-L / 2, -W / 2);
+    const g = new T.ExtrudeGeometry(sh, {depth:9, bevelEnabled:false}); g.rotateX(Math.PI / 2); g.translate(0, 4, 0);
+    const hull = new T.Mesh(g, mat.hull); hull.castShadow = hull.receiveShadow = true; ship.add(hull);
+    const g2 = new T.ExtrudeGeometry(sh, {depth:1.2, bevelEnabled:false}); g2.rotateX(Math.PI / 2); g2.translate(0, -3.6, 0); g2.scale(1.002, 1, 1.01);
+    ship.add(new T.Mesh(g2, mat.hullRed));
+    box(L - 6, .3, W - 1.5, mat.deck, -2, 4.1, 0, ship);
+    // château à l'arrière
+    box(10, 15, 20, mat.white, -55, 11.5, 0, ship);
+    box(10.2, 1.4, 20.2, mat.glass, -55, 17.2, 0, ship);
+    box(12, .6, 26, mat.white, -55, 19.2, 0, ship);
+    const fun = box(4, 7, 4, mat.hull, -62, 17, 0, ship);
+    box(.3, 6, .3, mat.white, -50, 22, 0, ship);
+  })();
+  // Le créneau libre du conteneur héros (rangée côté quai, au droit de la grue)
+  const SLOT = new T.Vector3(0 - SHIP0.x, 4.25 + 1.3, -14.5 - SHIP0.z);
+  const deckSlots = [];
+  for (let bay = -3; bay <= 4; bay++) for (let row = 0; row < 8; row++){
+    const x = bay * 12.8 - 8 + .0, z = -8.54 + row * 2.44;
+    const lx = x, lz = z;
+    const isHeroCol = Math.abs(lx - SLOT.x) < 6 && Math.abs(lz - SLOT.z) < 1.3;
+    const n = isHeroCol ? 0 : 1 + Math.floor(rnd() * 4);
+    for (let t = 0; t < n; t++) deckSlots.push([lx, 4.25 + 1.3 + t * 2.6, lz, Math.floor(rnd() * palette.length)]);
+  }
+  // On aligne le créneau du héros sur la grille du pont
+  SLOT.x = Math.round((SLOT.x + 8) / 12.8) * 12.8 - 8; SLOT.z = -8.54 + Math.round((SLOT.z + 8.54) / 2.44) * 2.44;
+  stackInstanced(deckSlots, ship);
+  ship.position.copy(SHIP0);
+  // le quai doit être aligné : la grue dépose au point monde = ship(SLOT)
+  const slotWorld0 = SLOT.clone().add(SHIP0);
+  const CRANE_SHIP_Z = slotWorld0.z, CRANE_X = slotWorld0.x;
+  crane.position.x = CRANE_X;
+
+  // sillage
+  const wakeC = document.createElement('canvas'); wakeC.width = 256; wakeC.height = 64;
+  { const g = wakeC.getContext('2d'); const gr = g.createLinearGradient(0, 0, 256, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(1, 'rgba(255,255,255,.95)');
+    g.fillStyle = gr; g.beginPath(); g.moveTo(0, 0); g.lineTo(256, 22); g.lineTo(256, 42); g.lineTo(0, 64); g.fill(); }
+  const wakeMat = new T.MeshBasicMaterial({map:new T.CanvasTexture(wakeC), transparent:true, opacity:0, depthWrite:false});
+  const wake = new T.Mesh(new T.PlaneGeometry(150, 34), wakeMat); wake.rotation.x = -Math.PI / 2; wake.position.set(-140, -1.3, 0);
+  ship.add(wake);
+
+  /* ---------- Large : éoliennes en mer + plateforme flottante ---------- */
+  const OFF = new T.Vector3(560, 0, -300);
+  for (let i = 0; i < 12; i++){
+    const x = OFF.x - 160 + (i % 4) * 110 + (Math.floor(i / 4) % 2) * 55, z = OFF.z - 40 - Math.floor(i / 4) * 120;
+    const t = turbine(x, z, 1.15, -1.4); box(6, 4, 6, mat.amber, 0, 2, 0, t);
+  }
+  const plat = new T.Group(); plat.position.set(OFF.x, -1.4, OFF.z + 40); scene.add(plat);
+  box(22, 3, 22, mat.white, 0, 1.2, 0, plat);
+  box(10, 4, 6, mat.grey, -3, 4.7, -4, plat); box(6, 3, 6, mat.teal, 6, 4.2, 4, plat);
+  for (let i = 0; i < 3; i++){ const tk = cyl(1, 6, mat.white, 16); tk.rotation.z = Math.PI / 2; tk.position.set(-2 + i * 0, 3.8, 4 + i * 2.4); plat.add(tk); }
+  box(.4, 10, .4, mat.white, 8, 8, -8, plat);
+  const bob = plat;
+
+  /* ---------- Chemin du navire ---------- */
+  const SHIP_END = new T.Vector3(OFF.x - 110, 0, OFF.z + 105);
+  function shipAt(p){
+    const t = seg(p, .66, 1);
+    const pos = new T.Vector3(lerp(SHIP0.x, SHIP_END.x, t), 0, SHIP0.z + (SHIP_END.z - SHIP0.z) * Math.pow(t, 1.6));
+    const at = u => new T.Vector3(lerp(SHIP0.x, SHIP_END.x, u), 0, SHIP0.z + (SHIP_END.z - SHIP0.z) * Math.pow(u, 1.6));
+    const t1 = Math.min(t, .99), d = at(t1 + .01).sub(at(t1));
+    const yaw = Math.atan2(-d.z, d.x) * sm(t / .08);
+    return {pos, yaw, t};
+  }
+
+  /* ---------- Caméra : images clés ---------- */
+  const v3 = (x, y, z) => new T.Vector3(x, y, z);
+  function camAt(p, truckX, shipPos){
+    const phone = root.classList.contains('is-phone');
+    const k = phone ? 1.75 : 1;
+    // 1) suivi du camion
+    const follow = phone
+      ? {pos: v3(truckX - 34, 24, 70), tgt: v3(truckX + 2, 3, -4)}
+      : {pos: v3(truckX - 20, 11, 36), tgt: v3(truckX + 6, 3.5, -1)};
+    // 2) vue du portique
+    const wide = {pos: v3(CRANE_X - 58 * k, 30 + 8 * k, 92 * k), tgt: v3(CRANE_X + 4, 14, -8)};
+    const wide2 = {pos: v3(CRANE_X - 40 * k, 52 + 8 * k, 96 * k), tgt: v3(CRANE_X + 2, 13, -14)};
+    // 3) suivi du navire
+    const sea = {pos: shipPos.clone().add(v3(30 * k, 42 + 10 * k, 120 * k)), tgt: shipPos.clone().add(v3(40, 4, -40))};
+    const end = {pos: shipPos.clone().add(v3(-70 * k, 60, 150 * k)), tgt: v3(OFF.x - 40, 18, OFF.z - 20)};
+    const mix = (a, b, t) => ({pos: a.pos.clone().lerp(b.pos, t), tgt: a.tgt.clone().lerp(b.tgt, t)});
+    let c = mix(follow, wide, seg(p, .2, .34));
+    c = mix(c, wide2, seg(p, .42, .62));
+    c = mix(c, sea, seg(p, .64, .8));
+    c = mix(c, end, seg(p, .84, 1));
+    return c;
+  }
+
+  /* ---------- Placement selon la progression ---------- */
+  const TRUCK_STOP = CRANE_X + 1; // le conteneur est à x-1 sur la remorque
+  const ON_TRUCK_Y = 1.625 + 1.3;
+  const SP_UP = 26, SP_TOP_OFF = .25 + 1.3;
+  let lastP = -1;
+  function place(p, time){
+    // Camion
+    const arrive = seg(p, 0, .27);
+    const leave = Math.pow(clamp((p - .62) / (.16)), 2);
+    const tx = lerp(-230, TRUCK_STOP, 1 - Math.pow(1 - arrive, 2.2)) + leave * 260;
+    truck.position.set(tx, 0, 2);
+    for (const w of wheels) w.rotation.z = -tx / .55;
+
+    // Navire
+    const S = shipAt(p);
+    ship.position.copy(S.pos); ship.rotation.y = S.yaw;
+    ship.position.y = Math.sin(time * .0008) * .15;
+    wakeMat.opacity = clamp(Math.sin(Math.PI * S.t) * 1.4) * .85;
+
+    // Portique : chariot et palonnier
+    const zTruck = 2, zShip = CRANE_SHIP_Z;
+    const trolZ = lerp(zTruck, zShip, seg(p, .49, .56));
+    const topTruck = ON_TRUCK_Y + SP_TOP_OFF, topShip = SLOT.y + SP_TOP_OFF;
+    let spY = SP_UP;
+    spY = lerp(spY, topTruck, seg(p, .345, .41));
+    spY = lerp(spY, SP_UP, seg(p, .43, .49));
+    spY = lerp(spY, topShip, seg(p, .56, .605));
+    spY = lerp(spY, SP_UP, seg(p, .62, .67));
+    trolley.position.z = trolZ;
+    spreader.position.set(0, spY, trolZ);
+    for (const c of cables){
+      const top = BOOM_Y - 2.9, bot = spY + .8, len = top - bot;
+      c.position.set(c.userData.x, bot + len / 2, trolZ + c.userData.z); c.scale.y = Math.max(.01, len);
+    }
+
+    // Conteneur héros
+    if (p < .42){ hero.position.set(tx - 1, ON_TRUCK_Y, 2); hero.rotation.set(0, 0, 0); }
+    else if (p < .612){ hero.position.set(CRANE_X, spY - SP_TOP_OFF, trolZ); hero.rotation.set(0, 0, 0); }
+    else { hero.position.copy(SLOT).applyAxisAngle(v3(0, 1, 0), ship.rotation.y).add(ship.position); hero.rotation.set(0, ship.rotation.y, 0); }
+
+    // Plateforme qui tangue
+    bob.rotation.z = Math.sin(time * .0011) * .02; bob.position.y = -1.4 + Math.sin(time * .0013) * .25;
+
+    // Caméra
+    const c = camAt(p, tx, ship.position);
+    camera.position.copy(c.pos); camera.lookAt(c.tgt);
+    sun.position.copy(c.tgt).add(v3(50, 90, 45)); sun.target.position.copy(c.tgt);
+
+    // Textes
+    for (const s of steps){ const on = p >= +s.dataset.a && p < +s.dataset.b; s.classList.toggle('on', on); }
+    bars.forEach((b, i) => { const a = +steps[i].dataset.a, e = +steps[i].dataset.b; b.style.transform = 'scaleX(' + clamp((p - a) / (Math.min(e, 1) - a)).toFixed(3) + ')'; });
+  }
+
+  /* ---------- Taille et boucle ---------- */
+  function size(){
+    const w = innerWidth, h = innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.fov = w < h ? 48 : 32;
+    camera.updateProjectionMatrix();
+    track.style.height = (7.5 * h) + 'px';
+  }
+  addEventListener('resize', size); addEventListener('jarvis:layout', size);
+  size();
+
+  let visible = true;
+  new IntersectionObserver(e => { visible = e[0].isIntersecting; }, {rootMargin:'200px'}).observe(track);
+  let pSmooth = 0;
+  function progress(){
+    const r = track.getBoundingClientRect();
+    return clamp(-r.top / (track.offsetHeight - innerHeight));
+  }
+  window.__portProgress = progress;
+  function loop(time){
+    if (visible){
+      const p = progress();
+      pSmooth += (p - pSmooth) * 0.14;
+      if (Math.abs(p - pSmooth) < 1e-4) pSmooth = p;
+      for (const r of rotors) r.rotation.z += 0.012;
+      place(pSmooth, time);
+      renderer.render(scene, camera);
+    }
+    requestAnimationFrame(loop);
+  }
+  pSmooth = progress();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
