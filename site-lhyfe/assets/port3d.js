@@ -8,8 +8,40 @@
    ============================================================ */
 (function () {
   'use strict';
-  const T = window.THREE, S = window.__story;
-  if (!T || !S) return;
+  const S = window.__story;
+  if (!S) return;
+  /* Si la 3D (WebGL) n'est pas disponible, on joue la même scène en images pré-calculées */
+  function fallback(err) {
+    if (err) console.warn('3D indisponible, passage en images :', err);
+    const host = document.getElementById('stage3d');
+    host.innerHTML = '';
+    const steps = [...document.querySelectorAll('.step')], bars = [...document.querySelectorAll('#progress b')];
+    const endcard = document.getElementById('endcard');
+    const N = 160, set = S.phone ? 'm' : 'd', imgs = [];
+    const img = new Image(); img.alt = '';
+    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block';
+    host.appendChild(img);
+    for (let i = 0; i < N; i++) { const im = new Image(); im.src = 'assets/frames/' + set + String(i).padStart(3, '0') + '.jpg'; imgs.push(im); }
+    const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+    let pS = 0, last = -1;
+    (function loop() {
+      const p = S.p3 || 0; pS += (p - pS) * .2; if (Math.abs(p - pS) < 1e-4) pS = p;
+      const i = Math.round(pS * (N - 1));
+      if (i !== last && imgs[i].complete && imgs[i].naturalWidth) { img.src = imgs[i].src; last = i; }
+      for (const s of steps) s.classList.toggle('on', pS >= +s.dataset.a && pS < +s.dataset.b);
+      bars.forEach((b, k) => { const a = +steps[k].dataset.a, e = +steps[k].dataset.b; b.style.transform = 'scaleX(' + clamp((pS - a) / (e - a)).toFixed(3) + ')'; });
+      endcard.classList.toggle('on', pS >= .93);
+      requestAnimationFrame(loop);
+    })();
+    imgs[0].onload = () => { window.__port3dReady = true; };
+    if (imgs[0].complete) window.__port3dReady = true;
+  }
+  window.__port3dFallback = fallback;
+  if (!window.THREE || /[?&]images\b/.test(location.search)) { fallback(!window.THREE ? 'Three.js absent' : 'mode images demandé'); return; }
+  try { run3d(); } catch (e) { fallback(e); }
+
+  function run3d() {
+  const T = window.THREE;
 
   const root = document.documentElement;
   const host = document.getElementById('stage3d');
@@ -26,6 +58,7 @@
   const UP = v3(0, 1, 0);
 
   /* ---------------- Rendu ---------------- */
+  { const t = document.createElement('canvas'); if (!(t.getContext('webgl2') || t.getContext('webgl'))) throw new Error('WebGL indisponible'); }
   const renderer = new T.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true;
@@ -1066,7 +1099,13 @@
 
   let pS = 0, warm = 0;
   window.__port3dSet = v => { pS = v; };            // pour les captures
+  let dead = false;
   function loop(time) {
+    if (dead) return;
+    try { frame3d(time); } catch (e) { dead = true; fallback(e); return; }
+    requestAnimationFrame(loop);
+  }
+  function frame3d(time) {
     const y = scrollY, start = (S.A + S.B - .6) * S.vh;
     const p = S.p3 || 0;
     if (y > start || warm < 3) {
@@ -1077,8 +1116,9 @@
       renderer.render(scene, camera);
       warm++;
     }
-    requestAnimationFrame(loop);
   }
+  renderer.domElement.addEventListener('webglcontextlost', () => { dead = true; fallback('contexte WebGL perdu'); });
   window.__port3dReady = true;
   requestAnimationFrame(loop);
+  }
 })();
