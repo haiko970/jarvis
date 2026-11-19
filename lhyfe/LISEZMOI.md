@@ -5,9 +5,10 @@ jusqu'aux clients. Maquette pédagogique indépendante, sans lien avec l'entrepr
 
 **Ouvrir :** double-cliquer sur `index.html` (Edge ou Chrome).
 
-- **`index.html` — Le voyage d'une particule** : on fait défiler la page (ou flèches ▲ ▼ du clavier) et on suit
-  une particule : électricité du vent → eau de mer → électrolyse → purification → compression → conteneur → camion → client.
-  Elle s'arrête à chaque endroit où elle est transformée. Marche sans internet.
+- **`index.html` — Le voyage d'une particule en 3D** : on fait défiler la page (ou flèches ↑ ↓ du clavier) et la caméra
+  suit une particule dans un paysage 3D (coucher de soleil sur la baie, éoliennes, usine, campagne, camion, station).
+  Elle s'arrête à chaque endroit où elle est transformée. Il faut internet (Three.js).
+- **`parcours-2d.html`** : la même histoire en 2D, sans internet.
 - **`supervision.html` — Tableau de bord** (la vue 3D a besoin d'internet pour Three.js) :
 
 - **① Usine 3D** : vue du site, flux animés (électricité, eau, hydrogène, refroidissement), clic sur un équipement = fiche.
