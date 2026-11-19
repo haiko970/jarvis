@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>H₂ Bouin — Du vent au camion</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/objects/Sky.js"></script>
 <style>
 :root{--bg:#0a0a0a;--h2:#5fe1ff;--elec:#ffcf4a;--eau:#5b9dff;--o2:#ff7a7a;--ok:#5ee39a;--sim:#d3a8ff}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:#fff;font-family:Inter,system-ui,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+html,body{margin:0;background:var(--bg);color:#fff;font-family:Geist,system-ui,"Segoe UI",sans-serif;font-weight:400;-webkit-font-smoothing:antialiased}
 ::selection{background:rgba(255,255,255,.2)}
 #gl{position:fixed;inset:0;z-index:0;pointer-events:none}
 #gl canvas{display:block;width:100%;height:100%}
@@ -20,11 +20,11 @@ html,body{margin:0;background:var(--bg);color:#fff;font-family:Inter,system-ui,"
 .px{padding-left:20px;padding-right:20px}
 @media(min-width:640px){.px{padding-left:32px;padding-right:32px}}
 @media(min-width:768px){.px{padding-left:48px;padding-right:48px}}
-.mono{font-size:11px;text-transform:uppercase;letter-spacing:.15em}
+.mono{font-family:"Geist Mono",ui-monospace,monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.14em}
 .shadow{text-shadow:0 2px 14px rgba(0,0,0,.55)}
 .glass{background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.16)}
 .badge{display:inline-block;border-left:2px solid #fff;background:rgba(255,255,255,.15);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:6px 12px}
-.btn{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:10px 20px;font:500 13px Inter,sans-serif;cursor:pointer;transition:background .3s;text-decoration:none;border:0}
+.btn{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:10px 20px;font:500 13px Geist,sans-serif;letter-spacing:-.01em;cursor:pointer;transition:background .3s;text-decoration:none;border:0}
 .btn.p{background:#fff;color:#000}.btn.p:hover{background:rgba(255,255,255,.85)}
 .btn.s{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(12px)}.btn.s:hover{background:rgba(255,255,255,.2)}
 .btn svg{width:14px;height:14px}
@@ -52,8 +52,9 @@ html,body{margin:0;background:var(--bg);color:#fff;font-family:Inter,system-ui,"
 @media(min-width:640px){#hero .intro{text-align:right}}
 #hero .bas{display:flex;flex-direction:column;gap:32px}
 @media(min-width:768px){#hero .bas{flex-direction:row;align-items:flex-end;justify-content:space-between}}
-h1,.titre{font-weight:400;letter-spacing:-.03em;line-height:1.05;margin:0}
-h1{font-size:clamp(46px,7vw,76px)}
+h1,.titre{font-family:"Instrument Serif",Georgia,serif;font-weight:400;letter-spacing:-.015em;line-height:.98;margin:0}
+h1 em,.titre em{font-style:italic;color:rgba(255,255,255,.82)}
+h1{font-size:clamp(54px,8.4vw,104px)}
 #hero .carte{display:flex;align-items:center;gap:16px;border-radius:12px;padding:12px;pointer-events:auto}
 #hero .vignette{width:80px;height:96px;border-radius:8px;background:radial-gradient(circle at 50% 40%,#e9fbff 0 8%,#5fe1ff 9% 18%,transparent 19%),radial-gradient(circle at 35% 62%,#5fe1ff 0 10%,transparent 11%),radial-gradient(circle at 65% 62%,#5fe1ff 0 10%,transparent 11%),linear-gradient(160deg,#16324a,#071019);box-shadow:inset 0 0 30px rgba(95,225,255,.35)}
 #hero .carte b{font-weight:500;font-size:14px}
@@ -62,7 +63,7 @@ h1{font-size:clamp(46px,7vw,76px)}
 #etape{position:fixed;left:0;right:0;bottom:0;z-index:6;padding-bottom:48px;display:flex;flex-direction:column;gap:28px;pointer-events:none}
 @media(min-width:900px){#etape{flex-direction:row;align-items:flex-end;justify-content:space-between;gap:56px}}
 #etape .g{max-width:560px;pointer-events:auto}
-#etape .titre{font-size:clamp(34px,4.6vw,60px);margin-top:18px}
+#etape .titre{font-size:clamp(42px,5.6vw,78px);margin-top:18px}
 #etape .corps{margin-top:18px;max-width:470px;font-size:15px;line-height:1.6;color:rgba(255,255,255,.85)}
 #etape .corps p{margin:0 0 10px}
 #etape .ctas{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
@@ -81,7 +82,7 @@ h1{font-size:clamp(46px,7vw,76px)}
 @media(max-width:899px){
   #etape{padding-bottom:18px;gap:12px}
   #etape .d{display:none}
-  #etape .titre{font-size:30px;margin-top:12px}
+  #etape .titre{font-size:40px;margin-top:12px}
   #etape .corps{font-size:14px;margin-top:10px}
   #etape .corps p:nth-child(2){display:none}
   #etape .ctas{margin-top:10px}
@@ -89,15 +90,16 @@ h1{font-size:clamp(46px,7vw,76px)}
 /* compteurs */
 #hud{position:fixed;top:80px;right:0;z-index:7;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;pointer-events:none;transition:opacity .5s}
 #hud>div{border-radius:10px;padding:8px 12px;min-width:104px}
-#hud .l{font-size:10px;color:rgba(255,255,255,.6);letter-spacing:.15em;text-transform:uppercase}
-#hud .v{font-size:15px;font-weight:600;margin-top:3px;white-space:nowrap;font-variant-numeric:tabular-nums}
-#hud .etat{min-width:210px}
+#hud .l{font-family:"Geist Mono",monospace;font-size:9.5px;color:rgba(255,255,255,.6);letter-spacing:.15em;text-transform:uppercase}
+#hud .v{font-size:15px;font-weight:500;display:flex;align-items:center;gap:8px;margin-top:3px;white-space:nowrap;font-variant-numeric:tabular-nums}
+#hud .etat{min-width:220px}
+#hud .pt{width:8px;height:8px;border-radius:50%;flex:none;box-shadow:0 0 10px currentColor;background:currentColor}
 @media(max-width:700px){#hud{left:0;top:72px;justify-content:flex-start}#hud>div{min-width:0;padding:6px 9px}#hud .v{font-size:12.5px}#hud .etat{min-width:0;flex-basis:100%}}
 /* étiquette 3D */
-#tag{position:fixed;z-index:4;transform:translate(-50%,-100%);pointer-events:none;border-radius:8px;padding:6px 10px;font-size:11px;letter-spacing:.15em;text-transform:uppercase;white-space:nowrap;transition:opacity .4s;display:flex;align-items:center;gap:8px}
+#tag{font-family:"Geist Mono",monospace;position:fixed;z-index:4;transform:translate(-50%,-100%);pointer-events:none;border-radius:8px;padding:6px 10px;font-size:11px;letter-spacing:.15em;text-transform:uppercase;white-space:nowrap;transition:opacity .4s;display:flex;align-items:center;gap:8px}
 #tag i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
 /* noir de transition */
-#noir{position:fixed;inset:0;z-index:8;background:#000;opacity:0;pointer-events:none;display:grid;place-items:center;font-size:clamp(28px,5vw,54px);letter-spacing:-.02em}
+#noir{position:fixed;inset:0;z-index:8;background:#000;opacity:0;pointer-events:none;display:grid;place-items:center;font-family:"Instrument Serif",serif;font-style:italic;font-size:clamp(40px,6vw,80px)}
 #charge{position:fixed;inset:0;z-index:60;background:#0a0a0a;display:grid;place-items:center;transition:opacity .8s}
 #charge div{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7)}
 #erreur{display:none;position:fixed;inset:0;z-index:70;background:#0a0a0a;place-items:center;text-align:center;padding:24px;line-height:1.6}
@@ -134,7 +136,7 @@ h1{font-size:clamp(46px,7vw,76px)}
   <div class="bas">
     <div>
       <div class="badge mono rv" data-d="150" style="margin-bottom:20px">Site de Bouin · Vendée</div>
-      <h1 class="shadow rv" data-d="280">Du vent. De l'eau.<br>De l'hydrogène.</h1>
+      <h1 class="shadow rv" data-d="280">Du vent. De l'eau.<br><em>De l'hydrogène.</em></h1>
     </div>
     <div class="carte glass rv" data-d="420">
       <div class="vignette"></div>
@@ -166,6 +168,8 @@ const lerp=(a,b,t)=>a+(b-a)*t;
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 const seg01=(t,a,b)=>clamp((t-a)/(b-a),0,1);
 const fmt=(x,d=0)=>x.toLocaleString("fr-FR",{minimumFractionDigits:d,maximumFractionDigits:d});
+// Densité de l'herbe : ?herbe=0.3 dans l'adresse pour un PC peu puissant
+const HERBE=clamp(parseFloat(new URLSearchParams(location.search).get("herbe")||"1")||1,0,2);
 const R='<span class="src r">RÉEL</span>', Sm='<span class="src s">SIM</span>';
 const CHEV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>';
 
@@ -187,66 +191,67 @@ function posOn(L,d){d=clamp(d,0,L.len);for(let i=1;i<L.pts.length;i++){if(d<=L.c
    cam = position de la caméra par rapport à la particule, vise = point regardé
    ================================================================== */
 const ST={
- eol:{etape:1,dur:1.2,cam:[44,-8,60],vise:[0,-6,0],tag:"Éolienne · parc Côte de Jade",titre:"Tout commence<br>avec le vent.",
+ eol:{etape:1,dur:1.2,cam:[44,-8,60],vise:[0,-6,0],tag:"Éolienne · parc Côte de Jade",titre:"Tout commence<br><em>avec le vent.</em>",
   txt:["Les éoliennes du parc <b>Côte de Jade</b>, au pied desquelles l'usine a été construite, transforment le vent en électricité.","Notre voyage commence par une <b style='color:var(--elec)'>particule d'énergie électrique</b> qui part du rotor et descend le mât."],
   data:[["Parc éolien","Côte de Jade, propriété de Vendée Énergie"+R],["Usine mise en service","2021"+R],["Vent aujourd'hui","9 m/s"+Sm]],
-  hud:{e:"⚡ Électricité (courant alternatif)",p:null,t:null},f:(L,t)=>{L.spark=t;}},
- transfo:{etape:1,dur:1.3,cam:[17,9,22],vise:[0,1,0],tag:"Poste électrique",titre:"Le courant<br>change de forme.",mini:"onde",
+  hud:{e:"Électricité (courant alternatif)",p:null,t:null},f:(L,t)=>{L.spark=t;}},
+ transfo:{etape:1,dur:1.3,cam:[17,9,22],vise:[0,1,0],tag:"Poste électrique",titre:"Le courant<br><em>change de forme.</em>",mini:"onde",
   txt:["Le courant des éoliennes est <b>alternatif</b> : il change de sens 50 fois par seconde.","Un transformateur baisse sa tension, puis un <b>redresseur</b> le rend <b>continu</b> : c'est la seule forme de courant que l'électrolyseur sait utiliser."],
   data:[["Tension à l'arrivée","20 000 V"+Sm],["Sortie","courant continu, ≈ 2 500 A"+Sm]],
-  hud:{e:"⚡ Courant alternatif → continu",p:null,t:null},f:()=>{}},
- attente:{etape:1,dur:.9,cam:[-7,5,13],vise:[4,0,0],tag:"Électrolyseur",titre:"Prête…<br>il manque l'eau.",
+  hud:{e:"Courant alternatif → continu",p:null,t:null},f:()=>{}},
+ attente:{etape:1,dur:.9,cam:[-7,5,13],vise:[4,0,0],tag:"Électrolyseur",titre:"Prête…<br><em>il manque l'eau.</em>",
   txt:["Pour fabriquer de l'hydrogène, il faut <b>casser des molécules d'eau</b>. L'électricité attend à l'entrée de l'électrolyseur.","Allons chercher notre goutte : elle vient de la mer, à quelques centaines de mètres."],
-  data:[],hud:{e:"⚡ Courant continu, en attente",p:null,t:null},f:()=>{}},
- mer:{etape:1,dur:1.1,cam:[16,4,22],vise:[0,0,0],tag:"Baie de Bourgneuf",titre:"Une goutte<br>d'eau de mer.",
+  data:[],hud:{e:"Courant continu, en attente",p:null,t:null},f:()=>{}},
+ mer:{etape:1,dur:1.1,cam:[16,4,22],vise:[0,0,0],tag:"Baie de Bourgneuf",titre:"Une goutte<br><em>d'eau de mer.</em>",
   txt:["Bouin est au bord de la baie de Bourgneuf. L'usine utilise de l'<b>eau de mer dessalée</b>.","Notre goutte contient du <b>sel</b> (cubes blancs), du <b>sable</b> et des débris d'<b>algues</b> (grains bruns). Il va falloir tout enlever."],
   data:[["Origine de l'eau","eau de mer dessalée sur place"+R],["Sel dans l'eau de mer","≈ 35 g par litre (valeur courante)"]],
-  hud:{e:"💧 Eau de mer (salée, sale)",p:[1,1],t:[13,13]},f:(L,t)=>{L.goutte=t;}},
- filtre:{etape:1,dur:1.2,cam:[9,5,11],vise:[0,0,0],tag:"Filtration",titre:"On retire sable<br>et algues.",fade:["filtre"],
+  hud:{e:"Eau de mer (salée, sale)",p:[1,1],t:[13,13]},f:(L,t)=>{L.goutte=t;}},
+ filtre:{etape:1,dur:1.2,cam:[9,5,11],vise:[0,0,0],tag:"Filtration",titre:"On retire sable<br><em>et algues.</em>",fade:["filtre"],
   txt:["L'eau traverse un filtre à sable, puis des cartouches très fines. Les grains et les débris restent coincés.","Le sel, lui, est dissous : il passe encore. L'étape suivante s'en occupe."],
   data:[["Filtres","sable + cartouches 5 µm"+Sm]],
-  hud:{e:"💧 Eau de mer filtrée",p:[2,3],t:[13,13]},f:(L,t)=>{L.sale=1-t;}},
- osmose:{etape:1,dur:1.4,cam:[6.5,3,9],vise:[0,-.2,0],tag:"Osmose inverse",titre:"On enlève<br>le sel.",mini:"membrane",fade:["osmose"],
+  hud:{e:"Eau de mer filtrée",p:[2,3],t:[13,13]},f:(L,t)=>{L.sale=1-t;}},
+ osmose:{etape:1,dur:1.4,cam:[6.5,3,9],vise:[0,-.2,0],tag:"Osmose inverse",titre:"On enlève<br><em>le sel.</em>",mini:"membrane",fade:["osmose"],
   txt:["Une pompe pousse l'eau très fort contre des <b>membranes</b> aux trous minuscules. L'eau passe, le sel ne passe pas.","Seule une partie de l'eau devient douce ; le reste, plus salé (la <b>saumure</b>), repart à la mer."],
   data:[["Pression de l'osmose","≈ 60 bar"+Sm],["Eau douce obtenue","≈ 40 % de l'eau de mer"+Sm]],
-  hud:{e:"💧 Eau douce",p:[3,60],t:[13,15]},f:(L,t)=>{L.sel=1-t;}},
- demin:{etape:1,dur:1.1,cam:[7,4,9],vise:[0,0,0],tag:"Déminéralisation",titre:"Une eau<br>ultra-pure.",
+  hud:{e:"Eau douce",p:[3,60],t:[13,15]},f:(L,t)=>{L.sel=1-t;}},
+ demin:{etape:1,dur:1.1,cam:[7,4,9],vise:[0,0,0],tag:"Déminéralisation",titre:"Une eau<br><em>ultra-pure.</em>",
   txt:["Un dernier passage enlève les minéraux qui restent. L'eau devient plus pure que l'eau du robinet ou l'eau en bouteille.","Sinon, les minéraux abîmeraient l'électrolyseur."],
   data:[["Conductivité","< 1 µS/cm"+Sm],["Eau pure par kg d'H₂","≈ 10 L (9 L en théorie)"+Sm]],
-  hud:{e:"💧 Eau ultra-pure",p:[3,3],t:[15,18]},f:(L,t)=>{L.pure=t;}},
- electrolyse:{etape:1,dur:2.6,cam:[-6.5,2.4,9.5],vise:[1.5,-.2,0],tag:"Électrolyseur 1 MW",titre:"L'eau est cassée<br>en deux.",mini:"molecule",fade:["electrolyse"],
+  hud:{e:"Eau ultra-pure",p:[3,3],t:[15,18]},f:(L,t)=>{L.pure=t;}},
+ electrolyse:{etape:1,dur:2.6,cam:[-6.5,2.4,9.5],vise:[1.5,-.2,0],tag:"Électrolyseur 1 MW",titre:"L'eau est cassée<br><em>en deux.</em>",mini:"molecule",fade:["electrolyse"],
   txt:["L'électricité et l'eau se retrouvent enfin. Dans chaque cellule, le courant traverse l'eau entre deux électrodes.","La molécule d'eau (H₂O) se casse : d'un côté naît l'<b style='color:var(--h2)'>hydrogène (H₂)</b>, de l'autre l'<b style='color:var(--o2)'>oxygène (O₂)</b>, relâché dans l'air par la cheminée."],
   data:[["Électrolyseur","1 MW (extension annoncée à 2,5 MW)"+R],["Production annoncée","≈ 300 kg d'H₂ par jour"+R],["Énergie","≈ 55 kWh par kg"+Sm]],
-  hud:{e:"⚡+💧 → H₂ + O₂",p:[3,30],t:[18,65]},f:(L,t)=>{L.elec=t;}},
- separateur:{etape:2,dur:1.2,cam:[9,4,11],vise:[0,0,0],tag:"Séparateur gaz / eau",titre:"On essore<br>l'hydrogène.",fade:["separateur"],
+  hud:{e:"Eau + électricité → H₂ + O₂",p:[3,30],t:[18,65]},f:(L,t)=>{L.elec=t;}},
+ separateur:{etape:2,dur:1.2,cam:[9,4,11],vise:[0,0,0],tag:"Séparateur gaz / eau",titre:"On essore<br><em>l'hydrogène.</em>",fade:["separateur"],
   txt:["L'hydrogène sort de l'électrolyseur chargé de <b>gouttelettes d'eau</b>.","Dans un grand ballon, le gaz ralentit : les gouttes tombent au fond et retournent à l'électrolyseur."],
   data:[["Ballons","2 (côté H₂ et côté O₂)"+Sm]],
-  hud:{e:"🫧 Hydrogène humide",p:[30,30],t:[65,40]},f:(L,t)=>{L.humide=1-t;}},
- purif:{etape:2,dur:1.3,cam:[9,5,11],vise:[0,0,0],tag:"Purification",titre:"Pur à<br>99,97 %.",fade:["purif"],
+  hud:{e:"Hydrogène humide",p:[30,30],t:[65,40]},f:(L,t)=>{L.humide=1-t;}},
+ purif:{etape:2,dur:1.3,cam:[9,5,11],vise:[0,0,0],tag:"Purification",titre:"Pur à<br><em>99,97 %.</em>",fade:["purif"],
   txt:["Un <b>catalyseur</b> transforme les dernières traces d'oxygène (le point rouge) en eau.","Puis des colonnes de <b>séchage</b> retiennent toute l'humidité. Les piles à combustible des véhicules exigent cette pureté."],
   data:[["Pureté visée","≥ 99,97 % (norme ISO 14687)"+Sm],["Humidité restante","point de rosée < −70 °C"+Sm]],
-  hud:{e:"✨ Hydrogène pur",p:[30,29],t:[40,25]},f:(L,t)=>{L.trace=1-t;}},
- comp:{etape:2,dur:1.8,cam:[-8,6,11],vise:[0,0,0],tag:"Compresseur",titre:"De 30<br>à 380 bar.",mini:"manometre",fade:["comp"],
+  hud:{e:"Hydrogène pur",p:[30,29],t:[40,25]},f:(L,t)=>{L.trace=1-t;}},
+ comp:{etape:2,dur:1.8,cam:[-8,6,11],vise:[0,0,0],tag:"Compresseur",titre:"De 30<br><em>à 380 bar.</em>",mini:"manometre",fade:["comp"],
   txt:["L'hydrogène est le gaz le plus léger qui existe : il prend énormément de place.","Des compresseurs à pistons le serrent par étapes. Les molécules sont <b>tassées</b> les unes contre les autres."],
   data:[["Pression","30 → 380 bar"+Sm],["Énergie","≈ 2,6 kWh par kg"+Sm],["Compresseurs","2 (1 en secours)"+Sm]],
-  hud:{e:"🗜️ Hydrogène comprimé",p:[30,380],t:[25,45]},f:(L,t)=>{L.serre=t;}},
- stock:{etape:3,dur:1,cam:[12,7,14],vise:[0,-1,0],tag:"Stockage tampon",titre:"Une pause<br>au stockage.",
+  hud:{e:"Hydrogène comprimé",p:[30,380],t:[25,45]},f:(L,t)=>{L.serre=t;}},
+ stock:{etape:3,dur:1,cam:[12,7,14],vise:[0,-1,0],tag:"Stockage tampon",titre:"Une pause<br><em>au stockage.</em>",
   txt:["Le vent n'est pas régulier. Quand aucun conteneur n'est prêt, l'hydrogène attend ici, dans des racks de bouteilles.","Il repart dès qu'un conteneur se branche."],
   data:[["Capacité","≈ 300 kg"+Sm],["Pression","jusqu'à 300 bar"+Sm]],
-  hud:{e:"🛢️ Hydrogène en attente",p:[380,300],t:[45,20]},f:()=>{}},
- remplissage:{etape:3,dur:1.8,cam:[15,2.6,13],vise:[0,-.6,0],tag:"Poste de remplissage n°2",titre:"Dans le<br>conteneur.",mini:"conteneur",
+  hud:{e:"Hydrogène en attente",p:[380,300],t:[45,20]},f:()=>{}},
+ remplissage:{etape:3,dur:1.8,cam:[15,2.6,13],vise:[0,-.6,0],tag:"Poste de remplissage n°2",titre:"Dans le<br><em>conteneur.</em>",mini:"conteneur",
   txt:["Notre particule entre dans un <b>conteneur</b> posé sur une remorque. Il se remplit doucement, pour que le gaz ne chauffe pas trop.","Plein, il reçoit un <b>numéro de lot</b> : on saura toujours d'où vient cet hydrogène."],
   data:[["Postes de remplissage","6"+R],["Conteneurs","type IV, en composite"+R],["Contenu d'un conteneur","≈ 250 kg"+Sm]],
-  hud:{e:"📦 Dans le conteneur",p:[30,380],t:[20,35]},f:(L,t)=>{L.dedans=t;}},
- route:{etape:4,dur:1.2,cam:[-24,8,24],vise:[6,1.5,0],tag:"En route vers La Roche-sur-Yon",titre:"En route.",
+  hud:{e:"Dans le conteneur",p:[30,380],t:[20,35]},f:(L,t)=>{L.dedans=t;}},
+ route:{etape:4,dur:1.2,cam:[-24,8,24],vise:[6,1.5,0],tag:"En route vers La Roche-sur-Yon",titre:"En <em>route.</em>",
   txt:["Le camion quitte Bouin. Notre particule voyage, serrée à 380 bar, parmi des milliards d'autres.","Le transport suit les règles des marchandises dangereuses. Le conteneur vide reviendra à l'usine."],
   data:[["Flotte de conteneurs du groupe","84"+R],["Bouin → La Roche-sur-Yon","≈ 75 km, 1 h 10"+Sm]],
-  hud:{e:"🚚 En transport",p:[380,380],t:[18,15]},f:()=>{}},
- livraison:{etape:5,dur:2.2,cam:[-30,8,-26],vise:[8,2,10],tag:"Station hydrogène · La Roche-sur-Yon",titre:"Livré.",mini:"fin",
+  hud:{e:"En transport",p:[380,380],t:[18,15]},f:()=>{}},
+ livraison:{etape:5,dur:2.2,cam:[-30,8,-26],vise:[8,2,10],tag:"Station hydrogène · La Roche-sur-Yon",titre:"<em>Livré.</em>",mini:"fin",
   txt:["Le conteneur est déposé à la station. Notre particule rejoint le réservoir d'un <b>bus</b>, d'une benne à ordures ou d'un utilitaire.","Dans le véhicule, une pile à combustible la recombine avec l'oxygène de l'air : de l'électricité pour le moteur… et seulement de l'eau en sortie."],
   data:[["Clients","stations de La Roche-sur-Yon et des Sables-d'Olonne"+R],["Contrat 2025 pour 3 stations","≈ 175 t d'hydrogène"+R],["Durée du voyage","≈ 10 h"+Sm]],
-  hud:{e:"✅ Livré au client",p:[380,350],t:[15,15]},f:(L,t)=>{L.livre=t;}}
+  hud:{e:"Livré au client",p:[380,350],t:[15,15]},f:(L,t)=>{L.livre=t;}}
 };
+function couleurEtat(a){if(!a)return "#ffcf4a";const id=a.id;if(["eol","transfo","attente"].includes(id))return "#ffcf4a";if(["mer","filtre","osmose","demin"].includes(id))return "#5b9dff";if(id==="livraison")return "#5ee39a";return "#5fe1ff";}
 const HEURE={mer:0,filtre:.1,osmose:.3,demin:.45,electrolyse:.75,separateur:.76,purif:.85,comp:1,stock:1.3,remplissage:9,route:9.6,livraison:10.3};
 
 /* ligne du temps */
@@ -346,18 +351,52 @@ function construire(){
   const B=(w,h,d,m,x,y,z,p,ombre=true)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=ombre;o.receiveShadow=true;(p||scene).add(o);return o;};
   const C=(rt,rb,h,m,x,y,z,p,seg=24)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;(p||scene).add(o);return o;};
   const cuve=(r,h,m,x,y,z,p)=>{const g=new THREE.Group();g.position.set(x,y,z);C(r,r,h,m,0,h/2+r*.5,0,g);[0,1].forEach(i=>{const s=new THREE.Mesh(new THREE.SphereGeometry(r,24,12,0,Math.PI*2,0,Math.PI/2),m);s.scale.y=.5;s.position.y=i?h+r*.5:r*.5;if(!i)s.rotation.x=Math.PI;s.castShadow=true;g.add(s);});(p||scene).add(g);return g;};
-  const etiquette=(txt,w,h,x,y,z,ry=0,p,coul="#14304a")=>{const t=texCanvas(512,128,(g)=>{g.fillStyle=coul;g.font="bold 64px Inter, Arial";g.textAlign="center";g.textBaseline="middle";g.fillText(txt,256,66);});const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,transparent:true,roughness:.6}));m.position.set(x,y,z);m.rotation.y=ry;(p||scene).add(m);return m;};
+  const etiquette=(txt,w,h,x,y,z,ry=0,p,coul="#14304a")=>{const t=texCanvas(512,128,(g)=>{g.fillStyle=coul;g.font="600 62px Geist, Arial";g.textAlign="center";g.textBaseline="middle";g.fillText(txt,256,66);});const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:t,transparent:true,roughness:.6}));m.position.set(x,y,z);m.rotation.y=ry;(p||scene).add(m);return m;};
 
-  // --- terrain ---
-  {const W=6400,D=3200,sx=320,sz=160;const g=new THREE.PlaneGeometry(W,D,sx,sz);g.rotateX(-Math.PI/2);g.translate(1000,0,0);
-   const p=g.attributes.position,col=new Float32Array(p.count*3);
-   for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);const y=haut(x,z);p.setY(i,y);
-     const n=fbm(x/60,z/60), champ=fbm(x/260+3,z/260-7);let c;
-     if(x<rive(z)+30&&y<1.2) c=[.42,.36,.24]; else if(champ>.58) c=[.38,.31,.12]; else if(champ<.3) c=[.2,.16,.09]; else c=[.13+.06*n,.2+.07*n,.07];
+  // --- terrain : texture d'herbe détaillée et petit relief ---
+  {const W=6400,D=3200,sx=640,sz=320;const g=new THREE.PlaneGeometry(W,D,sx,sz);g.rotateX(-Math.PI/2);g.translate(1000,0,0);
+   const p=g.attributes.position,col=new Float32Array(p.count*3),K=1.9;
+   for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);const y=haut(x,z)+(fbm(x/9,z/9)-.45)*.35*plat(x,z)*(x>rive(z)?1:0);p.setY(i,y);
+     const n=fbm(x/60,z/60),n2=fbm(x/14,z/14),champ=fbm(x/260+3,z/260-7);let c;
+     if(x<rive(z)+30&&y<1.2) c=[.42,.36,.24]; else if(champ>.58) c=[.36+.06*n2,.29+.05*n2,.11]; else if(champ<.3) c=[.19,.15,.09]; else c=[.11+.06*n+.03*n2,.18+.07*n+.04*n2,.06];
      if(y<-1) c=[.25,.22,.16];
-     col.set(c,i*3);}
+     col.set(c.map(v=>v*K),i*3);}
    g.setAttribute("color",new THREE.BufferAttribute(col,3));g.computeVertexNormals();
-   const t=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.96}));t.receiveShadow=true;scene.add(t);}
+   const herbe=texCanvas(512,512,(c,w,h)=>{c.fillStyle="#b4b79d";c.fillRect(0,0,w,h);
+     for(let i=0;i<500;i++){c.fillStyle=`rgba(${60+Math.random()*60|0},${70+Math.random()*50|0},40,.07)`;c.beginPath();c.arc(Math.random()*w,Math.random()*h,8+Math.random()*40,0,7);c.fill();}
+     for(let i=0;i<70000;i++){const x=Math.random()*w,y=Math.random()*h,l=110+Math.random()*145,k=Math.random();c.strokeStyle=`rgba(${l*(.78+k*.3)|0},${l|0},${l*(.5+k*.25)|0},.6)`;c.lineWidth=.7+Math.random()*1.1;c.beginPath();c.moveTo(x,y);const an=-Math.PI/2+(Math.random()-.5)*1.4,len=2+Math.random()*8;c.lineTo(x+Math.cos(an)*len,y+Math.sin(an)*len);c.stroke();}
+     for(let i=0;i<900;i++){c.fillStyle=`rgba(120,100,70,${.15+Math.random()*.2})`;c.fillRect(Math.random()*w,Math.random()*h,1.5,1.5);}},[1100,550]);
+   const relief=(()=>{const N=256,c=document.createElement("canvas");c.width=c.height=N;const x=c.getContext("2d"),img=x.createImageData(N,N),H=new Float32Array(N*N);
+     for(let i=0;i<N*N;i++)H[i]=Math.random();for(let k=0;k<2;k++)for(let y=0;y<N;y++)for(let X=0;X<N;X++){const i=y*N+X;H[i]=(H[i]*2+H[y*N+(X+1)%N]+H[((y+1)%N)*N+X])/4;}
+     for(let y=0;y<N;y++)for(let X=0;X<N;X++){const dx=H[y*N+(X+1)%N]-H[y*N+(X+N-1)%N],dy=H[((y+1)%N)*N+X]-H[((y+N-1)%N)*N+X],i=(y*N+X)*4;img.data[i]=128+dx*170;img.data[i+1]=128+dy*170;img.data[i+2]=255;img.data[i+3]=255;}
+     x.putImageData(img,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(1600,800);return t;})();
+   const t=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,map:herbe,normalMap:relief,normalScale:new THREE.Vector2(.9,.9),roughness:.97}));t.receiveShadow=true;scene.add(t);}
+
+  // --- herbe en 3D : des touffes de brins qui ondulent au vent ---
+  {const U={value:0};ANIM.push(t=>{U.value=t;});
+   const geo=(()=>{const segs=3,pos=[],col=[],nor=[],idx=[];for(let i=0;i<=segs;i++){const t=i/segs,ww=.05*(1-t*.88),b=t*t*.2;pos.push(-ww,t,b,ww,t,b);const c=.32+.68*t;col.push(c,c,c,c,c,c);nor.push(0,1,.25,0,1,.25);}
+     for(let i=0;i<segs;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}
+     const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));g.setAttribute("color",new THREE.Float32BufferAttribute(col,3));g.setAttribute("normal",new THREE.Float32BufferAttribute(nor,3));g.setIndex(idx);return g;})();
+   const mat=new THREE.MeshStandardMaterial({vertexColors:true,side:THREE.DoubleSide,roughness:.8});
+   mat.onBeforeCompile=sh=>{sh.uniforms.uT=U;sh.vertexShader="uniform float uT;\n"+sh.vertexShader.replace("#include <begin_vertex>",`#include <begin_vertex>
+      #ifdef USE_INSTANCING
+      float hh=position.y*position.y; vec3 ip=vec3(instanceMatrix[3][0],0.,instanceMatrix[3][2]);
+      float w=sin(uT*1.6+ip.x*.13+ip.z*.07)*.6+sin(uT*2.9+ip.x*.45+ip.z*.3)*.25;
+      transformed.x+=w*.22*hh; transformed.z+=cos(uT*1.25+ip.z*.11)*.12*hh;
+      #endif`);};
+   const rnd=(()=>{let v=11;return()=>{v=(v*16807)%2147483647;return v/2147483647;};})();
+   const interdit=(x,z)=>(x>-156&&x<130&&z>-128&&z<54)||(Math.abs(z-40)<5.5&&x>-45&&x<1505)||(x<rive(z)+6)||(x>2962&&x<3038&&z>-17&&z<37)||(Math.abs(z)<5.5&&x>2545&&x<3205)||(Math.abs(x-2985)<5.5&&z<0&&z>-205)||(Math.abs(z-40)<3&&x>-292&&x<-55);
+   const cells=new Map(),o=new THREE.Object3D(),c=new THREE.Color(),CELL=100;
+   [[-300,240,-280,160,80000],[130,1500,4,90,70000],[2830,3170,-120,120,26000],[-145,-85,-245,-55,6000]].forEach(([x0,x1,z0,z1,n])=>{
+     for(let i=0;i<n*HERBE/7;i++){const cx=lerp(x0,x1,rnd()),cz=lerp(z0,z1,rnd());if(interdit(cx,cz))continue;
+       const ble=fbm(cx/260+3,cz/260-7)>.58,tuft=4+(rnd()*6|0);
+       for(let j=0;j<tuft;j++){const x=cx+(rnd()-.5)*(ble?1.6:.9),z=cz+(rnd()-.5)*(ble?1.6:.9),y=haut(x,z);const fleur=!ble&&rnd()<.012;
+         const h=fleur?.35+rnd()*.2:(ble?.75+rnd()*.35:.3+rnd()*.6);
+         const kx=Math.floor(x/CELL),kz=Math.floor(z/CELL),key=kx+","+kz;let cel=cells.get(key);if(!cel){cel={cx:(kx+.5)*CELL,cz:(kz+.5)*CELL,m:[],c:[]};cells.set(key,cel);}
+         o.position.set(x-cel.cx,y-.03,z-cel.cz);o.rotation.set((rnd()-.5)*.4,rnd()*6.28,(rnd()-.5)*.4);o.scale.set(fleur?2.2:1+rnd()*.7,h,1);o.updateMatrix();cel.m.push(o.matrix.clone());
+         if(fleur)c.setHSL(rnd()<.5?.14:.02,rnd()<.5?.9:.05,.7);else if(ble)c.setHSL(.11+rnd()*.03,.5,.38+rnd()*.12);else c.setHSL(.19+rnd()*.08,.38+rnd()*.2,.15+rnd()*.13);cel.c.push(c.clone());}}});
+   cells.forEach(cel=>{const g=geo.clone();g.boundingSphere=new THREE.Sphere(new THREE.Vector3(0,0,0),CELL*.75);const im=new THREE.InstancedMesh(g,mat,cel.m.length);
+     cel.m.forEach((m,i)=>{im.setMatrixAt(i,m);im.setColorAt(i,cel.c[i]);});im.position.set(cel.cx,0,cel.cz);im.receiveShadow=true;scene.add(im);});}
 
   // --- mer ---
   {const nt=(function(){const c=document.createElement("canvas");c.width=c.height=256;const g=c.getContext("2d");const img=g.createImageData(256,256);const H=(x,y)=>Math.sin(x*.18+y*.05)+Math.sin(x*.07-y*.21)*.8+Math.sin((x+y)*.31)*.35+Math.sin(x*.5-y*.43)*.2;
@@ -455,23 +494,29 @@ function construire(){
   {const g=new THREE.Group();g.position.set(-110,.15,20);scene.add(g);B(14,4,8,M.blanc,0,2,0,g);B(14.2,1.4,8.2,M.vitre,0,2.4,0,g);B(14.6,.3,8.6,M.sombre,0,4.15,0,g);etiquette("SALLE DE CONTRÔLE",5,1,0,3.6,4.12,0,g);
    C(6,6,7,M.rouge,-120,3.5,-90);}
 
-  // --- arbres et haies de la campagne ---
-  {const n=2600,tronc=new THREE.InstancedMesh(new THREE.CylinderGeometry(.25,.35,4,6),new THREE.MeshStandardMaterial({color:0x3b2c20,roughness:.9}),n),
-     feu=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(3.2,1),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.85,flatShading:true}),n),o=new THREE.Object3D();
+  // --- arbres : couronnes faites de plusieurs boules bosselées, ombrées en bas ---
+  {const fusion=gs=>{let n=0,m=0;gs.forEach(g=>{n+=g.attributes.position.count;m+=g.index.count;});const pos=new Float32Array(n*3),nor=new Float32Array(n*3),col=new Float32Array(n*3),idx=new Uint32Array(m);let o=0,oi=0;
+     gs.forEach(g=>{pos.set(g.attributes.position.array,o*3);nor.set(g.attributes.normal.array,o*3);for(let i=0;i<g.index.count;i++)idx[oi+i]=g.index.array[i]+o;o+=g.attributes.position.count;oi+=g.index.count;});
+     for(let i=0;i<n;i++){const y=pos[i*3+1];const v=clamp(.45+.22*(y+.5),.4,1);col[i*3]=col[i*3+1]=col[i*3+2]=v;}
+     const r=new THREE.BufferGeometry();r.setAttribute("position",new THREE.BufferAttribute(pos,3));r.setAttribute("normal",new THREE.BufferAttribute(nor,3));r.setAttribute("color",new THREE.BufferAttribute(col,3));r.setIndex(new THREE.BufferAttribute(idx,1));return r;};
+   const parts=[];for(let i=0;i<5;i++){const g=new THREE.SphereGeometry(1,16,12),p=g.attributes.position;const an=i*2.4,ox=i?Math.cos(an)*1.35:0,oy=i?.2+(i%2)*.7:.8,oz=i?Math.sin(an)*1.35:0,r=i?1.45:1.9;
+     for(let j=0;j<p.count;j++){const x=p.getX(j),y=p.getY(j),z=p.getZ(j),d=1+(bruit(x*2.6+i*7,z*2.6+y*3.1)-.5)*.42;p.setXYZ(j,ox+x*r*d,oy+y*r*d*.82,oz+z*r*d);}g.computeVertexNormals();parts.push(g);}
+   const cg=fusion(parts);
+   const n=2600,tronc=new THREE.InstancedMesh(new THREE.CylinderGeometry(.18,.34,4.4,7),new THREE.MeshStandardMaterial({color:0x3a2b20,roughness:.95}),n),
+     feu=new THREE.InstancedMesh(cg,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.88}),n),o=new THREE.Object3D();
    let k=0,essai=0;const rnd=(()=>{let s=7;return()=>{s=(s*16807)%2147483647;return s/2147483647;};})();
    while(k<n&&essai<40000){essai++;let x,z;
      if(rnd()<.18){x=2450+rnd()*900;z=-500+rnd()*1000;}else{x=-260+rnd()*1900;z=-700+rnd()*1200;}
      if(plat(x,z)<.6||x<rive(z)+25)continue;
-     // haies : alignements le long des champs
      if(rnd()<.45){const lx=Math.round(x/140)*140;if(Math.abs(x-lx)>3)continue;}
-     const y=haut(x,z),s=.7+rnd()*.9;
-     o.position.set(x,y+2*s,z);o.scale.set(s,s,s);o.rotation.y=rnd()*6;o.updateMatrix();tronc.setMatrixAt(k,o.matrix);
-     o.position.y=y+(4.6+rnd())*s;o.scale.set(s*(1+rnd()*.4),s*(.9+rnd()*.5),s*(1+rnd()*.4));o.updateMatrix();feu.setMatrixAt(k,o.matrix);
-     feu.setColorAt(k,new THREE.Color().setHSL(.22+rnd()*.07,.45,.13+rnd()*.08));k++;}
-   tronc.count=feu.count=k;feu.castShadow=true;scene.add(tronc);scene.add(feu);}
+     const y=haut(x,z),s=.75+rnd()*.85,peuplier=rnd()<.12;
+     o.position.set(x,y+2.1*s*(peuplier?1.3:1),z);o.scale.set(s,s*(peuplier?1.3:1),s);o.rotation.set(0,rnd()*6,0);o.updateMatrix();tronc.setMatrixAt(k,o.matrix);
+     o.position.y=y+(peuplier?8.5:4.8)*s;o.scale.set(s*(peuplier?.55:1+rnd()*.3),s*(peuplier?2.6:.9+rnd()*.4),s*(peuplier?.55:1+rnd()*.3));o.updateMatrix();feu.setMatrixAt(k,o.matrix);
+     feu.setColorAt(k,new THREE.Color().setHSL(.2+rnd()*.08,.38+rnd()*.15,.16+rnd()*.09));k++;}
+   tronc.count=feu.count=k;feu.castShadow=true;tronc.castShadow=true;scene.add(tronc);scene.add(feu);}
   // panneaux sur la route
   [[320,"Challans","18 km"],[760,"Aizenay","42 km"],[1250,"La Roche-sur-Yon","75 km"]].forEach(([x,a,b])=>{const g=new THREE.Group();g.position.set(x,0,47);scene.add(g);B(.15,3.2,.15,M.galva,-1.4,1.6,0,g);B(.15,3.2,.15,M.galva,1.4,1.6,0,g);
-    const t=texCanvas(512,256,(c)=>{c.fillStyle="#f4f4f0";c.fillRect(0,0,512,256);c.strokeStyle="#c0262e";c.lineWidth=18;c.strokeRect(9,9,494,238);c.fillStyle="#111";c.font="bold 70px Inter, Arial";c.textAlign="center";c.fillText(a,256,120);c.font="56px Inter, Arial";c.fillText(b,256,200);});
+    const t=texCanvas(512,256,(c)=>{c.fillStyle="#f4f4f0";c.fillRect(0,0,512,256);c.strokeStyle="#c0262e";c.lineWidth=18;c.strokeRect(9,9,494,238);c.fillStyle="#111";c.font="600 68px Geist, Arial";c.textAlign="center";c.fillText(a,256,120);c.font="400 54px Geist, Arial";c.fillText(b,256,200);});
     const m=new THREE.Mesh(new THREE.PlaneGeometry(4,2),new THREE.MeshStandardMaterial({map:t,roughness:.6}));m.position.set(0,3.6,0);m.rotation.y=-Math.PI/2+.4;g.add(m);});
 
   // --- station de La Roche-sur-Yon ---
@@ -480,7 +525,7 @@ function construire(){
    B(26,.8,14,M.blanc,0,7,18,g);const bande=B(26.2,.4,14.2,new THREE.MeshStandardMaterial({color:0x2fbf71,emissive:0x0c5a30,roughness:.4}),0,6.5,18,g);
    [[-11,12],[11,12],[-11,24],[11,24]].forEach(([x,z])=>B(.5,6.5,.5,M.galva,x,3.4,z,g));
    [-5,5].forEach(x=>{B(1.2,2.4,.8,M.blanc,x,1.5,18,g);etiquette("H₂",1,1,x,2.1,18.41,0,g,"#1d8a52");});
-   const tot=texCanvas(256,512,(c)=>{c.fillStyle="#173a2a";c.fillRect(0,0,256,512);c.fillStyle="#fff";c.font="bold 120px Inter, Arial";c.textAlign="center";c.fillText("H₂",128,200);c.font="bold 40px Inter, Arial";c.fillText("STATION",128,300);c.fillText("HYDROGÈNE",128,350);});
+   const tot=texCanvas(256,512,(c)=>{c.fillStyle="#173a2a";c.fillRect(0,0,256,512);c.fillStyle="#fff";c.font="400 140px 'Instrument Serif', Georgia";c.textAlign="center";c.fillText("H₂",128,200);c.font="500 36px Geist, Arial";c.fillText("STATION",128,300);c.fillText("HYDROGÈNE",128,350);});
    const tm=new THREE.Mesh(new THREE.BoxGeometry(2.4,7,.5),[M.galva,M.galva,M.galva,M.galva,new THREE.MeshStandardMaterial({map:tot,roughness:.5}),M.galva]);tm.position.set(-20,3.5,-6);tm.castShadow=true;g.add(tm);
    const r=new THREE.Group();r.position.set(22,0,26);g.add(r);const rc=C(1.6,1.6,12,M.blanc,0,2,0,r);rc.rotation.z=Math.PI/2;B(10,.6,3,M.galva,0,.3,0,r);
    B(14,5,9,M.blanc,-16,2.5,32,g);B(14.2,1.5,9.2,M.vitre,-16,2.8,32,g);
@@ -680,9 +725,9 @@ function rendu(T,t,dt){
   if(fiche!==ficheCour){ficheCour=fiche;afficheFiche(fiche);}
   if(fiche&&fiche.mini){const tt=(cur.k==="arret"&&cur.stop===fiche)?u:(T>fiche.t0?1:0);const cle=fiche.id+Math.round(tt*60);if(cle!==miniCle){miniCle=cle;const m=$("#mini");if(m)m.innerHTML=MINI[fiche.mini](tt);}}
   const h=(arret||ST.eol).hud,uu=cur.k==="arret"?u:1;
-  $("#hEtat").textContent=h.e; $("#hP").textContent=h.p?fmt(lerp(h.p[0],h.p[1],uu))+" bar":"—"; $("#hT").textContent=h.t?fmt(lerp(h.t[0],h.t[1],uu))+" °C":"—";
+  $("#hEtat").innerHTML=`<i class="pt" style="color:${couleurEtat(arret)}"></i>${h.e}`; $("#hP").textContent=h.p?fmt(lerp(h.p[0],h.p[1],uu))+" bar":"—"; $("#hT").textContent=h.t?fmt(lerp(h.t[0],h.t[1],uu))+" °C":"—";
   const ids=Object.keys(HEURE);let hh=null;if(arret&&HEURE[arret.id]!=null){const i=ids.indexOf(arret.id),h0=i>0?HEURE[ids[i-1]]:0;hh=lerp(h0,HEURE[arret.id],cur.k==="arret"&&cur.stop===arret?u:1);}
-  $("#hH").textContent=hh==null?"⚡ instantané":`${Math.floor(hh)} h ${String(Math.round((hh%1)*60)).padStart(2,"0")}`;
+  $("#hH").textContent=hh==null?"instantané":`${Math.floor(hh)} h ${String(Math.round((hh%1)*60)).padStart(2,"0")}`;
   // étiquette accrochée à l'équipement
   const tag=$("#tag"); if(cur.k==="arret"&&!noir){ tmp.set(P.p[0],P.p[1]+(id==="elec"&&stopId==="eol"?6:2.2)*(stopId==="eol"?1:1),P.p[2]); if(id==="arrivee") tmp.set(2990,9,18); tmp.project(camera);
     const x=(tmp.x+1)/2*innerWidth,y=(1-tmp.y)/2*innerHeight; tag.style.left=x+"px"; tag.style.top=(y-14)+"px"; tag.querySelector("span").textContent=cur.stop.tag; tag.style.opacity=tmp.z<1&&u>.05&&u<.97?1:0; } else tag.style.opacity=0;
@@ -714,7 +759,7 @@ function afficheFiche(s){
 }
 const MINI={
   onde(t){let a="M10,55";for(let x=0;x<=300;x+=4){const s=Math.sin(x/16);const y=55-28*s*(1-t)-28*t;a+=` L${10+x},${y.toFixed(1)}`;}
-    return `<svg viewBox="0 0 320 100"><line x1="10" y1="55" x2="310" y2="55" stroke="rgba(255,255,255,.2)"/><path d="${a}" stroke="#ffcf4a" stroke-width="3" fill="none"/><text x="10" y="94" fill="rgba(255,255,255,.6)" font-size="11" font-family="Inter" letter-spacing="1.5">${t<.5?"ALTERNATIF ~ VA-ET-VIENT":"CONTINU ═ TOUJOURS DANS LE MÊME SENS"}</text></svg>`;},
+    return `<svg viewBox="0 0 320 100"><line x1="10" y1="55" x2="310" y2="55" stroke="rgba(255,255,255,.2)"/><path d="${a}" stroke="#ffcf4a" stroke-width="3" fill="none"/><text x="10" y="94" fill="rgba(255,255,255,.6)" font-size="11" letter-spacing="1.5">${t<.5?"ALTERNATIF ~ VA-ET-VIENT":"CONTINU ═ TOUJOURS DANS LE MÊME SENS"}</text></svg>`;},
   membrane(t){let s=`<svg viewBox="0 0 320 110"><rect x="155" y="6" width="6" height="86" fill="rgba(255,255,255,.7)"/>`;for(let i=0;i<12;i++){const y=12+(i*29)%78,pass=i/12<t,x=pass?175+((i*37)%120):40+((i*53)%100);s+=`<circle cx="${x}" cy="${y}" r="5" fill="#5b9dff"/>`;}for(let i=0;i<10;i++)s+=`<rect x="${30+((i*41)%110)}" y="${10+(i*23)%76}" width="7" height="7" fill="#fff"/>`;
     return s+`<text x="10" y="106" fill="rgba(255,255,255,.6)" font-size="10" letter-spacing="1.5">SEL BLOQUÉ</text><text x="180" y="106" fill="rgba(255,255,255,.6)" font-size="10" letter-spacing="1.5">EAU DOUCE →</text></svg>`;},
   molecule(t){const sp=seg01(t,.4,.8);const at=(x,y,r,c,l)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#06121c">${l}</text>`;let s=`<svg viewBox="0 0 320 120">`;
@@ -722,7 +767,10 @@ const MINI={
     return s+`<text x="160" y="116" text-anchor="middle" fill="#fff" font-size="13" letter-spacing="1">2 H₂O → 2 H₂ + O₂</text></svg>`;},
   manometre(t){const v=30+350*t,a=(-120+240*v/400)*Math.PI/180;return `<svg viewBox="0 0 320 120"><path d="M95,100 A65,65 0 1 1 225,100" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="10"/><line x1="160" y1="72" x2="${160+Math.sin(a)*52}" y2="${72-Math.cos(a)*52}" stroke="#ff7a7a" stroke-width="4" stroke-linecap="round"/><circle cx="160" cy="72" r="6" fill="#fff"/><text x="160" y="116" text-anchor="middle" font-size="17" fill="#fff">${fmt(v)} bar</text></svg>`;},
   conteneur(t){const f=.3+.7*t;return `<svg viewBox="0 0 320 90"><rect x="10" y="14" width="300" height="46" rx="6" fill="rgba(0,0,0,.25)" stroke="rgba(255,255,255,.5)"/><rect x="12" y="16" width="${296*f}" height="42" rx="5" fill="#5fe1ff" opacity=".75"/><text x="160" y="43" text-anchor="middle" font-size="15" fill="#fff">${fmt(250*f)} / 250 kg</text><text x="10" y="84" fill="rgba(255,255,255,.6)" font-size="10" letter-spacing="1.5">${t>=.99?"PLEIN · LOT LOT-BOU-261119-021":"REMPLISSAGE EN COURS…"}</text></svg>`;},
-  fin(t){const e=["⚡ vent","💧 mer","🔬 électrolyse","✨ purification","🗜️ 380 bar","📦 conteneur","🚚 route","🚌 bus"];return `<svg viewBox="0 0 320 112">${e.map((x,i)=>`<text x="${8+(i%2)*160}" y="${20+Math.floor(i/2)*24}" font-size="13" fill="${i/e.length<=t+.01?"#fff":"rgba(255,255,255,.25)"}">${x}</text>`).join("")}<text x="8" y="110" font-size="10" letter-spacing="1.5" fill="#5ee39a">${t>.9?"✓ VOYAGE TERMINÉ":"…"}</text></svg>`;}
+  fin(t){const e=[["Vent","#ffcf4a"],["Eau de mer","#5b9dff"],["Électrolyse","#5fe1ff"],["Purification","#5fe1ff"],["380 bar","#5fe1ff"],["Conteneur","#5fe1ff"],["Route","#ffcf4a"],["Bus","#5ee39a"]];
+    const n=e.length,on=i=>i/n<=t+.01;let s=`<svg viewBox="0 0 320 96"><line x1="16" y1="30" x2="304" y2="30" stroke="rgba(255,255,255,.18)"/><line x1="16" y1="30" x2="${16+288*clamp(t*1.02,0,1)}" y2="30" stroke="#fff" stroke-width="1.5"/>`;
+    e.forEach(([x,c],i)=>{const px=16+i*288/(n-1);s+=`<circle cx="${px}" cy="30" r="${on(i)?5:3.5}" fill="${on(i)?c:"#0a0a0a"}" stroke="${on(i)?c:"rgba(255,255,255,.35)"}"/><text x="${px}" y="${i%2?62:14}" text-anchor="middle" font-size="9.5" font-family="Geist Mono" letter-spacing=".8" fill="${on(i)?"#fff":"rgba(255,255,255,.35)"}">${x.toUpperCase()}</text>`;});
+    return s+`<text x="16" y="90" font-size="9.5" font-family="Geist Mono" letter-spacing="1.5" fill="#5ee39a">${t>.9?"VOYAGE TERMINÉ · ≈ 10 H":""}</text></svg>`;}
 };
 
 /* ==================================================================

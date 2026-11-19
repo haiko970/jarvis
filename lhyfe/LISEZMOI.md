@@ -17,3 +17,5 @@ jusqu'aux clients. Maquette pédagogique indépendante, sans lien avec l'entrepr
 
 Les données marquées **RÉEL** viennent de sources publiques (liens en bas de page). Tout ce qui est marqué
 **SIM** est une estimation cohérente (le modèle et ses hypothèses sont en haut du script, objet `P`).
+
+**PC peu puissant ?** Ajouter `?herbe=0.3` à la fin de l'adresse (ou `?herbe=0` pour enlever l'herbe en 3D).
