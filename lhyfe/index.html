@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supervision H₂ Bouin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --bg:#070d14; --panel:#0d1722; --panel2:#111f2d; --line:#1d3245; --txt:#d8e6f2; --mut:#7f97ab;
+  --h2:#38d6ff; --eau:#3d7bff; --elec:#ffc83d; --o2:#9aa8b5; --froid:#38e0a0;
+  --ok:#2fd27a; --maint:#ffb020; --stop:#ff4d5e; --sim:#c792ff;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,"Segoe UI",sans-serif;font-size:14px}
+button{font:inherit;color:inherit}
+header{display:flex;align-items:center;gap:16px;padding:10px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0b1621,#070d14);flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.04em}
+.logo .mol{width:30px;height:30px;border-radius:50%;border:2px solid var(--h2);display:grid;place-items:center;color:var(--h2);font-size:12px;box-shadow:0 0 12px #38d6ff55}
+.logo small{display:block;font-weight:400;color:var(--mut);letter-spacing:0;font-size:12px}
+.badge-sim{border:1px solid var(--sim);color:var(--sim);padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.08em}
+nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+nav button{background:transparent;border:1px solid var(--line);padding:7px 12px;border-radius:6px;cursor:pointer;color:var(--mut)}
+nav button.on{border-color:var(--h2);color:var(--h2);background:#38d6ff12}
+.clock{font-family:var(--mono);display:flex;align-items:center;gap:8px;color:var(--mut)}
+.clock b{color:var(--txt);font-weight:600}
+.clock select{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:4px;padding:3px}
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;padding:10px 16px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;position:relative}
+.kpi .l{padding-right:34px;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.kpi .v{font-family:var(--mono);font-size:20px;font-weight:600;margin-top:2px}
+.kpi .v small{font-size:12px;color:var(--mut);font-weight:400}
+.kpi .s{font-size:11px;color:var(--mut)}
+.tag{position:absolute;top:6px;right:8px;font-size:9px;font-weight:700;letter-spacing:.06em;padding:1px 4px;border-radius:3px}
+.tag.sim{color:var(--sim);border:1px solid #c792ff66}
+.tag.reel{color:var(--ok);border:1px solid #2fd27a66}
+.bar{height:4px;background:#1a2a3a;border-radius:2px;margin-top:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--h2)}
+/* layout */
+main{padding:0 16px 16px}
+.view{display:none}.view.on{display:block}
+.grid3d{display:grid;grid-template-columns:1fr 330px;gap:10px}
+@media(max-width:980px){.grid3d{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
+.card h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);font-weight:600}
+#scene{position:relative;height:620px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#0a1520}
+@media(max-width:700px){#scene{height:440px}}
+#scene canvas{display:block}
+.lbl{position:absolute;transform:translate(-50%,-100%);pointer-events:auto;cursor:pointer;white-space:nowrap;font-size:11px;padding:2px 6px;border-radius:4px;background:#07101acc;border:1px solid var(--line);display:flex;gap:5px;align-items:center}
+.lbl:hover{border-color:var(--h2)}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex:none}
+.dot.ok{background:var(--ok);box-shadow:0 0 6px var(--ok)}.dot.maint{background:var(--maint);box-shadow:0 0 6px var(--maint)}.dot.stop{background:var(--stop);box-shadow:0 0 6px var(--stop)}
+.hint{position:absolute;left:10px;bottom:10px;font-size:11px;color:var(--mut);background:#07101acc;padding:5px 8px;border-radius:5px;border:1px solid var(--line)}
+.legend{position:absolute;right:10px;bottom:10px;font-size:11px;background:#07101acc;padding:6px 8px;border-radius:5px;border:1px solid var(--line);display:grid;gap:3px}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:16px;height:3px;border-radius:2px;display:inline-block}
+.fail{padding:40px;color:var(--mut);text-align:center}
+.side{display:grid;gap:10px;align-content:start}
+.eqlist button{display:flex;width:100%;justify-content:space-between;align-items:center;gap:8px;background:transparent;border:0;border-bottom:1px solid #16283a;padding:6px 2px;cursor:pointer;text-align:left}
+.eqlist button:hover{color:var(--h2)}
+.eqlist .n{font-size:11px;color:var(--mut);font-family:var(--mono)}
+canvas.spark{width:100%;height:90px;display:block}
+.small{font-size:12px;color:var(--mut);line-height:1.45}
+/* panneau équipement */
+#panel{position:fixed;top:0;right:0;height:100%;width:420px;max-width:100%;background:var(--panel2);border-left:1px solid var(--h2);transform:translateX(105%);transition:transform .25s;z-index:50;overflow:auto;padding:16px;box-shadow:-10px 0 40px #000a}
+#panel.on{transform:none}
+#panel .x{position:absolute;right:12px;top:10px;background:transparent;border:1px solid var(--line);border-radius:6px;width:30px;height:30px;cursor:pointer}
+#panel h2{margin:0 36px 4px 0;font-size:18px}
+#panel .step{font-size:11px;color:var(--h2);text-transform:uppercase;letter-spacing:.08em}
+#panel h4{margin:14px 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+#panel p{margin:0;line-height:1.5}
+.state{display:inline-flex;align-items:center;gap:6px;margin:8px 0;padding:4px 10px;border-radius:20px;border:1px solid var(--line);font-size:12px;font-weight:600}
+table.kv{width:100%;border-collapse:collapse;font-size:13px}
+table.kv td{padding:5px 4px;border-bottom:1px solid #1a2d40;vertical-align:top}
+table.kv td:first-child{color:var(--mut);width:48%}
+table.kv td.m{font-family:var(--mono)}
+.src{font-size:9px;font-weight:700;padding:0 4px;border-radius:3px;margin-left:4px;vertical-align:middle}
+.src.r{color:var(--ok);border:1px solid #2fd27a66}.src.s{color:var(--sim);border:1px solid #c792ff66}
+.statebtns{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.statebtns button{background:transparent;border:1px solid var(--line);border-radius:5px;padding:4px 8px;cursor:pointer;font-size:12px}
+/* schéma */
+#schema svg{width:100%;height:auto;display:block}
+.node{cursor:pointer}
+.node rect{fill:#0f2030;stroke:#2a4862;stroke-width:1.5}
+.node:hover rect{stroke:var(--h2)}
+.node text{fill:var(--txt);font-size:13px;font-family:Inter,sans-serif}
+.node .sub{fill:var(--mut);font-size:11px;font-family:var(--mono)}
+.node .ico{font-size:18px}
+.pipe{fill:none;stroke-width:5;stroke-linecap:round;opacity:.35}
+.pipe-core{fill:none;stroke-width:2;stroke-dasharray:6 10;stroke-linecap:round}
+.stepband{fill:#0b1824;stroke:#16283a}
+.steplbl{fill:var(--mut);font-size:12px;letter-spacing:.08em;font-weight:600}
+.explain{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+@media(max-width:900px){.explain{grid-template-columns:1fr 1fr}}
+.explain div{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12px;line-height:1.45;color:var(--mut)}
+.explain b{color:var(--txt);display:block;margin-bottom:4px;font-size:13px}
+.explain .num{color:var(--h2);font-family:var(--mono)}
+/* logistique */
+.glog{display:grid;grid-template-columns:1.4fr 1fr;gap:10px}
+@media(max-width:980px){.glog{grid-template-columns:1fr}}
+#map svg{width:100%;height:auto;display:block;background:#0a1520;border-radius:8px}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{color:var(--mut);text-align:left;font-weight:500;padding:5px 4px;border-bottom:1px solid var(--line)}
+.tbl td{padding:5px 4px;border-bottom:1px solid #16283a;font-family:var(--mono)}
+.tbl tr.sel td{background:#38d6ff14}
+.tbl tr{cursor:pointer}
+.scroll{max-height:240px;overflow:auto}
+.timeline{display:grid;gap:0;margin-top:6px}
+.tl{display:grid;grid-template-columns:26px 1fr;gap:8px;position:relative;padding-bottom:12px}
+.tl:before{content:"";position:absolute;left:12px;top:22px;bottom:0;width:2px;background:var(--line)}
+.tl:last-child:before{display:none}
+.tl .c{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:11px;font-family:var(--mono);background:var(--bg)}
+.tl.done .c{border-color:var(--h2);color:var(--h2)}
+.tl.cur .c{border-color:var(--maint);color:var(--maint);box-shadow:0 0 10px #ffb02088}
+.tl b{display:block;font-size:13px}.tl span{font-size:12px;color:var(--mut)}
+.station{display:grid;grid-template-columns:1fr 70px;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid #16283a;font-size:12px}
+.bays{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.bay{border:1px solid var(--line);border-radius:6px;padding:6px;font-size:11px;cursor:pointer}
+.bay .g{height:30px;background:#14273a;border-radius:3px;position:relative;overflow:hidden;margin:4px 0}
+.bay .g i{position:absolute;left:0;bottom:0;top:0;background:linear-gradient(90deg,#1b6f8f,#38d6ff)}
+.bay .g em{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-family:var(--mono);font-size:11px}
+footer{padding:12px 16px 24px;color:var(--mut);font-size:11px;line-height:1.6;border-top:1px solid var(--line)}
+footer a{color:var(--h2)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><div class="mol">H₂</div><div>SUPERVISION HYDROGÈNE — SITE DE BOUIN<small>Parcours d'un lot d'hydrogène, de l'usine (Vendée) jusqu'au client · maquette non officielle</small></div></div>
+  <span class="badge-sim" title="Les valeurs en direct sont calculées par un modèle, pas lues sur l'usine">SIMULATION</span>
+  <div class="clock">Heure simulée <b id="clk">--</b>
+    <select id="speed" title="Vitesse de la simulation">
+      <option value="1">×1 (temps réel)</option><option value="10">×10</option><option value="60" selected>×60 (1 min = 1 h)</option><option value="300">×300</option>
+    </select>
+  </div>
+  <nav>
+    <button data-v="v3d" class="on">① Usine 3D</button>
+    <button data-v="vschema">② Parcours dans l'usine</button>
+    <button data-v="vlog">③ Transport &amp; clients</button>
+  </nav>
+</header>
+
+<section class="kpis" id="kpis"></section>
+
+<main>
+  <!-- VUE 3D -->
+  <div class="view on" id="v3d">
+    <div class="grid3d">
+      <div id="scene">
+        <div class="hint">Glisser : tourner · Clic droit / Maj+glisser : déplacer · Molette : zoom · Clic sur un équipement : fiche</div>
+        <div class="legend">
+          <span><i style="background:var(--elec)"></i>Électricité</span>
+          <span><i style="background:var(--eau)"></i>Eau</span>
+          <span><i style="background:var(--h2)"></i>Hydrogène</span>
+          <span><i style="background:var(--froid)"></i>Refroidissement</span>
+        </div>
+      </div>
+      <div class="side">
+        <div class="card"><h3>Production — 48 dernières heures <span class="src s">SIM</span></h3><canvas class="spark" id="spark"></canvas><div class="small" id="sparktxt"></div></div>
+        <div class="card"><h3>Postes de remplissage des conteneurs</h3><div class="bays" id="bays"></div></div>
+        <div class="card eqlist"><h3>Équipements</h3><div id="eqlist"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VUE SCHÉMA -->
+  <div class="view" id="vschema">
+    <div class="card" id="schema"><h3>Schéma de procédé animé — cliquer sur un bloc pour sa fiche</h3><div id="svgwrap"></div></div>
+    <div class="explain">
+      <div><b><span class="num">1</span> Production</b>Les éoliennes voisines fournissent l'électricité. L'eau de mer est dessalée puis purifiée. Dans l'électrolyseur, le courant casse les molécules d'eau (H₂O) en hydrogène (H₂) et oxygène (O₂).</div>
+      <div><b><span class="num">2</span> Purification &amp; compression</b>L'hydrogène sort humide et avec des traces d'oxygène. On retire l'oxygène, puis on le sèche. Les compresseurs le serrent ensuite jusqu'à des centaines de bars.</div>
+      <div><b><span class="num">3</span> Stockage &amp; remplissage</b>Un stockage tampon absorbe les variations du vent. Les conteneurs posés sur les postes de remplissage se remplissent un à un.</div>
+      <div><b><span class="num">4</span> Transport</b>Quand un conteneur est plein, un camion l'emmène par la route. Le lot (numéro unique) est suivi tout au long du trajet.</div>
+      <div><b><span class="num">5</span> Livraison</b>Le conteneur plein est déposé chez le client (station pour bus et camions, ou site industriel). Le conteneur vide revient à Bouin.</div>
+    </div>
+  </div>
+
+  <!-- VUE LOGISTIQUE -->
+  <div class="view" id="vlog">
+    <div class="glog">
+      <div class="card" id="map"><h3>Carte des livraisons — camions en direct <span class="src s">SIM</span></h3><div id="mapwrap"></div><div class="small" style="margin-top:6px">Tracés routiers simplifiés. Les camions et les horaires sont simulés ; les trois stations de Vendée sont des clients réels de Bouin (sources en bas de page). Le client industriel de Saint-Nazaire est <b>fictif</b>.</div></div>
+      <div class="side">
+        <div class="card"><h3>Suivi du lot sélectionné</h3><div id="lotinfo" class="small">Cliquer sur un lot dans le journal.</div><div class="timeline" id="timeline"></div></div>
+        <div class="card"><h3>Stock chez les clients <span class="src s">SIM</span></h3><div id="stations"></div></div>
+      </div>
+    </div>
+    <div class="glog" style="margin-top:10px">
+      <div class="card"><h3>Journal des lots</h3><div class="scroll"><table class="tbl" id="lots"><thead><tr><th>Lot</th><th>Quantité</th><th>Client</th><th>Étape</th><th>Dernier événement</th></tr></thead><tbody></tbody></table></div></div>
+      <div class="card"><h3>Camions</h3><div class="scroll"><table class="tbl" id="trucks"><thead><tr><th>Camion</th><th>État</th><th>Lot</th><th>Destination</th><th>Arrivée</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+  </div>
+</main>
+
+<aside id="panel"><button class="x" onclick="closePanel()" aria-label="Fermer">✕</button><div id="pbody"></div></aside>
+
+<footer>
+  <b>Ce qui est réel et ce qui est simulé.</b> Données publiques utilisées (étiquette <span class="src r">RÉEL</span>) : site de Bouin mis en service en 2021 au pied du parc éolien Côte de Jade (Vendée Énergie), électrolyse d'eau de mer dessalée, électrolyseur de 1 MW (extension annoncée à 2,5 MW), environ 300 kg d'H₂ produits par jour d'après l'entreprise, 6 postes de remplissage de conteneurs, certification RFNBO en mai 2025, approvisionnement des stations de La Roche-sur-Yon et des Sables-d'Olonne, flotte du groupe de 84 conteneurs de type IV (Hexagon Purus).
+  Tout le reste (valeurs en direct, rendement, pressions, températures, consommation d'eau, plan de l'usine, nombre de camions, capacité des conteneurs, consommations des clients, client de Saint-Nazaire) est une <b>estimation cohérente</b> marquée <span class="src s">SIM</span>. La disposition 3D est illustrative : elle ne reproduit pas les plans réels du site.
+  Maquette pédagogique indépendante, sans lien avec l'entreprise.<br>
+  Sources : <a href="https://www.lhyfe.com/production-unit/lhyfe-bouin-pays-de-la-loire/" target="_blank" rel="noopener">fiche du site de Bouin</a> ·
+  <a href="https://www.lejournaldesentreprises.com/article/lhyfe-ouvre-en-vendee-la-premiere-usine-hydrogene-vert-de-france-420997" target="_blank" rel="noopener">Le Journal des Entreprises (2021)</a> ·
+  <a href="https://www.banquedesterritoires.fr/financement-lhyfe-production-hydrogene-renouvelable" target="_blank" rel="noopener">Banque des Territoires</a> ·
+  <a href="https://www.h2-view.com/story/lhyfe-provides-refuelling-station-in-vendee-with-hydrogen/2100103.article/" target="_blank" rel="noopener">H2 View (stations de Vendée)</a> ·
+  <a href="https://www.boamp.fr/telechargements/FILES/PDF/2025/12/25-138554.pdf" target="_blank" rel="noopener">BOAMP déc. 2025 (≈175 t pour 3 stations)</a> ·
+  <a href="https://energynews.pro/lhyfe-devient-le-premier-producteur-dhydrogene-rfnbo-deurope-avec-21-mw-certifies" target="_blank" rel="noopener">certification RFNBO</a> ·
+  <a href="https://www.engineeringnews.co.za/article/green-hydrogen-producer-lhyfe-expands-container-fleet-dedicated-to-hydrogen-transport-2026-07-07" target="_blank" rel="noopener">flotte de conteneurs (2026)</a> ·
+  <a href="https://hexagonpurus.com/our-solutions/infrastructure/wycarrier-en" target="_blank" rel="noopener">conteneurs Hexagon Purus</a>
+</footer>
+
+<script>
+"use strict";
+/* =====================================================================
+   1. OUTILS
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const clamp = (x,a,b) => Math.max(a, Math.min(b, x));
+const fmt = (x,d=0) => x.toLocaleString("fr-FR",{minimumFractionDigits:d,maximumFractionDigits:d});
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rand = rng(20211001);
+const hhmm = t => { const d=new Date(t); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); };
+const dshort = t => { const d=new Date(t); return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+" "+hhmm(t); };
+
+/* =====================================================================
+   2. HYPOTHÈSES DU MODÈLE (toutes « SIM » sauf mention)
+   ===================================================================== */
+const P = {
+  elecNomKW: 1000,          // RÉEL : électrolyseur de 1 MW
+  kWhParKg: 55,             // SIM : consommation électrique de l'électrolyseur par kg
+  chargeMin: 0.15,          // SIM : charge minimale avant mise en veille
+  eauDemiParKg: 10,         // SIM : litres d'eau pure par kg (9 L en théorie + pertes)
+  tauxOsmose: 0.40,         // SIM : 40 % de l'eau de mer devient eau douce
+  compKWhParKg: 2.6,        // SIM : énergie de compression 30 → 380 bar
+  auxKW: 35,                // SIM : auxiliaires (pompes, contrôle, éclairage)
+  pSortie: 30,              // SIM : pression en sortie d'électrolyseur (bar)
+  pConteneur: 380,          // SIM : pression maxi de remplissage des conteneurs (bar)
+  tamponMax: 300,           // SIM : stockage tampon (kg)
+  pTamponMax: 300,          // SIM : pression maxi du tampon (bar)
+  conteneurKg: 250,         // SIM : capacité d'un conteneur
+  debitBaie: 22,            // SIM : débit max de remplissage d'un poste (kg/h)
+  nbConteneurs: 12,         // SIM : conteneurs affectés à Bouin (le groupe en a 84, RÉEL)
+  nbCamions: 3,             // SIM
+  vitesse: 62,              // SIM : km/h moyens
+  dureeDechargement: 0.75,  // SIM : heures
+  dureeMiseEnPlace: 0.5     // SIM : heures pour poser un conteneur vide sur un poste
+};
+const nomKgH = P.elecNomKW / P.kWhParKg;   // ≈ 18,2 kg/h
+const nomKgJ = nomKgH * 24;                // ≈ 436 kg/j
+
+/* =====================================================================
+   3. CLIENTS ET CARTE
+   ===================================================================== */
+const PLACES = {
+  bouin:{n:"Bouin (usine)",lat:46.974,lon:-1.995},
+  challans:{n:"Challans",lat:46.846,lon:-1.878},
+  aizenay:{n:"Aizenay",lat:46.740,lon:-1.608},
+  stgilles:{n:"Saint-Gilles-Croix-de-Vie",lat:46.697,lon:-1.945},
+  roche:{n:"La Roche-sur-Yon",lat:46.670,lon:-1.426},
+  sables:{n:"Les Sables-d'Olonne",lat:46.497,lon:-1.783},
+  machecoul:{n:"Machecoul",lat:47.000,lon:-1.820},
+  nantes:{n:"Nantes",lat:47.218,lon:-1.553},
+  stnaz:{n:"Saint-Nazaire",lat:47.273,lon:-2.214},
+  pornic:{n:"Pornic",lat:47.115,lon:-2.103},
+  bourgneuf:{n:"Bourgneuf-en-Retz",lat:47.041,lon:-1.951},
+  stbrevin:{n:"Saint-Brevin (pont)",lat:47.247,lon:-2.167}
+};
+const CLIENTS = [
+  {id:"RSY1",nom:"Station H₂ La Roche-sur-Yon (1)",type:"Station bus / bennes",reel:true,route:["bouin","challans","aizenay","roche"],cap:600,conso:70,stock:300},
+  {id:"RSY2",nom:"Station H₂ La Roche-sur-Yon (2)",type:"Station véhicules",reel:true,route:["bouin","challans","aizenay","roche"],cap:500,conso:50,stock:260},
+  {id:"SAB",nom:"Station H₂ Les Sables-d'Olonne",type:"Station véhicules",reel:true,route:["bouin","challans","stgilles","sables"],cap:500,conso:55,stock:240},
+  {id:"SNZ",nom:"Site industriel — Saint-Nazaire (fictif)",type:"Industrie (fictif)",reel:false,route:["bouin","bourgneuf","pornic","stbrevin","stnaz"],cap:800,conso:60,stock:420}
+];
+// Les stations de Vendée : ~200 kg/j au total, cohérent avec ≈175 t sur un contrat pluriannuel (BOAMP 2025).
+function hav(a,b){const R=6371,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLo=(b.lon-a.lon)*r;const h=Math.sin(dLa/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+CLIENTS.forEach(c=>{let d=0;for(let i=1;i<c.route.length;i++)d+=hav(PLACES[c.route[i-1]],PLACES[c.route[i]]);c.km=d*1.15;c.h=c.km/P.vitesse;});
+
+/* =====================================================================
+   4. ÉQUIPEMENTS (fiches)
+   ===================================================================== */
+const S = {}; // état de simulation (rempli plus bas)
+const EQ = [
+ {id:"eol",nom:"Parc éolien Côte de Jade",etape:"1 · Production",
+  fonction:"Fournir l'électricité renouvelable qui alimente l'électrolyseur.",
+  fonct:"Les éoliennes terrestres voisines transforment le vent en électricité. L'usine a été construite à leur pied : l'électricité arrive par une liaison courte jusqu'au poste électrique du site. Quand le vent faiblit, la production d'hydrogène baisse.",
+  carac:[["Propriétaire","Vendée Énergie","r"],["Type","Éoliennes terrestres","r"],["Puissance réservée à l'usine","≈ 2 MW équivalent","s"],["Vent de démarrage / nominal","3 m/s / 12 m/s","s"]],
+  live:()=>[["Vent",fmt(S.vent,1)+" m/s"],["Puissance disponible",fmt(S.pDispo)+" kW"]]},
+ {id:"poste",nom:"Poste électrique & redresseur",etape:"1 · Production",
+  fonction:"Adapter l'électricité du réseau éolien pour l'électrolyseur.",
+  fonct:"Un transformateur abaisse la tension, puis un redresseur transforme le courant alternatif en courant continu : l'électrolyse a besoin d'un courant continu de forte intensité. Le poste alimente aussi les compresseurs et les auxiliaires.",
+  carac:[["Tension d'arrivée","20 kV","s"],["Sortie redresseur","courant continu, ≈ 2 500 A","s"],["Rendement","≈ 96 %","s"]],
+  live:()=>[["Puissance totale du site",fmt(S.pSite)+" kW"],["Courant continu",fmt(S.pElec/0.4)+" A"]]},
+ {id:"eau",nom:"Prise d'eau de mer & prétraitement",etape:"1 · Production",
+  fonction:"Pomper l'eau de mer et retirer sable, algues et particules.",
+  fonct:"L'eau de mer est aspirée puis filtrée (filtres à sable et à cartouches) avant le dessalement. Bouin est situé en bord de baie de Bourgneuf : l'eau utilisée par l'usine est de l'eau de mer dessalée.",
+  carac:[["Origine de l'eau","Eau de mer (dessalée sur place)","r"],["Filtration","sable + cartouches 5 µm","s"]],
+  live:()=>[["Débit eau de mer",fmt(S.eauMerLh)+" L/h"],["Eau de mer aujourd'hui",fmt(S.jourEauMer/1000,1)+" m³"]]},
+ {id:"osmose",nom:"Dessalement & déminéralisation",etape:"1 · Production",
+  fonction:"Produire une eau très pure, sans sel ni minéraux.",
+  fonct:"Une osmose inverse pousse l'eau à travers des membranes très fines qui retiennent le sel. Une seconde étape (résines ou électrodéionisation) enlève les derniers minéraux : l'électrolyseur exige une eau presque parfaitement pure. La saumure (eau plus salée) est rejetée.",
+  carac:[["Technique","Osmose inverse + polissage","s"],["Taux de conversion","40 %","s"],["Conductivité eau pure","< 1 µS/cm","s"]],
+  live:()=>[["Eau pure produite",fmt(S.eauDemiLh)+" L/h"],["Eau pure aujourd'hui",fmt(S.jourEau)+" L"]]},
+ {id:"elec",nom:"Électrolyseur 1 MW",etape:"1 · Production",
+  fonction:"Casser les molécules d'eau en hydrogène et oxygène grâce au courant électrique.",
+  fonct:"Dans chaque cellule, le courant traverse l'eau entre deux électrodes : l'hydrogène se forme d'un côté, l'oxygène de l'autre, séparés par une membrane. Les cellules sont empilées en « stacks ». La production suit en direct la puissance du vent (de 15 % à 100 % de charge).",
+  carac:[["Puissance","1 MW (extension annoncée à 2,5 MW)","r"],["Production annoncée","≈ 300 kg/jour","r"],["Production maxi théorique","≈ "+fmt(nomKgH,1)+" kg/h · "+fmt(nomKgJ)+" kg/j","s"],["Consommation","55 kWh/kg","s"],["Pression de sortie","30 bar","s"],["Fournisseur / technologie","non confirmés dans nos sources","s"]],
+  live:()=>[["Charge",fmt(S.charge*100)+" %"],["Production",fmt(S.prodKgH,1)+" kg/h"],["Température des stacks",fmt(S.tStack,1)+" °C"],["Pression",fmt(S.pElecBar,1)+" bar"]]},
+ {id:"sep",nom:"Séparateurs gaz / liquide",etape:"1 · Production",
+  fonction:"Séparer le gaz de l'eau entraînée et évacuer l'oxygène.",
+  fonct:"À la sortie des stacks, le gaz contient des gouttes d'eau. Deux ballons séparent l'eau, qui retourne vers l'électrolyseur. L'hydrogène part vers la purification ; l'oxygène est rejeté à l'air libre par un évent.",
+  carac:[["Nombre de ballons","2 (H₂ et O₂)","s"],["Oxygène produit","8 kg par kg d'H₂ (chimie)","r"]],
+  live:()=>[["Oxygène rejeté",fmt(S.prodKgH*8,0)+" kg/h"],["Niveau ballon H₂",fmt(52+8*Math.sin(S.t/7e5),0)+" %"]]},
+ {id:"froid",nom:"Aéroréfrigérants",etape:"1 · Production",
+  fonction:"Évacuer la chaleur dégagée par l'électrolyse et la compression.",
+  fonct:"Environ un tiers de l'énergie électrique devient de la chaleur. Un circuit d'eau glycolée la transporte vers des ventilateurs extérieurs qui la dissipent dans l'air, pour garder les stacks autour de 60 à 70 °C.",
+  carac:[["Puissance froid","≈ 400 kW","s"],["Fluide","eau glycolée","s"]],
+  live:()=>[["Chaleur évacuée",fmt(S.pElec*0.32)+" kW"],["Départ / retour",fmt(S.tStack-14,0)+" / "+fmt(S.tStack-4,0)+" °C"],["Ventilateurs",fmt(clamp(S.charge*110,15,100))+" %"]]},
+ {id:"purif",nom:"Purification (désoxygénation + séchage)",etape:"2 · Traitement",
+  fonction:"Rendre l'hydrogène assez pur pour les piles à combustible.",
+  fonct:"Un catalyseur transforme les traces d'oxygène en eau. Deux colonnes d'adsorption retiennent ensuite l'humidité : l'une sèche pendant que l'autre se régénère, puis elles s'échangent. Un analyseur vérifie la pureté en continu.",
+  carac:[["Pureté visée","≥ 99,97 % (norme mobilité ISO 14687)","s"],["Point de rosée","< −70 °C","s"],["Colonnes","2 en alternance","s"]],
+  live:()=>[["Pureté mesurée",fmt(99.995+0.003*Math.sin(S.t/3e6),3)+" %"],["O₂ résiduel",fmt(2+Math.sin(S.t/2e6),1)+" ppm"],["Colonne active",(Math.floor(S.t/2.88e7)%2?"B":"A")]]},
+ {id:"comp",nom:"Compresseurs",etape:"2 · Compression",
+  fonction:"Augmenter la pression de l'hydrogène pour en stocker beaucoup dans peu de place.",
+  fonct:"Des compresseurs à pistons serrent le gaz par étapes, avec un refroidissement entre chaque étage. On passe de 30 bar à la sortie de l'électrolyseur jusqu'à 380 bar pour remplir les conteneurs.",
+  carac:[["Nombre","2 (1 en service + 1 en secours)","s"],["Pression","30 → 380 bar","s"],["Énergie","≈ 2,6 kWh/kg","s"]],
+  live:()=>[["Débit comprimé",fmt(S.prodKgH,1)+" kg/h"],["Pression de refoulement",fmt(S.pRefoul)+" bar"],["Puissance",fmt(S.pComp)+" kW"]]},
+ {id:"stock",nom:"Stockage tampon haute pression",etape:"3 · Stockage",
+  fonction:"Garder l'hydrogène quand aucun conteneur n'est prêt et lisser les variations du vent.",
+  fonct:"Des racks de bouteilles reçoivent l'hydrogène comprimé quand les postes de remplissage sont occupés ou vides. Ils le restituent ensuite aux conteneurs. S'il est plein, l'électrolyseur doit ralentir.",
+  carac:[["Capacité","≈ "+P.tamponMax+" kg","s"],["Pression maxi","300 bar","s"]],
+  live:()=>[["Contenu",fmt(S.tampon,0)+" kg"],["Pression",fmt(S.tampon/P.tamponMax*P.pTamponMax+20,0)+" bar"],["Remplissage",fmt(S.tampon/P.tamponMax*100)+" %"]]},
+ {id:"baies",nom:"Postes de remplissage des conteneurs",etape:"3 · Remplissage",
+  fonction:"Remplir les conteneurs d'hydrogène posés sur des remorques.",
+  fonct:"Chaque conteneur est raccordé par un flexible haute pression. Le remplissage est progressif pour limiter l'échauffement du gaz. Quand il est plein, un numéro de lot est attribué et le camion peut partir.",
+  carac:[["Nombre de postes","6","r"],["Conteneurs","type IV (composite), Hexagon Purus","r"],["Capacité d'un conteneur","≈ "+P.conteneurKg+" kg à 380 bar","s"],["Débit par poste","≤ "+P.debitBaie+" kg/h","s"]],
+  live:()=>[["Postes en remplissage",String(S.bays.filter(b=>b.etat==="remplissage").length)],["Conteneurs pleins en attente",String(S.bays.filter(b=>b.etat==="plein").length)],["H₂ dans les conteneurs",fmt(S.bays.reduce((a,b)=>a+(b.c?b.c.kg:0),0))+" kg"]]},
+ {id:"secu",nom:"Sécurité du site",etape:"Transverse",
+  fonction:"Détecter toute fuite ou flamme et mettre l'installation en sécurité.",
+  fonct:"Des détecteurs d'hydrogène et de flamme surveillent chaque zone. En cas d'alarme, l'arrêt d'urgence coupe l'électricité, ferme les vannes et vide les équipements vers l'évent en hauteur. Une réserve d'eau sert à la lutte contre l'incendie. Les zones à risque sont ventilées et clôturées.",
+  carac:[["Détecteurs H₂ / flamme","24 / 8","s"],["Évent","mât de 12 m","s"],["Réserve incendie","120 m³","s"],["Seuil d'alarme H₂","10 % de la LIE","s"]],
+  live:()=>[["Détection H₂ maxi",fmt(0.2+0.2*Math.abs(Math.sin(S.t/9e5)),1)+" % LIE"],["Alarmes actives","0"],["Jours sans accident","—"]]},
+ {id:"cc",nom:"Salle de contrôle",etape:"Transverse",
+  fonction:"Piloter l'usine et suivre les lots.",
+  fonct:"Le système de contrôle (automates + supervision) ajuste la charge de l'électrolyseur selon le vent, enchaîne les remplissages, et prévient les équipes. Les données de chaque lot (quantité, pureté, pression) sont enregistrées pour la traçabilité et la certification RFNBO (hydrogène renouvelable).",
+  carac:[["Certification","RFNBO (mai 2025)","r"],["Surveillance","24 h/24, à distance","s"]],
+  live:()=>[["Lots produits ce mois",String(S.lots.filter(l=>l.debut>=S.debutMois).length)],["Mode","Automatique"]]}
+];
+const EQI = Object.fromEntries(EQ.map(e=>[e.id,e]));
+EQ.forEach(e=>e.etat="ok");
+EQI.comp.note="Compresseur B en secours";
+
+/* =====================================================================
+   5. SIMULATION
+   ===================================================================== */
+const now = Date.now();
+const d0 = new Date(now); const debutMois = new Date(d0.getFullYear(), d0.getMonth(), 1).getTime();
+Object.assign(S,{
+  t:debutMois, debutMois, vent:7, pDispo:0, pElec:0, charge:0, prodKgH:0, tStack:30, pElecBar:30, pRefoul:30, pComp:0, pSite:0,
+  eauDemiLh:0, eauMerLh:0, tampon:120, jourKg:0, moisKg:0, jourEau:0, jourEauMer:0, jourKWh:0, jour:d0.getDate(),
+  hist:[], histAcc:0, histN:0, histH:null,
+  bays:[], pool:P.nbConteneurs-6, trucks:[], lots:[], lotN:0, evts:[], selLot:null
+});
+for(let i=0;i<6;i++) S.bays.push({i, etat:"vide", attente:rand()*0.5, c:null, maint:false});
+S.bays[5].maint=true; // un poste en maintenance (simulé)
+for(let i=0;i<P.nbCamions;i++) S.trucks.push({id:"CAM-"+(i+1), etat:"disponible", lot:null, client:null, pos:0, fin:0, debut:0});
+
+// Vent : somme de sinus lents + rafales, reproductible
+const ph = [rand()*6.28,rand()*6.28,rand()*6.28,rand()*6.28];
+function vent(t){const h=t/3.6e6; return clamp(8.4+2.8*Math.sin(h/9+ph[0])+2.2*Math.sin(h/31+ph[1])+1.3*Math.sin(h/2.3+ph[2])+0.6*Math.sin(h*1.7+ph[3]),0,24);}
+// On choisit des phases pour que la simulation démarre avec du vent (sinon l'usine peut être en veille à l'ouverture)
+for(let k=0;k<300 && vent(now)<9;k++){ for(let i=0;i<4;i++) ph[i]=rand()*6.28; }
+function courbe(v){ if(v<3||v>25) return 0; if(v>=12) return 1; return ((v-3)/9)**2.2; }
+
+function lotId(t){const d=new Date(t); S.lotN++; return "LOT-BOU-"+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+String(S.lotN).padStart(3,"0");}
+
+function step(dtH){
+  const t = S.t;
+  // --- Changement de jour ---
+  const d = new Date(t);
+  if(d.getDate()!==S.jour){ S.jour=d.getDate(); S.jourKg=0; S.jourEau=0; S.jourEauMer=0; S.jourKWh=0; if(d.getDate()===1){S.moisKg=0;S.debutMois=t;} }
+  // --- Électricité & électrolyseur ---
+  S.vent = vent(t);
+  S.pDispo = 2000*courbe(S.vent);
+  let consigne = Math.min(P.elecNomKW, S.pDispo*0.95);
+  if(EQI.elec.etat!=="ok") consigne = 0;
+  // Capacité d'aval : postes libres + place dans le tampon
+  const bayLibres = S.bays.filter(b=>b.etat==="remplissage");
+  const capAval = bayLibres.length*P.debitBaie + (S.tampon<P.tamponMax-1 ? 999 : 0);
+  if(EQI.comp.etat!=="ok" || EQI.purif.etat!=="ok") consigne=0;
+  let maxKgH = Math.min(consigne/P.kWhParKg, capAval);
+  let charge = maxKgH*P.kWhParKg/P.elecNomKW;
+  if(charge<P.chargeMin) charge=0;
+  S.charge += (charge-S.charge)*Math.min(1,dtH*6);       // inertie
+  S.pElec = S.charge*P.elecNomKW;
+  S.prodKgH = S.pElec/P.kWhParKg;
+  S.tStack += ((25+48*S.charge)-S.tStack)*Math.min(1,dtH*1.5);
+  S.pElecBar = S.charge>0 ? P.pSortie - 0.5 + rand()*0.6 : 1.2;
+  S.pComp = S.prodKgH*P.compKWhParKg;
+  S.pSite = S.pElec/0.96 + S.pComp + P.auxKW + S.pElec*0.32*0.04;
+  S.eauDemiLh = S.prodKgH*P.eauDemiParKg; S.eauMerLh = S.eauDemiLh/P.tauxOsmose;
+  // --- Bilan matière ---
+  const kg = S.prodKgH*dtH;
+  S.jourKg+=kg; S.moisKg+=kg; S.jourEau+=S.eauDemiLh*dtH; S.jourEauMer+=S.eauMerLh*dtH; S.jourKWh+=S.pSite*dtH;
+  // Répartition vers les postes (le plus avancé d'abord) puis tampon
+  let reste = kg;
+  const enRemp = S.bays.filter(b=>b.etat==="remplissage").sort((a,b)=>b.c.kg-a.c.kg);
+  for(const b of enRemp){ const place=Math.min(P.conteneurKg-b.c.kg, P.debitBaie*dtH); const q=Math.min(place,reste); b.c.kg+=q; reste-=q; b.c.q=q; if(reste<=0) break; }
+  S.tampon = Math.min(P.tamponMax, S.tampon+reste);
+  // Le tampon vide dans les postes libres
+  for(const b of enRemp){ const place=Math.min(P.conteneurKg-b.c.kg, P.debitBaie*dtH-(b.c.q||0)); const q=Math.max(0,Math.min(place,S.tampon)); b.c.kg+=q; S.tampon-=q; b.c.q=0; }
+  S.pRefoul = enRemp.length? clamp(60+ (enRemp[0].c.kg/P.conteneurKg)*320,30,P.pConteneur) : S.tampon/P.tamponMax*P.pTamponMax+20;
+  // --- Postes de remplissage ---
+  for(const b of S.bays){
+    if(b.maint){ b.etat="maintenance"; continue; }
+    if(b.etat==="maintenance") b.etat="vide";
+    if(b.etat==="vide"){ b.attente-=dtH; if(b.attente<=0 && S.pool>0){ S.pool--; b.c={kg:3,lot:null}; b.etat="remplissage"; } }
+    if(b.etat==="remplissage" && b.c){
+      if(!b.c.lot && b.c.kg>3.05){ const id=lotId(t); b.c.lot=id; S.lots.unshift({id,debut:t,plein:null,depart:null,arrivee:null,livre:null,client:null,kg:0,bay:b.i+1,camion:null,etape:3}); }
+      const L=b.c.lot?S.lots.find(l=>l.id===b.c.lot):null; if(L) L.kg=b.c.kg;
+      if(b.c.kg>=P.conteneurKg-0.01){ b.etat="plein"; if(L){L.plein=t;} }
+    }
+    if(b.etat==="plein"){
+      const cam = S.trucks.find(c=>c.etat==="disponible");
+      // client choisi : le plus bas en stock relatif qui peut recevoir le conteneur
+      const cli = CLIENTS.filter(c=>c.stock+c.encours+P.conteneurKg<=c.cap).sort((a,b)=>(a.stock+a.encours)/a.cap-(b.stock+b.encours)/b.cap)[0];
+      if(cam && cli){
+        const L=S.lots.find(l=>l.id===b.c.lot);
+        cam.etat="aller"; cam.lot=L.id; cam.client=cli.id; cam.debut=t; cam.fin=t+cli.h*3.6e6; cam.kg=b.c.kg;
+        cli.encours+=b.c.kg; L.depart=t; L.client=cli.id; L.camion=cam.id; L.etape=4;
+        b.c=null; b.etat="vide"; b.attente=P.dureeMiseEnPlace;
+      }
+    }
+  }
+  // --- Camions ---
+  for(const c of S.trucks){
+    const cli = CLIENTS.find(x=>x.id===c.client); const L = S.lots.find(l=>l.id===c.lot);
+    if(c.etat==="aller" && t>=c.fin){ c.etat="livraison"; c.debut=t; c.fin=t+P.dureeDechargement*3.6e6; if(L){L.arrivee=t;L.etape=5;} }
+    else if(c.etat==="livraison" && t>=c.fin){ cli.stock=Math.min(cli.cap,cli.stock+c.kg); cli.encours-=c.kg; c.etat="retour"; c.debut=t; c.fin=t+cli.h*3.6e6; if(L){L.livre=t;L.etape=6;} }
+    else if(c.etat==="retour" && t>=c.fin){ c.etat="disponible"; c.lot=null; c.client=null; S.pool++; }
+  }
+  // --- Consommation des clients (plus forte en journée) ---
+  const hr = d.getHours()+d.getMinutes()/60;
+  const prof = 0.35+1.3*Math.max(0,Math.sin((hr-5)/16*Math.PI));
+  for(const c of CLIENTS){ c.stock=Math.max(0,c.stock - c.conso*prof*dtH/21.65); }
+  // --- Historique horaire ---
+  const hKey = Math.floor(t/3.6e6);
+  if(S.histH===null) S.histH=hKey;
+  S.histAcc+=S.prodKgH; S.histN++;
+  if(hKey!==S.histH){ S.hist.push({t:S.histH*3.6e6, v:S.histAcc/S.histN}); if(S.hist.length>48) S.hist.shift(); S.histAcc=0; S.histN=0; S.histH=hKey; }
+  if(S.lots.length>200) S.lots.length=200;
+}
+CLIENTS.forEach(c=>c.encours=0);
+// Pré-calcul depuis le début du mois, pour avoir des compteurs réalistes
+(function avance(){ const dt=60e3; while(S.t<now){ step(dt/3.6e6); S.t+=dt; } S.t=now; })();
+
+/* =====================================================================
+   6. INDICATEURS
+   ===================================================================== */
+function h2Dispo(){ return S.tampon + S.bays.reduce((a,b)=>a+(b.c?b.c.kg:0),0); }
+function renderKPI(){
+  const jours = (S.t-S.debutMois)/864e5;
+  const util = S.moisKg/(nomKgH*jours*24)*100;
+  const k = [
+    ["Production instantanée", fmt(S.prodKgH,1), "kg/h", `charge ${fmt(S.charge*100)} % · vent ${fmt(S.vent,1)} m/s`, "sim", S.prodKgH/nomKgH],
+    ["Production du jour", fmt(S.jourKg), "kg", `référence publique ≈ 300 kg/j`, "sim", S.jourKg/nomKgJ],
+    ["Production du mois", fmt(S.moisKg/1000,2), "t", `${fmt(jours,1)} jours écoulés`, "sim", null],
+    ["Capacité nominale", "1", "MW", `≈ ${fmt(nomKgH,1)} kg/h · ${fmt(nomKgJ)} kg/j`, "reel", null],
+    ["Taux d'utilisation (mois)", fmt(util,1), "%", "production / maximum théorique", "sim", util/100],
+    ["Pression", fmt(S.pElecBar,0)+" → "+fmt(S.pRefoul,0), "bar", "sortie électrolyseur → refoulement", "sim", S.pRefoul/P.pConteneur],
+    ["Température stacks", fmt(S.tStack,1), "°C", "plage normale 55–75 °C", "sim", null],
+    ["Puissance électrique site", fmt(S.pSite), "kW", `${fmt(S.jourKWh/1000,1)} MWh aujourd'hui`, "sim", S.pSite/1100],
+    ["Eau pure utilisée", fmt(S.eauDemiLh), "L/h", `${fmt(S.jourEau/1000,2)} m³ aujourd'hui (${fmt(S.jourEauMer/1000,1)} m³ d'eau de mer)`, "sim", null],
+    ["H₂ disponible sur site", fmt(h2Dispo()), "kg", `tampon ${fmt(S.tampon)} kg + conteneurs`, "sim", h2Dispo()/(P.tamponMax+6*P.conteneurKg)],
+  ];
+  $("#kpis").innerHTML = k.map(([l,v,u,s,tg,b])=>`<div class="kpi"><span class="tag ${tg}">${tg==="sim"?"SIM":"RÉEL"}</span><div class="l">${l}</div><div class="v">${v} <small>${u}</small></div><div class="s">${s}</div>${b!=null?`<div class="bar"><i style="width:${clamp(b*100,0,100)}%"></i></div>`:""}</div>`).join("");
+  $("#clk").textContent = new Date(S.t).toLocaleString("fr-FR",{weekday:"short",day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
+}
+function renderSpark(){
+  const cv=$("#spark"), r=devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight; if(!w) return;
+  cv.width=w*r; cv.height=h*r; const g=cv.getContext("2d"); g.scale(r,r);
+  const pts=S.hist; const max=nomKgH*1.05;
+  g.strokeStyle="#1d3245"; g.lineWidth=1; g.font="10px JetBrains Mono"; g.fillStyle="#7f97ab";
+  [0,0.5,1].forEach(f=>{const y=h-14-(h-22)*f; g.beginPath(); g.moveTo(28,y); g.lineTo(w,y); g.stroke(); g.fillText(fmt(max*f,0),0,y+3);});
+  if(pts.length<2) return;
+  const X=i=>28+(w-30)*i/(pts.length-1), Y=v=>h-14-(h-22)*v/max;
+  g.beginPath(); pts.forEach((p,i)=>i?g.lineTo(X(i),Y(p.v)):g.moveTo(X(i),Y(p.v)));
+  g.lineTo(X(pts.length-1),h-14); g.lineTo(X(0),h-14); g.closePath(); g.fillStyle="#38d6ff22"; g.fill();
+  g.beginPath(); pts.forEach((p,i)=>i?g.lineTo(X(i),Y(p.v)):g.moveTo(X(i),Y(p.v))); g.strokeStyle="#38d6ff"; g.lineWidth=2; g.stroke();
+  g.fillStyle="#7f97ab"; g.fillText(hhmm(pts[0].t),28,h-2); g.fillText(hhmm(pts[pts.length-1].t),w-34,h-2);
+  const moy=pts.reduce((a,p)=>a+p.v,0)/pts.length;
+  $("#sparktxt").textContent=`Moyenne ${fmt(moy,1)} kg/h, soit ≈ ${fmt(moy*24)} kg/jour (axe en kg/h). La production suit le vent.`;
+}
+const ETATS={ok:["Opérationnel","ok"],maint:["En maintenance","maint"],stop:["À l'arrêt","stop"]};
+function eqEtat(e){ if(e.id==="elec" && e.etat==="ok" && S.charge===0) return ["En veille (vent faible ou aval plein)","maint"]; return ETATS[e.etat]; }
+function renderBays(){
+  $("#bays").innerHTML=S.bays.map(b=>{
+    const pct=b.c?b.c.kg/P.conteneurKg*100:0;
+    const lab={vide:"vide · pose conteneur",remplissage:(b.c&&b.c.lot)?"remplissage":"prêt · en file",plein:"plein · attente camion",maintenance:"maintenance"}[b.etat];
+    const col=b.etat==="maintenance"?"maint":b.etat==="plein"?"ok":"ok";
+    return `<div class="bay" onclick="openPanel('baies')"><div style="display:flex;justify-content:space-between"><b>Poste ${b.i+1}</b><span class="dot ${b.etat==="maintenance"?"maint":b.etat==="vide"?"stop":"ok"}"></span></div><div class="g"><i style="width:${pct}%"></i><em>${b.c?fmt(b.c.kg)+" kg":"—"}</em></div><span style="color:var(--mut)">${lab}</span></div>`;
+  }).join("");
+}
+function renderEqList(){
+  $("#eqlist").innerHTML=EQ.map(e=>{const [l,c]=eqEtat(e);return `<button onclick="openPanel('${e.id}')"><span><span class="dot ${c}"></span> ${e.nom}</span><span class="n">${e.etape.split(" ")[0]}</span></button>`;}).join("");
+}
+
+/* =====================================================================
+   7. PANNEAU « FICHE ÉQUIPEMENT »
+   ===================================================================== */
+let panelId=null;
+function openPanel(id){ panelId=id; renderPanel(); $("#panel").classList.add("on"); hl3d(id); }
+function closePanel(){ panelId=null; $("#panel").classList.remove("on"); hl3d(null); }
+function setEtat(id,et){ EQI[id].etat=et; renderPanel(); renderEqList(); }
+function renderPanel(){
+  if(!panelId) return; const e=EQI[panelId]; const [l,c]=eqEtat(e);
+  $("#pbody").innerHTML=`<div class="step">Étape ${e.etape}</div><h2>${e.nom}</h2>
+  <div class="state"><span class="dot ${c}"></span>${l}</div>${e.note?`<div class="small">${e.note}</div>`:""}
+  <h4>Fonction</h4><p>${e.fonction}</p>
+  <h4>Fonctionnement</h4><p class="small" style="color:var(--txt)">${e.fonct}</p>
+  <h4>Caractéristiques techniques</h4><table class="kv">${e.carac.map(([k,v,s])=>`<tr><td>${k}</td><td>${v}<span class="src ${s}">${s==="r"?"RÉEL":"SIM"}</span></td></tr>`).join("")}</table>
+  <h4>Supervision en direct <span class="src s">SIM</span></h4><table class="kv">${e.live().map(([k,v])=>`<tr><td>${k}</td><td class="m">${v}</td></tr>`).join("")}</table>
+  <h4>Tester un état (démonstration)</h4><div class="statebtns">${Object.entries(ETATS).map(([k,[lab,cl]])=>`<button onclick="setEtat('${e.id}','${k}')"><span class="dot ${cl}"></span> ${lab}</button>`).join("")}</div>
+  <p class="small" style="margin-top:8px">Mettre l'électrolyseur, la purification ou les compresseurs à l'arrêt stoppe la production : les indicateurs et les animations réagissent.</p>`;
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closePanel();});
+
+/* =====================================================================
+   8. VUE 3D (Three.js)
+   ===================================================================== */
+let R3 = null;
+function init3D(){
+  const box=$("#scene");
+  if(!window.THREE){ box.insertAdjacentHTML("afterbegin",`<div class="fail">La vue 3D a besoin d'une connexion internet (bibliothèque Three.js). Les autres vues fonctionnent.</div>`); return; }
+  let renderer; try{ renderer=new THREE.WebGLRenderer({antialias:true}); }catch(err){ box.insertAdjacentHTML("afterbegin",`<div class="fail">WebGL n'est pas disponible sur ce navigateur.</div>`); return; }
+  renderer.setPixelRatio(Math.min(2,devicePixelRatio)); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  box.prepend(renderer.domElement);
+  const scene=new THREE.Scene(); scene.background=new THREE.Color(0x0a1520); scene.fog=new THREE.Fog(0x0a1520,180,420);
+  const cam=new THREE.PerspectiveCamera(45,1,0.5,1000);
+  scene.add(new THREE.HemisphereLight(0x9fc8ff,0x1a2a1a,0.75));
+  const sun=new THREE.DirectionalLight(0xfff2dd,0.9); sun.position.set(-80,120,60); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
+  Object.assign(sun.shadow.camera,{left:-140,right:140,top:140,bottom:-140,far:400}); scene.add(sun);
+
+  const M=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.7,metalness:.2},o));
+  const mats={sol:M(0x3a4a33,{roughness:1}),beton:M(0x8a9097,{roughness:.9}),blanc:M(0xe8ecef),gris:M(0x6c7a86),acier:M(0xb8c2cc,{metalness:.6,roughness:.35}),
+    bleu:M(0x1f5fa8),vert:M(0x2e7d5b),jaune:M(0xf2b632),rouge:M(0xc0392b),mer:M(0x14466e,{roughness:.2,metalness:.3}),route:M(0x2b2f33,{roughness:1}),vitre:M(0x4aa3d8,{emissive:0x0b3550,roughness:.2})};
+  const groups={};
+  function G(id,x,z){const g=new THREE.Group(); g.position.set(x,0,z); g.userData.id=id; scene.add(g); (groups[id]=groups[id]||[]).push(g); return g;}
+  function box3(g,w,h,d,m,x=0,y=0,z=0){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); o.position.set(x,y+h/2,z); o.castShadow=o.receiveShadow=true; g.add(o); return o;}
+  function cyl(g,r,h,m,x=0,y=0,z=0,seg=20){const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg),m); o.position.set(x,y+h/2,z); o.castShadow=o.receiveShadow=true; g.add(o); return o;}
+
+  // Sol, mer, routes
+  const sol=new THREE.Mesh(new THREE.PlaneGeometry(500,500),mats.sol); sol.rotation.x=-Math.PI/2; sol.receiveShadow=true; scene.add(sol);
+  const mer=new THREE.Mesh(new THREE.PlaneGeometry(200,500),mats.mer); mer.rotation.x=-Math.PI/2; mer.position.set(-200,0.05,0); scene.add(mer);
+  const dalle=new THREE.Mesh(new THREE.PlaneGeometry(150,95),mats.beton); dalle.rotation.x=-Math.PI/2; dalle.position.set(5,0.06,5); dalle.receiveShadow=true; scene.add(dalle);
+  const rte=new THREE.Mesh(new THREE.PlaneGeometry(200,9),mats.route); rte.rotation.x=-Math.PI/2; rte.position.set(150,0.07,38); scene.add(rte);
+  const rte2=new THREE.Mesh(new THREE.PlaneGeometry(110,9),mats.route); rte2.rotation.x=-Math.PI/2; rte2.position.set(45,0.08,38); scene.add(rte2);
+  // Clôture
+  const fence=new THREE.LineBasicMaterial({color:0x9fb3c4,transparent:true,opacity:.5});
+  const fpts=[[-70,-42],[80,-42],[80,52],[-70,52],[-70,-42]].map(([x,z])=>new THREE.Vector3(x,2,z));
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(fpts),fence));
+
+  // 1. Éoliennes
+  const rotors=[];
+  [[-60,-105],[-10,-120],[40,-108],[90,-125]].forEach(([x,z],i)=>{
+    const g=G("eol",x,z); const tour=new THREE.Mesh(new THREE.CylinderGeometry(.9,1.8,60,16),mats.blanc); tour.position.y=30; tour.castShadow=true; g.add(tour);
+    box3(g,3,2.6,7,mats.blanc,0,59,1);
+    const rot=new THREE.Group(); rot.position.set(0,60.3,4.8); g.add(rot);
+    for(let k=0;k<3;k++){const p=new THREE.Mesh(new THREE.BoxGeometry(1.4,24,.4),mats.blanc); p.position.y=12; const a=new THREE.Group(); a.rotation.z=k*2.094; a.add(p); rot.add(a);}
+    rot.add(new THREE.Mesh(new THREE.SphereGeometry(1.1,12,12),mats.blanc)); rot.rotation.z=i; rotors.push(rot);
+  });
+  // 2. Poste électrique
+  { const g=G("poste",-40,-30); box3(g,14,0.4,12,mats.beton); box3(g,5,4,4,mats.gris,-3,0.4,-2); box3(g,4,3,3,mats.gris,3,0.4,-2);
+    for(let i=0;i<3;i++) cyl(g,.25,3,mats.acier,-3+i*1.2,4.4,-2,8); box3(g,10,3,3,M(0x3c4a57),0,0.4,3.5); }
+  // 3. Prise d'eau + 4. Osmose
+  { const g=G("eau",-92,18); box3(g,6,2,6,mats.beton); cyl(g,1.2,3,mats.bleu,-1.5,2,0); cyl(g,1.2,3,mats.bleu,1.5,2,0);
+    const tuyau=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,30,8),mats.gris); tuyau.rotation.z=Math.PI/2; tuyau.position.set(-17,0.4,0); g.add(tuyau); }
+  { const g=G("osmose",-55,18); box3(g,12.2,2.6,2.5,mats.bleu,0,0,0); box3(g,12.2,2.6,2.5,M(0x2a6fb8),0,0,3); cyl(g,2,4,mats.blanc,-9,0,1.5); }
+  // 5. Électrolyseur (2 conteneurs) + 6. séparateurs
+  { const g=G("elec",-22,4); box3(g,12.2,2.9,2.5,mats.blanc,0,0,-2.2); box3(g,12.2,2.9,2.5,mats.blanc,0,0,1.6);
+    const band=M(0x38d6ff,{emissive:0x0e6e8a}); box3(g,12.25,.3,2.55,band,0,2.2,-2.2); box3(g,12.25,.3,2.55,band,0,2.2,1.6); }
+  { const g=G("sep",-8,4); cyl(g,1,6,mats.acier,-1.6,0,-1); cyl(g,1,6,mats.acier,1.6,0,-1); cyl(g,.2,8,mats.gris,1.6,6,-1,8); }
+  // 7. Aéroréfrigérants
+  const fans=[];
+  { const g=G("froid",-22,-16); for(let i=0;i<2;i++){ box3(g,10,2.2,3.4,mats.gris,0,0,i*4-2); for(let k=0;k<3;k++){ const f=new THREE.Mesh(new THREE.BoxGeometry(2.6,.12,.4),M(0x222)); f.position.set(-3.3+k*3.3,2.35,i*4-2); g.add(f); fans.push(f);} } }
+  // 8. Purification
+  { const g=G("purif",8,4); box3(g,7,.4,5,mats.beton); cyl(g,.7,6,mats.vert,-1.8,.4,0); cyl(g,.7,6,mats.vert,0,.4,0); cyl(g,.5,4,mats.acier,1.8,.4,0); box3(g,1.6,2,1.2,mats.gris,2.6,.4,-1.8); }
+  // 9. Compresseurs
+  { const g=G("comp",24,4); box3(g,14,5,8,M(0x5c7286)); box3(g,14.1,.6,8.1,M(0x38d6ff,{emissive:0x0e6e8a}),0,4.2,0); for(let i=0;i<3;i++) cyl(g,.4,1.5,mats.gris,-4+i*4,5,0,8); }
+  // 10. Stockage tampon (racks de bouteilles)
+  { const g=G("stock",42,-14); box3(g,16,.5,9,mats.beton); for(let r=0;r<3;r++) for(let c=0;c<4;c++){ const b=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,14,14),mats.acier); b.rotation.z=Math.PI/2; b.position.set(0,1.2+r*1.2,-3+c*1.9); b.castShadow=true; g.add(b);} }
+  // 11. Postes de remplissage (6) avec remorques
+  const bayObj=[];
+  for(let i=0;i<6;i++){
+    const g=G("baies",-5+i*13,30); box3(g,11,.3,4.6,mats.beton); box3(g,.6,2.4,.6,mats.jaune,-4.8,.3,-2.6);
+    const toit=box3(g,12,.3,6,mats.gris,0,6,0); cyl(g,.2,6,mats.gris,-5.5,0,-2.8,6); cyl(g,.2,6,mats.gris,5.5,0,-2.8,6);
+    const rem=new THREE.Group(); g.add(rem);
+    box3(rem,10,.5,2.5,M(0x333a40),0,1.1,0);
+    const cont=box3(rem,9,2.4,2.4,M(0xdfe6ec),0,1.6,0);
+    const fill=box3(rem,0.1,.25,2.45,M(0x38d6ff,{emissive:0x38d6ff,emissiveIntensity:.8}),-4.5,3.2,0);
+    const led=new THREE.Mesh(new THREE.SphereGeometry(.35,10,10),M(0x2fd27a,{emissive:0x2fd27a})); led.position.set(-4.8,3,-2.6); g.add(led);
+    bayObj.push({rem,fill,led,cont});
+  }
+  // 12. Sécurité : évent, réserve incendie, détecteurs
+  { const g=G("secu",62,-26); cyl(g,.35,12,mats.acier); box3(g,1,1,1,mats.rouge,0,12,0); cyl(g,5,5,mats.rouge,-14,0,6);
+    const g2=G("secu",-2,-30); cyl(g2,.12,4,mats.gris,0,0,0,6); box3(g2,.6,.6,.6,mats.rouge,0,4,0); }
+  // 13. Salle de contrôle
+  { const g=G("cc",-50,40); box3(g,12,3.5,7,mats.blanc); box3(g,12.1,1.2,7.1,mats.vitre,0,1.6,0); }
+
+  // Réseaux (lignes) + particules en mouvement
+  const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+  const nets=[
+    {c:0xffc83d,w:"elec",pts:[V(-10,58,-118),V(-30,12,-60),V(-40,6,-30),V(-30,5,-10),V(-22,4,4)],n:26},
+    {c:0x3d7bff,w:"eau",pts:[V(-108,.8,18),V(-92,.8,18),V(-60,1,18),V(-40,1,14),V(-22,1,4)],n:22},
+    {c:0x38e0a0,w:"froid",pts:[V(-22,1.5,2),V(-30,1.5,-6),V(-22,2.5,-16),V(-14,1.5,-6)],n:14,loop:true},
+    {c:0x38d6ff,w:"h2",pts:[V(-16,3.2,4),V(-8,4,3),V(5,3.2,4),V(17,3,4),V(31,3,2),V(36,3,-12),V(48,3,-12),V(56,3,0),V(60,3,22),V(30,3,24),V(-5,3,24)],n:44}
+  ];
+  const flows=[];
+  nets.forEach(nw=>{
+    const curve=new THREE.CatmullRomCurve3(nw.pts,!!nw.loop,"centripetal");
+    const tube=new THREE.Mesh(new THREE.TubeGeometry(curve,160,.22,8,!!nw.loop),new THREE.MeshStandardMaterial({color:nw.c,transparent:true,opacity:.35,emissive:nw.c,emissiveIntensity:.25}));
+    scene.add(tube);
+    const geo=new THREE.SphereGeometry(nw.w==="h2"?.45:.38,10,10), mat=new THREE.MeshBasicMaterial({color:nw.c});
+    const ps=[]; for(let i=0;i<nw.n;i++){const m=new THREE.Mesh(geo,mat); scene.add(m); ps.push({m,u:i/nw.n});}
+    flows.push({curve,ps,w:nw.w});
+  });
+  // conduites verticales vers chaque poste
+  for(let i=0;i<6;i++){ const x=-5+i*13; const c=new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,3,6),new THREE.MeshBasicMaterial({color:0x38d6ff,transparent:true,opacity:.5})); c.position.set(x-4.8,1.8,26); scene.add(c); }
+  // Camion qui part / arrive sur la route
+  const truck=new THREE.Group(); box3(truck,3,3,2.6,M(0x1f5fa8),5.5,.4,0); box3(truck,8,2.4,2.4,M(0xdfe6ec),-0.5,1.4,0); box3(truck,12,.4,2.4,M(0x333),0,.8,0); truck.position.set(300,0,38); scene.add(truck);
+  let truckAnim=null;
+
+  // Étiquettes HTML
+  const labelPos={eol:V(-10,72,-120),poste:V(-40,8,-30),eau:V(-92,6,18),osmose:V(-55,6,19),elec:V(-22,6,4),sep:V(-8,9,3),froid:V(-22,5,-16),purif:V(8,8,4),comp:V(24,8,4),stock:V(42,7,-14),baies:V(27,9,30),secu:V(62,15,-26),cc:V(-50,6,40)};
+  const labels={};
+  Object.entries(labelPos).forEach(([id,p])=>{const d=document.createElement("div"); d.className="lbl"; d.onclick=()=>openPanel(id); box.appendChild(d); labels[id]={d,p};});
+
+  // Caméra orbitale maison
+  const orb={th:0.75,ph:0.95,r:190,tg:V(0,0,0)}; let drag=null, moved=0;
+  const el=renderer.domElement;
+  el.addEventListener("contextmenu",e=>e.preventDefault());
+  el.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY,pan:e.button===2||e.shiftKey}; moved=0; el.setPointerCapture(e.pointerId);});
+  el.addEventListener("pointermove",e=>{ if(!drag){hover(e);return;} const dx=e.clientX-drag.x, dy=e.clientY-drag.y; moved+=Math.abs(dx)+Math.abs(dy); drag.x=e.clientX; drag.y=e.clientY;
+    if(drag.pan){ const s=orb.r/600; const fx=Math.cos(orb.th), fz=Math.sin(orb.th); orb.tg.x+=(-dx*fz - dy*fx)*s*-1; orb.tg.z+=(dx*fx - dy*fz)*s*-1; }
+    else { orb.th-=dx*0.006; orb.ph=clamp(orb.ph-dy*0.005,0.15,1.45); } });
+  el.addEventListener("pointerup",e=>{ if(drag&&moved<5) pick(e); drag=null; });
+  el.addEventListener("wheel",e=>{e.preventDefault(); orb.r=clamp(orb.r*(1+Math.sign(e.deltaY)*0.1),35,380);},{passive:false});
+  const ray=new THREE.Raycaster(), mv=new THREE.Vector2();
+  function hit(e){ const r=el.getBoundingClientRect(); mv.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1); ray.setFromCamera(mv,cam);
+    const all=[].concat(...Object.values(groups)); const h=ray.intersectObjects(all,true)[0]; if(!h) return null; let o=h.object; while(o&&!o.userData.id) o=o.parent; return o?o.userData.id:null; }
+  function pick(e){ const id=hit(e); if(id) openPanel(id); }
+  function hover(e){ el.style.cursor=hit(e)?"pointer":"grab"; }
+
+  // surbrillance simple via boîte englobante
+  let hlBox=null;
+  function hlSimple(id){ if(hlBox){scene.remove(hlBox);hlBox=null;} if(!id||!groups[id]) return; const b=new THREE.Box3(); groups[id].forEach(g=>b.expandByObject(g)); hlBox=new THREE.Box3Helper(b,0x38d6ff); scene.add(hlBox); }
+
+  function resize(){ const w=box.clientWidth,h=box.clientHeight; renderer.setSize(w,h); cam.aspect=w/h; cam.updateProjectionMatrix(); }
+  addEventListener("resize",resize); resize();
+
+  let lastBayState=S.bays.map(b=>b.etat);
+  R3={
+    hl:hlSimple,
+    frame(dtReal){
+      if(!$("#v3d").classList.contains("on")) return;
+      cam.position.set(orb.tg.x+orb.r*Math.sin(orb.ph)*Math.cos(orb.th), orb.r*Math.cos(orb.ph), orb.tg.z+orb.r*Math.sin(orb.ph)*Math.sin(orb.th)); cam.lookAt(orb.tg);
+      const k=Math.min(4,+$("#speed").value/60+0.4);
+      rotors.forEach(r=>r.rotation.z-=dtReal*courbe(S.vent)*2.2*k+dtReal*0.05);
+      fans.forEach((f,i)=>f.rotation.y+=dtReal*(EQI.froid.etat==="ok"?(4+S.charge*18):0));
+      const spd={elec:S.pDispo/2000, eau:S.charge, froid:EQI.froid.etat==="ok"?0.5:0, h2:S.charge};
+      flows.forEach(f=>{ const v=spd[f.w]; f.ps.forEach(p=>{ p.u=(p.u+dtReal*0.05*v)%1; p.m.position.copy(f.curve.getPointAt(p.u)); p.m.visible=v>0.02; }); });
+      S.bays.forEach((b,i)=>{ const o=bayObj[i]; o.rem.visible=!!b.c; const pct=b.c?b.c.kg/P.conteneurKg:0; o.fill.scale.x=Math.max(0.01,pct*90); o.fill.position.x=-4.5+pct*4.5;
+        o.led.material.color.setHex(b.etat==="maintenance"?0xffb020:b.etat==="plein"?0x38d6ff:b.etat==="vide"?0xff4d5e:0x2fd27a);
+        if(lastBayState[i]==="plein" && b.etat==="vide"){ truckAnim={x:-5+i*13,t:0}; }
+        lastBayState[i]=b.etat; });
+      if(truckAnim){ truckAnim.t+=dtReal; truck.position.set(truckAnim.x+truckAnim.t*22,0,38); if(truckAnim.t>9){truckAnim=null; truck.position.x=300;} }
+      renderer.render(scene,cam);
+      const w=box.clientWidth,h=box.clientHeight;
+      Object.entries(labels).forEach(([id,{d,p}])=>{ const v=p.clone().project(cam); const vis=v.z<1&&Math.abs(v.x)<1.05&&Math.abs(v.y)<1.05; d.style.display=vis?"flex":"none"; if(vis){ d.style.left=((v.x+1)/2*w)+"px"; d.style.top=((1-v.y)/2*h)+"px"; }
+        const e=EQI[id]; const [l,c]=eqEtat(e); const html=`<span class="dot ${c}"></span>${e.nom.split(" (")[0]}`; if(d._h!==html){d.innerHTML=html; d._h=html;} });
+    }
+  };
+}
+function hl3d(id){ if(R3) R3.hl(id); }
+
+/* =====================================================================
+   9. SCHÉMA DE PROCÉDÉ (SVG)
+   ===================================================================== */
+const NODES={
+  eol:{x:30,y:40,ic:"🌬️",t:"Éoliennes",s:()=>fmt(S.pDispo)+" kW dispo"},
+  poste:{x:30,y:170,ic:"⚡",t:"Poste électrique",s:()=>fmt(S.pSite)+" kW site"},
+  eau:{x:30,y:330,ic:"🌊",t:"Eau de mer",s:()=>fmt(S.eauMerLh)+" L/h"},
+  osmose:{x:230,y:330,ic:"💧",t:"Dessalement",s:()=>fmt(S.eauDemiLh)+" L/h pure"},
+  elec:{x:230,y:170,ic:"🔋",t:"Électrolyseur",s:()=>fmt(S.prodKgH,1)+" kg/h · "+fmt(S.tStack,0)+" °C"},
+  froid:{x:230,y:40,ic:"❄️",t:"Refroidissement",s:()=>fmt(S.pElec*0.32)+" kW évacués"},
+  sep:{x:430,y:170,ic:"⚗️",t:"Séparateurs",s:()=>"O₂ "+fmt(S.prodKgH*8)+" kg/h →air"},
+  purif:{x:430,y:330,ic:"🧪",t:"Purification",s:()=>"pureté 99,99x %"},
+  comp:{x:630,y:330,ic:"⚙️",t:"Compresseurs",s:()=>fmt(S.pElecBar,0)+" → "+fmt(S.pRefoul,0)+" bar"},
+  stock:{x:630,y:170,ic:"🛢️",t:"Stockage tampon",s:()=>fmt(S.tampon)+" kg"},
+  baies:{x:830,y:250,ic:"🚛",t:"Remplissage",s:()=>S.bays.filter(b=>b.etat==="remplissage").length+" actifs · "+S.bays.filter(b=>b.etat==="plein").length+" pleins"},
+  secu:{x:430,y:40,ic:"🛡️",t:"Sécurité",s:()=>"0 alarme"},
+  cc:{x:630,y:40,ic:"🖥️",t:"Salle de contrôle",s:()=>"mode auto"}
+};
+const NW=170,NH=62;
+const PIPES=[
+  ["eol","poste","elec"],["poste","elec","elec"],["eau","osmose","eau"],["osmose","elec","eau"],
+  ["elec","froid","froid"],["elec","sep","h2"],["sep","purif","h2"],["purif","comp","h2"],["comp","stock","h2"],["stock","baies","h2"],["comp","baies","h2"]
+];
+const COL={elec:"#ffc83d",eau:"#3d7bff",h2:"#38d6ff",froid:"#38e0a0"};
+let svgDots=[];
+function anchor(n,side){const N=NODES[n];return side==="r"?[N.x+NW,N.y+NH/2]:side==="l"?[N.x,N.y+NH/2]:side==="t"?[N.x+NW/2,N.y]:[N.x+NW/2,N.y+NH];}
+function pathFor(a,b){
+  const A=NODES[a],B=NODES[b];
+  if(Math.abs(A.y-B.y)<5){ const [x1,y1]=anchor(a,A.x<B.x?"r":"l"),[x2,y2]=anchor(b,A.x<B.x?"l":"r"); return `M${x1},${y1} L${x2},${y2}`; }
+  if(Math.abs(A.x-B.x)<5){ const [x1,y1]=anchor(a,A.y<B.y?"b":"t"),[x2,y2]=anchor(b,A.y<B.y?"t":"b"); return `M${x1},${y1} L${x2},${y2}`; }
+  const [x1,y1]=anchor(a,"r"),[x2,y2]=anchor(b,"l"); const mx=(x1+x2)/2; return `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`;
+}
+function initSchema(){
+  let s=`<svg viewBox="0 0 1180 450" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schéma de procédé">
+  <rect class="stepband" x="10" y="10" width="400" height="430" rx="10"/><text class="steplbl" x="22" y="430">1 · PRODUCTION</text>
+  <rect class="stepband" x="415" y="10" width="400" height="430" rx="10"/><text class="steplbl" x="427" y="430">2 · PURIFICATION &amp; COMPRESSION</text>
+  <rect class="stepband" x="820" y="10" width="190" height="430" rx="10"/><text class="steplbl" x="832" y="430">3 · REMPLISSAGE</text>
+  <rect class="stepband" x="1015" y="10" width="155" height="430" rx="10"/><text class="steplbl" x="1025" y="430">4-5 · ROUTE</text>
+  <g id="pipes"></g><g id="dots"></g>
+  <g style="cursor:pointer" onclick="go('vlog')"><rect x="1030" y="230" width="128" height="104" rx="8" fill="#0f2030" stroke="#2a4862"/>
+  <text x="1094" y="262" text-anchor="middle" font-size="22">🚚</text><text x="1094" y="288" text-anchor="middle" fill="#d8e6f2" font-size="13">Transport</text><text x="1094" y="306" text-anchor="middle" fill="#d8e6f2" font-size="13">&amp; clients</text><text id="sTr" x="1094" y="324" text-anchor="middle" fill="#7f97ab" font-size="11" font-family="JetBrains Mono"></text></g>`;
+  Object.entries(NODES).forEach(([id,n])=>{ s+=`<g class="node" onclick="openPanel('${id}')"><rect x="${n.x}" y="${n.y}" width="${NW}" height="${NH}" rx="8"/><text class="ico" x="${n.x+12}" y="${n.y+36}">${n.ic}</text><text x="${n.x+42}" y="${n.y+26}">${n.t}</text><text class="sub" id="sub-${id}" x="${n.x+42}" y="${n.y+46}"></text><circle id="st-${id}" cx="${n.x+NW-12}" cy="${n.y+12}" r="5"/></g>`; });
+  s+=`</svg>`; $("#svgwrap").innerHTML=s;
+  const pg=$("#pipes"), dg=$("#dots"); const ns="http://www.w3.org/2000/svg";
+  // flèche vers le transport
+  PIPES.push(["baies","__tr","h2"]);
+  PIPES.forEach(([a,b,k])=>{
+    const d = b==="__tr" ? `M${NODES.baies.x+NW},${NODES.baies.y+NH/2} L1030,282` : pathFor(a,b);
+    const p1=document.createElementNS(ns,"path"); p1.setAttribute("d",d); p1.setAttribute("class","pipe"); p1.setAttribute("stroke",COL[k]); pg.appendChild(p1);
+    const p2=document.createElementNS(ns,"path"); p2.setAttribute("d",d); p2.setAttribute("class","pipe-core"); p2.setAttribute("stroke",COL[k]); pg.appendChild(p2);
+    const L=p1.getTotalLength(); const n=Math.max(2,Math.round(L/45)); const dots=[];
+    for(let i=0;i<n;i++){ const c=document.createElementNS(ns,"circle"); c.setAttribute("r",k==="h2"?4:3.2); c.setAttribute("fill",COL[k]); dg.appendChild(c); dots.push({c,u:i/n}); }
+    svgDots.push({p:p1,core:p2,L,dots,k,a,b,off:0});
+  });
+}
+function frameSchema(dt){
+  if(!$("#vschema").classList.contains("on")) return;
+  const spd={elec:S.pDispo/2000,eau:S.charge,froid:EQI.froid.etat==="ok"?0.5:0,h2:S.charge};
+  svgDots.forEach(s=>{ let v=spd[s.k]; if(s.a==="comp"&&s.b==="stock") v=S.bays.some(b=>b.etat==="remplissage")?v*0.2:v; if(s.b==="__tr") v=S.trucks.some(t=>t.etat==="aller")?0.6:0;
+    s.off-=dt*60*v; s.core.style.strokeDashoffset=s.off;
+    s.dots.forEach(d=>{ d.u=(d.u+dt*v*70/s.L)%1; const p=s.p.getPointAtLength(d.u*s.L); d.c.setAttribute("cx",p.x); d.c.setAttribute("cy",p.y); d.c.style.opacity=v>0.02?1:0; }); });
+  Object.entries(NODES).forEach(([id,n])=>{ $("#sub-"+id).textContent=n.s(); const c=eqEtat(EQI[id])[1]; $("#st-"+id).setAttribute("fill",c==="ok"?"#2fd27a":c==="maint"?"#ffb020":"#ff4d5e"); });
+  $("#sTr").textContent="en route : "+S.trucks.filter(t=>t.etat==="aller").length;
+}
+
+/* =====================================================================
+   10. CARTE & LOGISTIQUE
+   ===================================================================== */
+const MAP={lon0:-2.45,lon1:-1.25,lat0:46.38,lat1:47.36,W:760,H:560};
+const kx=MAP.W/(MAP.lon1-MAP.lon0), ky=MAP.H/(MAP.lat1-MAP.lat0);
+const prj=(lat,lon)=>[(lon-MAP.lon0)*kx,(MAP.lat1-lat)*ky];
+const COAST=[[47.36,-2.45],[47.30,-2.30],[47.28,-2.20],[47.27,-2.17],[47.22,-2.17],[47.15,-2.16],[47.12,-2.10],[47.06,-2.04],[47.00,-1.99],[46.96,-2.03],[46.92,-2.12],[46.85,-2.14],[46.79,-2.08],[46.72,-1.98],[46.69,-1.94],[46.60,-1.87],[46.50,-1.80],[46.45,-1.66],[46.38,-1.50],[46.38,-2.45]];
+const NOIRM=[[47.05,-2.30],[47.01,-2.22],[46.94,-2.16],[46.93,-2.20],[46.99,-2.28],[47.04,-2.34]];
+const LOIRE=[[47.28,-2.17],[47.25,-2.05],[47.22,-1.85],[47.21,-1.65],[47.22,-1.45],[47.25,-1.25]];
+function routePts(c){ return c.route.map(k=>prj(PLACES[k].lat,PLACES[k].lon)); }
+function polyLen(pts){let L=0;for(let i=1;i<pts.length;i++)L+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);return L;}
+function along(pts,f){ const L=polyLen(pts)*f; let a=0; for(let i=1;i<pts.length;i++){const s=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]); if(a+s>=L){const u=(L-a)/s; return [pts[i-1][0]+(pts[i][0]-pts[i-1][0])*u, pts[i-1][1]+(pts[i][1]-pts[i-1][1])*u];} a+=s;} return pts[pts.length-1]; }
+function initMap(){
+  const poly=a=>a.map(([la,lo])=>prj(la,lo).join(",")).join(" ");
+  let s=`<svg viewBox="0 0 ${MAP.W} ${MAP.H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Carte des livraisons">
+  <defs><pattern id="gr" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#12263a" stroke-width="1"/></pattern></defs>
+  <rect width="100%" height="100%" fill="#101e14"/><rect width="100%" height="100%" fill="url(#gr)"/>
+  <polygon points="${poly(COAST)}" fill="#0c2a45"/><polygon points="${poly(NOIRM)}" fill="#101e14" stroke="#2a4862"/>
+  <polyline points="${poly(LOIRE)}" fill="none" stroke="#1c4a73" stroke-width="7" stroke-linecap="round"/>
+  <text x="${prj(46.62,-2.38)[0]}" y="${prj(46.62,-2.38)[1]}" fill="#2f5a80" font-size="14" font-style="italic">Océan Atlantique</text>
+  <text x="${prj(47.04,-2.22)[0]}" y="${prj(47.07,-2.22)[1]}" fill="#4d6e8c" font-size="10">Noirmoutier</text>
+  <text x="${prj(47.0,-2.12)[0]}" y="${prj(47.03,-2.12)[1]}" fill="#4d6e8c" font-size="10" font-style="italic">Baie de Bourgneuf</text>`;
+  CLIENTS.forEach(c=>{ s+=`<polyline points="${routePts(c).map(p=>p.join(",")).join(" ")}" fill="none" stroke="${c.reel?"#38d6ff":"#c792ff"}" stroke-opacity=".35" stroke-width="3" stroke-dasharray="${c.reel?"":"6 5"}"/>`; });
+  ["challans","aizenay","stgilles","machecoul","nantes","pornic"].forEach(k=>{const [x,y]=prj(PLACES[k].lat,PLACES[k].lon); s+=`<circle cx="${x}" cy="${y}" r="2.5" fill="#7f97ab"/><text x="${x+5}" y="${y-4}" fill="#7f97ab" font-size="10">${PLACES[k].n}</text>`;});
+  const [bx,by]=prj(PLACES.bouin.lat,PLACES.bouin.lon);
+  s+=`<g style="cursor:pointer" onclick="go('v3d')"><circle cx="${bx}" cy="${by}" r="16" fill="#38d6ff22" stroke="#38d6ff"/><text x="${bx}" y="${by+4}" text-anchor="middle" fill="#38d6ff" font-size="11" font-weight="700">H₂</text><text x="${bx+20}" y="${by+4}" fill="#d8e6f2" font-size="12" font-weight="600">Usine de Bouin</text></g>`;
+  const off={RSY1:[0,-12],RSY2:[0,14],SAB:[0,0],SNZ:[0,0]};
+  CLIENTS.forEach(c=>{ const last=c.route[c.route.length-1]; let [x,y]=prj(PLACES[last].lat,PLACES[last].lon); x+=off[c.id][0]; y+=off[c.id][1]; c.xy=[x,y];
+    const gauche=last==="roche"; s+=`<g><rect x="${x-7}" y="${y-7}" width="14" height="14" rx="3" fill="${c.reel?"#2fd27a":"#c792ff"}"/><text x="${gauche?x-12:x+12}" text-anchor="${gauche?"end":"start"}" y="${y+4}" fill="#d8e6f2" font-size="11">${c.nom.replace("Station H₂ ","")} · ${fmt(c.km)} km</text></g>`; });
+  s+=`<g id="trk"></g><text x="12" y="${MAP.H-12}" fill="#7f97ab" font-size="10">■ vert : client réel · ■ violet : client fictif · tracés simplifiés</text></svg>`;
+  $("#mapwrap").innerHTML=s;
+}
+function truckPos(c){ const cli=CLIENTS.find(x=>x.id===c.client); const pts=routePts(cli); const f=clamp((S.t-c.debut)/(c.fin-c.debut),0,1);
+  if(c.etat==="aller") return along(pts,f); if(c.etat==="retour") return along(pts,1-f); return pts[pts.length-1]; }
+function renderLog(){
+  if(!$("#vlog").classList.contains("on")) return;
+  $("#trk").innerHTML=S.trucks.filter(c=>c.etat!=="disponible").map(c=>{const [x,y]=truckPos(c); const sel=S.selLot&&c.lot===S.selLot; const col=c.etat==="retour"?"#7f97ab":"#ffc83d";
+    return `<g transform="translate(${x},${y})" style="cursor:pointer" onclick="selLot('${c.lot}')"><circle r="${sel?14:10}" fill="${col}33" stroke="${sel?"#fff":col}"/><text y="4" text-anchor="middle" font-size="11">🚚</text><text x="12" y="-10" fill="${col}" font-size="10" font-family="JetBrains Mono">${c.id}${c.etat==="retour"?" (vide)":""}</text></g>`;}).join("");
+  const etape=["","","","Remplissage","En route","Livraison","Livré"];
+  $("#lots tbody").innerHTML=S.lots.slice(0,40).map(l=>{const cli=CLIENTS.find(c=>c.id===l.client); const last=l.livre||l.arrivee||l.depart||l.plein||l.debut;
+    return `<tr class="${l.id===S.selLot?"sel":""}" onclick="selLot('${l.id}')"><td>${l.id}</td><td>${fmt(l.kg)} kg</td><td>${cli?cli.id:"—"}</td><td>${etape[l.etape]}${l.etape===3&&l.plein?" (plein)":""}</td><td>${dshort(last)}</td></tr>`;}).join("");
+  const lab={disponible:"À Bouin",aller:"En livraison",livraison:"Déchargement",retour:"Retour à vide"};
+  $("#trucks tbody").innerHTML=S.trucks.map(c=>`<tr onclick="${c.lot?`selLot('${c.lot}')`:""}"><td>${c.id}</td><td>${lab[c.etat]}</td><td>${c.lot?c.lot.slice(-10):"—"}</td><td>${c.client||"—"}</td><td>${c.etat==="disponible"?"—":hhmm(c.fin)}</td></tr>`).join("");
+  $("#stations").innerHTML=CLIENTS.map(c=>`<div class="station"><div>${c.nom} <span class="src ${c.reel?"r":"s"}">${c.reel?"RÉEL":"FICTIF"}</span><div class="bar"><i style="width:${c.stock/c.cap*100}%;background:${c.stock/c.cap<0.25?"var(--maint)":"var(--h2)"}"></i></div><span style="color:var(--mut)">${c.type} · conso ≈ ${c.conso} kg/j (SIM)</span></div><div style="font-family:var(--mono);text-align:right">${fmt(c.stock)}<br><small style="color:var(--mut)">/ ${c.cap} kg</small></div></div>`).join("");
+  renderLot();
+}
+function selLot(id){ S.selLot=id; renderLog(); }
+function renderLot(){
+  if(!S.selLot && S.lots.length) S.selLot=(S.lots.find(l=>l.etape===4)||S.lots[0]).id;
+  const l=S.lots.find(x=>x.id===S.selLot); if(!l){return;}
+  const cli=CLIENTS.find(c=>c.id===l.client);
+  $("#lotinfo").innerHTML=`<b style="font-family:var(--mono);color:var(--h2)">${l.id}</b> · ${fmt(l.kg)} kg · poste ${l.bay}${l.camion?" · "+l.camion:""}<br>Pureté ≥ 99,97 % · 380 bar · hydrogène renouvelable (éolien) <span class="src s">SIM</span>`;
+  const camion=S.trucks.find(c=>c.lot===l.id);
+  const steps=[
+    ["Production",`Électrolyse au fil du vent, à partir du ${dshort(l.debut)}`,l.debut],
+    ["Purification & compression","Désoxygénation, séchage, compression jusqu'à 380 bar",l.debut],
+    ["Stockage & remplissage",l.plein?`Conteneur plein le ${dshort(l.plein)} (poste ${l.bay})`:`En cours : ${fmt(l.kg/P.conteneurKg*100)} %`,l.plein],
+    ["Transport",l.depart?`Départ ${dshort(l.depart)} · ${l.camion}`+(camion&&camion.etat==="aller"?` · ${fmt((S.t-camion.debut)/(camion.fin-camion.debut)*100)} % du trajet, arrivée prévue ${hhmm(camion.fin)}`:""):"En attente d'un camion",l.arrivee],
+    ["Livraison",l.livre?`Livré ${dshort(l.livre)} — ${cli.nom}`:l.arrivee?`Déchargement chez ${cli.nom}`:cli?`Prévu : ${cli.nom}`:"Client non encore attribué",l.livre]
+  ];
+  let cur = l.livre?5: l.arrivee?4: l.depart?3: l.plein?2: 2;
+  $("#timeline").innerHTML=steps.map(([t,s,done],i)=>`<div class="tl ${i<cur||l.livre?"done":i===cur?"cur":""}"><div class="c">${i+1}</div><div><b>${t}</b><span>${s}</span></div></div>`).join("");
+}
+
+/* =====================================================================
+   11. NAVIGATION & BOUCLE
+   ===================================================================== */
+function go(v){ document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v)); document.querySelectorAll(".view").forEach(x=>x.classList.toggle("on",x.id===v)); if(v==="v3d") dispatchEvent(new Event("resize")); renderLog(); }
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));
+
+init3D(); initSchema(); initMap();
+let last=performance.now(), slow=0;
+function loop(t){
+  const dt=clamp((t-last)/1000,0,0.1); last=t;
+  // avance la simulation par petits pas (max 30 s simulées par pas)
+  let simMs=dt*1000*(+$("#speed").value);
+  while(simMs>0){ const d=Math.min(simMs,30e3); step(d/3.6e6); S.t+=d; simMs-=d; }
+  if(R3) R3.frame(dt);
+  frameSchema(dt);
+  slow+=dt; if(slow>0.25){ slow=0; renderKPI(); renderBays(); renderEqList(); renderPanel(); renderLog(); renderSpark(); }
+  requestAnimationFrame(loop);
+}
+renderKPI(); renderSpark(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>
