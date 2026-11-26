@@ -290,7 +290,41 @@
     padding: 6px 12px; font: inherit; font-size: 12px; cursor: pointer;
   }
   .orb-actions button:hover { color: var(--cyan); border-color: var(--cyan); }
+  .orb-main { display: grid; grid-template-columns: 1fr; min-height: 0; }
   .orb-center { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; }
+  /* Vue « Mélange » : la boule au centre, l'essentiel du tableau de bord sur les côtés */
+  .mix-side { display: none; }
+  body.mix-mode .orb-main { grid-template-columns: minmax(210px, 270px) minmax(0, 1fr) minmax(210px, 270px); gap: 28px; }
+  body.mix-mode .mix-side { display: flex; flex-direction: column; justify-content: center; gap: 14px; min-height: 0; }
+  body.mix-mode #orbCanvas { width: min(46vh, 34vw); height: min(46vh, 34vw); }
+  body.mix-mode .orb-info { display: none; }
+  body.mix-mode .orb-sub { width: 100%; }
+  body.mix-mode #orbSay { font-size: clamp(16px, 1.9vw, 24px); }
+  body.mix-mode .orb-main { grid-template-columns: minmax(210px, 300px) minmax(0, 1fr) minmax(210px, 300px); }
+  .mix-card {
+    padding: 11px 14px; border-left: 2px solid rgba(var(--c-rgb), 0.55); background: rgba(var(--c-rgb), 0.045);
+    border-radius: 0 12px 12px 0; cursor: pointer; transition: background 0.2s; animation: boot 0.5s ease-out both;
+  }
+  .mix-card:hover { background: rgba(var(--c-rgb), 0.09); }
+  .mix-side.right .mix-card { border-left: 0; border-right: 2px solid rgba(var(--c-rgb), 0.55); border-radius: 12px 0 0 12px; text-align: right; }
+  .mix-card .k { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.25em; color: var(--cyan); text-transform: uppercase; }
+  .mix-card .v { font-size: 22px; font-weight: 300; line-height: 1.2; margin-top: 3px; }
+  .mix-card .v small { font-size: 13px; color: var(--muted); font-weight: 400; }
+  .mix-card .s { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .mix-card .row { display: flex; align-items: center; gap: 10px; }
+  .mix-side.right .mix-card .row { justify-content: flex-end; }
+  .mix-card .row svg { width: 40px; height: 40px; flex-shrink: 0; }
+  .mix-card ul { list-style: none; margin: 5px 0 0; padding: 0; font-size: 13.5px; }
+  .mix-card li { display: flex; gap: 8px; padding: 1px 0; }
+  .mix-card li b { font-family: var(--font-mono); font-weight: 400; color: var(--cyan); min-width: 44px; }
+  .mix-card li.past { opacity: 0.4; }
+  .mix-bar { height: 3px; background: rgba(var(--c-rgb), 0.15); border-radius: 3px; margin-top: 7px; overflow: hidden; }
+  .mix-bar i { display: block; height: 100%; background: var(--cyan); box-shadow: var(--glow); }
+  .mix-card .ctl { display: inline-flex; gap: 4px; margin-top: 5px; }
+  .mix-card .ctl button {
+    background: none; border: 1px solid var(--line); color: var(--cyan); border-radius: 50%; width: 28px; height: 28px; cursor: pointer;
+  }
+  .mix-tide { width: 100%; height: 30px; margin-top: 5px; display: block; }
   #orbCanvas { width: min(50vh, 64vw); height: min(50vh, 64vw); cursor: pointer; flex-shrink: 1; min-height: 0; }
   .orb-sub { width: min(900px, 92vw); text-align: center; margin-top: -3vh; }
   #orbUser { color: var(--muted); font-size: 15px; min-height: 1.3em; opacity: 0.8; }
@@ -320,7 +354,7 @@
   }
   .fonts button b { font-size: 19px; font-weight: 500; line-height: 1.1; }
   .fonts button.on, .views button.on { border-color: var(--cyan); box-shadow: var(--glow); }
-  .views { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .views { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .views button {
     background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text); cursor: pointer;
     padding: 10px; font: inherit; font-size: 13px;
@@ -547,7 +581,7 @@
     <div class="date" id="clockDate"></div>
   </div>
   <div class="top-actions">
-    <button class="pill" id="orbToggle" type="button" title="Passer à la vue Orbe">◉ Orbe</button>
+    <button class="pill" id="orbToggle" type="button" title="Vue épurée, avec la boule">◐ Épuré</button>
     <button class="pill" id="voiceToggle" type="button">🔊 Voix : activée</button>
     <button class="pill" id="wakeToggle" type="button">👂 Réveil « Jarvis » : non</button>
     <button class="gear" id="openSettings" title="Réglages" aria-label="Réglages">⚙️</button>
@@ -659,17 +693,22 @@
     <div>
       <div class="orb-clock"><b id="orbTime">--:--</b><span id="orbDate"></span></div>
       <div class="orb-actions">
-        <button type="button" id="orbBack" title="Revenir au tableau de bord">▦ Tableau de bord</button>
+        <button type="button" id="orbSwitch">◉ Orbe seule</button>
+        <button type="button" id="orbBack" title="Tableau de bord complet">▦ Complet</button>
         <button type="button" data-orb-settings>⚙️</button>
       </div>
     </div>
   </div>
-  <div class="orb-center">
-    <canvas id="orbCanvas" title="Clique pour parler"></canvas>
-    <div class="orb-sub">
-      <div id="orbUser"></div>
-      <div id="orbSay">Bonjour. Je vous écoute.</div>
+  <div class="orb-main">
+    <aside class="mix-side left" id="mixLeft"></aside>
+    <div class="orb-center">
+      <canvas id="orbCanvas" title="Clique pour parler"></canvas>
+      <div class="orb-sub">
+        <div id="orbUser"></div>
+        <div id="orbSay">Bonjour. Je vous écoute.</div>
+      </div>
     </div>
+    <aside class="mix-side right" id="mixRight"></aside>
   </div>
   <div>
     <div class="orb-info" id="orbInfo"></div>
@@ -713,8 +752,9 @@
     <div class="field" style="margin-top: 12px">
       <label>Affichage</label>
       <div class="views" id="views">
-        <button type="button" data-view="hud">▦ Tableau de bord</button>
-        <button type="button" data-view="orbe">◉ Orbe</button>
+        <button type="button" data-view="mix">◐ Mélange</button>
+        <button type="button" data-view="orbe">◉ Orbe seule</button>
+        <button type="button" data-view="hud">▦ Complet</button>
       </div>
     </div>
     <div class="field">
@@ -1183,7 +1223,9 @@ async function loadSettings() {
     window.briefData = data;
     applyTheme(settings.theme);
     if (settings.police) applyFont(settings.police);
-    if (settings.vue && settings.vue !== (orb.on ? "orbe" : "hud")) applyView(settings.vue);
+    // Tant que tu n'as pas choisi d'affichage, Jarvis montre le « Mélange »
+    const wanted = settings.vue_choisie ? settings.vue : "mix";
+    if (wanted !== currentView()) applyView(wanted);
     const sel = $("personnalite");
     sel.innerHTML = "";
     for (const [key, label] of Object.entries(data.personnalites)) sel.add(new Option(label, key));
@@ -2550,6 +2592,7 @@ setTimeout(() => checkUpdate(false), 4000);
 
 // ---------- Musique (Spotify) ----------
 function renderMusic(m) {
+  window.lastMedia = m;
   const body = $("musicBody");
   body.className = "";
   if (m.indisponible) { body.innerHTML = '<span class="empty">Disponible avec Spotify sur Windows.</span>'; return; }
@@ -2748,13 +2791,17 @@ function drawOrb() {
   g.setLineDash([]);
 }
 
+function currentView() {
+  return !orb.on ? "hud" : document.body.classList.contains("mix-mode") ? "mix" : "orbe";
+}
 // Les sous-titres reprennent la discussion
 function orbSync() {
   if (!orb.on) return;
   const lastJarvis = [...chat.querySelectorAll(".msg.jarvis")].pop();
   const lastUser = [...chat.querySelectorAll(".msg.user")].pop();
   let say = (lastJarvis?.textContent || "").trim();
-  if (say.length > 240) say = "…" + say.slice(-240).replace(/^\S*\s/, "");
+  const max = document.body.classList.contains("mix-mode") ? 160 : 240;  // la fin de ce qu'il dit
+  if (say.length > max) say = "…" + say.slice(-max).replace(/^\S*\s/, "");
   if ($("orbSay").textContent !== say) $("orbSay").textContent = say;
   const user = lastUser && (!lastJarvis || lastUser.compareDocumentPosition(lastJarvis) & Node.DOCUMENT_POSITION_FOLLOWING)
     ? "« " + lastUser.textContent.trim() + " »" : "";
@@ -2771,18 +2818,110 @@ function orbSync() {
   if (v && !v.en_vacances) bits.push(`<span>Vacances dans <b>${esc(v.restants)} jours</b></span>`);
   const html = bits.join("");
   if ($("orbInfo").innerHTML !== html) $("orbInfo").innerHTML = html;
+  if (document.body.classList.contains("mix-mode")) renderMix();
 }
 setInterval(orbSync, 300);
 
+// ---------- Vue « Mélange » : seulement l'essentiel, autour de la boule ----------
+function mixCard(key, html) {
+  return html ? `<div class="mix-card" data-mix="${key}" title="Clique pour voir le détail">${html}</div>` : "";
+}
+function tideSpark(curve) {
+  if (!curve || curve.length < 2) return "";
+  const xs = (h) => (h / 23) * 200, ys = (v) => 15 - v * 5.5;
+  const line = curve.map((p, i) => `${i ? "L" : "M"}${xs(p.h).toFixed(1)} ${ys(p.v).toFixed(1)}`).join(" ");
+  const now = (nowMinutes() / 60 / 23) * 200;
+  return `<svg class="mix-tide" viewBox="0 0 200 30" preserveAspectRatio="none">
+    <path d="${line}" fill="none" stroke="currentColor" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+    <line x1="${now}" x2="${now}" y1="0" y2="30" style="stroke: var(--ok)" stroke-dasharray="2 2" vector-effect="non-scaling-stroke"/></svg>`;
+}
+function renderMix() {
+  const d = window.lastDash || {}, now = nowMinutes();
+  const left = [], right = [];
+  // Météo
+  const w = d.meteo?.data;
+  if (w) {
+    const tomorrow = w.jours?.[1];
+    left.push(mixCard("meteo", `<div class="k">Météo</div>
+      <div class="row">${wxIcon(w.code)}<div class="v">${esc(w.temp)}°<br><small>${esc(w.desc)}</small></div></div>
+      <div class="s">Vent ${esc(w.vent)} km/h ${esc(w.vent_dir || "")}${tomorrow ? ` · demain ${esc(tomorrow.min)}°/${esc(tomorrow.max)}°` : ""}</div>`));
+  }
+  // Marée
+  const t = d.marees?.data;
+  if (t) {
+    const next = t.extremes?.find((e) => e.minutes >= now);
+    const nextHigh = t.extremes?.find((e) => e.type === "haute" && e.minutes >= now);
+    const wait = nextHigh ? nextHigh.minutes - now : null;
+    left.push(mixCard("maree", `<div class="k">Marée</div>
+      <div class="v">${nextHigh ? `Haute à ${esc(nextHigh.heure)}` : "Plus de marée haute"}</div>
+      <div class="s">${wait != null ? `dans ${Math.floor(wait / 60)} h ${String(wait % 60).padStart(2, "0")}` : ""}${next && next !== nextHigh ? ` · basse à ${esc(next.heure)}` : ""}</div>
+      ${tideSpark(t.courbe)}`));
+  }
+  // Aujourd'hui : les prochains moments de la journée
+  const items = (d.journee?.data || []).filter((it) => !it.annule);
+  const coming = items.filter((it) => { const m = toMinutes(it.heure); return m == null || m + 60 > now; }).slice(0, 4);
+  const tasks = (d.taches?.data || []).length;
+  if (coming.length || tasks) {
+    left.push(mixCard("jour", `<div class="k">Aujourd'hui</div>
+      ${coming.length ? `<ul>${coming.map((it) => `<li><b>${esc(it.heure === "toute la journée" ? "JOUR" : it.heure)}</b><span>${esc(it.titre)}</span></li>`).join("")}</ul>`
+        : `<div class="s">Plus rien de prévu.</div>`}
+      ${tasks ? `<div class="s">✓ ${tasks} tâche${tasks > 1 ? "s" : ""} à faire</div>` : ""}`));
+  }
+  // Foot : ton club d'abord, sinon ton équipe préférée
+  const club = d.club?.data, foot = d.foot?.data;
+  if (club) {
+    const kind = { match: "Ton match", entrainement: "Entraînement", tournoi: "Tournoi" }[club.type] || "Ton club";
+    const day = club.date === new Date().toLocaleDateString("sv") ? "Aujourd'hui"
+      : new Date(club.date + "T12:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric" });
+    right.push(mixCard("foot", `<div class="k">${kind}</div><div class="v">${esc(day)} <small>${esc(club.heure || "")}</small></div>
+      <div class="s">${esc(club.titre)}${club.rdv ? ` · RDV ${esc(club.rdv)}` : ""}</div>`));
+  } else if (foot && (foot.direct || foot.dernier || foot.prochain)) {
+    const m = foot.direct || foot.dernier;
+    const next = foot.prochain;
+    right.push(mixCard("foot", `<div class="k">${foot.direct ? '<span class="live">● En direct</span>' : esc(foot.equipe)}</div>
+      ${m ? `<div class="v">${esc(m.domicile.nom)} ${m.domicile.score ?? "–"}-${m.exterieur.score ?? "–"} ${esc(m.exterieur.nom)}</div>` : ""}
+      ${next && !foot.direct ? `<div class="s">Prochain : ${esc(new Date(next.date + "T12:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" }))} ${esc(next.heure)}</div>` : ""}`));
+  }
+  // Vacances : un simple compte à rebours avec une barre
+  const v = d.vacances?.data;
+  if (v) {
+    const pct = v.total ? Math.round((100 * v.passes) / v.total) : 0;
+    right.push(mixCard("vacances", `<div class="k">Vacances d'été</div>
+      <div class="v">${v.en_vacances ? "En vacances !" : `J-${esc(v.restants)}`}</div>
+      <div class="s">${pct} % de l'année passée</div><div class="mix-bar"><i style="width: ${pct}%"></i></div>`));
+  }
+  // Musique
+  const m = window.lastMedia;
+  if (m && m.lance) {
+    right.push(mixCard("musique", `<div class="k">Musique</div>
+      <div class="v" style="font-size: 16px">${m.lecture ? esc(m.titre) : "En pause"}</div>
+      <div class="s">${m.lecture ? esc(m.artiste || "") : "Spotify"}</div>
+      <div class="ctl"><button type="button" data-media="precedent">⏮</button><button type="button" data-media="lecture_pause">${m.lecture ? "⏸" : "▶"}</button><button type="button" data-media="suivant">⏭</button></div>`));
+  }
+  const l = left.join(""), r = right.join("");
+  if ($("mixLeft").dataset.html !== l) { $("mixLeft").innerHTML = l; $("mixLeft").dataset.html = l; }
+  if ($("mixRight").dataset.html !== r) { $("mixRight").innerHTML = r; $("mixRight").dataset.html = r; }
+}
+// Un clic sur une carte (pas sur ses boutons) montre le tableau de bord complet
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-media]")) return;
+  if (e.target.closest(".mix-card")) applyView("hud", true);
+});
+
 function applyView(view, save) {
-  orb.on = view === "orbe";
+  if (!["hud", "mix", "orbe"].includes(view)) view = "mix";
+  orb.on = view !== "hud";
   document.body.classList.toggle("orb-mode", orb.on);
+  document.body.classList.toggle("mix-mode", view === "mix");
+  $("orbSwitch").textContent = view === "mix" ? "◉ Orbe seule" : "◐ Mélange";
+  $("orbSwitch").dataset.to = view === "mix" ? "orbe" : "mix";
   document.querySelectorAll("#views button").forEach((b) => b.classList.toggle("on", b.dataset.view === view));
   try { localStorage.setItem("jarvis_vue", view); } catch (e) {}
-  if (save) saveSettings({ vue: view });
+  if (save) saveSettings({ vue: view, vue_choisie: true });
   if (orb.on) { readOrbColors(); orbSync(); requestAnimationFrame(drawOrb); }
 }
-$("orbToggle").onclick = () => applyView("orbe", true);
+$("orbToggle").onclick = () => applyView("mix", true);
+$("orbSwitch").onclick = () => applyView($("orbSwitch").dataset.to, true);
 $("orbBack").onclick = () => applyView("hud", true);
 document.querySelectorAll("#views button").forEach((b) => { b.onclick = () => applyView(b.dataset.view, true); });
 document.querySelector("[data-orb-settings]").onclick = () => { loadSettings(); openSettings(true); };
@@ -2796,7 +2935,7 @@ $("orbForm").onsubmit = (e) => {
 };
 // Les couleurs de la boule suivent le thème
 new MutationObserver(readOrbColors).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-try { applyView(localStorage.getItem("jarvis_vue") || "hud"); } catch (e) { applyView("hud"); }
+try { applyView(localStorage.getItem("jarvis_vue") || "mix"); } catch (e) { applyView("mix"); }
 
 // ---------- Polices d'écriture ----------
 const FONTS = {

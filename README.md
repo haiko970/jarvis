@@ -26,8 +26,10 @@ Il peut agir sur ton PC :
 - 🏖️ afficher le compte à rebours des vacances d'été : un point par jour de l'année scolaire
 - 🎨 changer les couleurs de l'interface : J.A.R.V.I.S. (bleu), Iron Man (rouge et or), Hulk (vert),
   Thanos (violet) ou Furtif (blanc) — dans ⚙️ Réglages ou en disant « Jarvis, mets le thème Iron Man »
-- ◉ passer en **vue Orbe** : une boule vivante qui respire, s'agite et lance des étincelles quand Jarvis parle,
-  avec ses paroles en sous-titres (bouton « ◉ Orbe », ou « Jarvis, mode orbe ») ; et choisir sa **police d'écriture**
+- ◐ un affichage **épuré** (par défaut) : une boule vivante au centre, qui s'agite et lance des étincelles quand
+  Jarvis parle, avec ses paroles en sous-titres et seulement l'essentiel autour (météo, marée, journée, foot,
+  vacances, musique). Aussi en **orbe seule** ou en **tableau de bord complet** (boutons en haut, ou
+  « Jarvis, mode orbe / mode épuré / tableau de bord complet ») ; et le choix de la **police d'écriture**
 - 🛡️ surveiller le PC quand tu pars (« Jarvis, surveille le PC ») : si quelqu'un touche à la souris ou au
   clavier sans taper ton code secret, « Accès non autorisé », photo avec la webcam et PC verrouillé
 - ⚽ donner le score de ton équipe de foot (en direct pendant les matchs), son dernier résultat et son prochain match

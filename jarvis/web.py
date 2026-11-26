@@ -498,9 +498,9 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                     emit({"type": "text", "text": sentinelle.activer_sentinelle()})
                     quick, text = None, ""
                 if quick and quick.startswith("vue:"):
-                    config.save({"vue": quick[4:]})
+                    config.save({"vue": quick[4:], "vue_choisie": True})
                     emit({"type": "action", "action": "vue", "vue": quick[4:]})
-                    emit({"type": "text", "text": "Voici l'orbe." if quick[4:] == "orbe" else "Voici le tableau de bord."})
+                    emit({"type": "text", "text": {"orbe": "Voici l'orbe.", "mix": "Voici l'affichage épuré."}.get(quick[4:], "Voici le tableau de bord complet.")})
                     quick, text = None, ""
                 if quick and quick.startswith("theme:"):
                     emit({"type": "tool", "name": "changer_theme", "args": {}})

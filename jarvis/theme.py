@@ -84,7 +84,8 @@ def quick_theme(text: str) -> str | None:
 
 # « Jarvis, mode orbe » / « mets le tableau de bord » : changer d'affichage
 _VUE_ORBE = re.compile(r"\b(orbe|boule|sphere)\b")
-_VUE_HUD = re.compile(r"\b(tableau de bord|dashboard|hud|ecran de controle)\b")
+_VUE_HUD = re.compile(r"\b(tableau de bord|dashboard|hud|ecran de controle|complet)\b")
+_VUE_MIX = re.compile(r"\b(melange|epure|simple|mix)\b")
 _VUE_VERBE = re.compile(r"\b(mode|vue|affichage|interface|mets?|passe|remets?|affiche|montre)\b")
 
 
@@ -92,6 +93,10 @@ def quick_view(text: str) -> str | None:
     phrase = _simple(text)
     if len(phrase.split()) > 10 or not _VUE_VERBE.search(phrase):
         return None
+    if re.search(r"\b(theme|couleurs?)\b", phrase):
+        return None  # « mets le thème… » : c'est pour les couleurs
+    if _VUE_MIX.search(phrase):
+        return "mix"
     if _VUE_ORBE.search(phrase):
         return "orbe"
     if _VUE_HUD.search(phrase):
