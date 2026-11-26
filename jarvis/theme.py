@@ -100,7 +100,7 @@ def quick_view(text: str) -> str | None:
     if _VUE_ORBE.search(phrase):
         return "orbe"
     if _VUE_HUD.search(phrase):
-        return "hud"
+        return "mix"  # l'ancien tableau de bord n'existe plus : on montre l'orbe avec ses cartes
     return None
 
 

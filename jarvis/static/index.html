@@ -289,7 +289,7 @@
     background: transparent; border: 1px solid var(--line); color: var(--muted); border-radius: 999px;
     padding: 6px 12px; font: inherit; font-size: 12px; cursor: pointer;
   }
-  .orb-actions button:hover { color: var(--cyan); border-color: var(--cyan); }
+  .orb-actions button:hover, .orb-actions button.on { color: var(--cyan); border-color: var(--cyan); }
   .orb-main { display: grid; grid-template-columns: 1fr; min-height: 0; }
   .orb-center { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; }
   /* Vue « Mélange » : la boule au centre, l'essentiel du tableau de bord sur les côtés */
@@ -395,7 +395,7 @@
   }
   .fonts button b { font-size: 19px; font-weight: 500; line-height: 1.1; }
   .fonts button.on, .views button.on { border-color: var(--cyan); box-shadow: var(--glow); }
-  .views { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .views { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .views button {
     background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text); cursor: pointer;
     padding: 10px; font: inherit; font-size: 13px;
@@ -622,9 +622,6 @@
     <div class="date" id="clockDate"></div>
   </div>
   <div class="top-actions">
-    <button class="pill" id="orbToggle" type="button" title="Vue épurée, avec la boule">◐ Épuré</button>
-    <button class="pill" id="voiceToggle" type="button">🔊 Voix : activée</button>
-    <button class="pill" id="wakeToggle" type="button">👂 Réveil « Jarvis » : non</button>
     <button class="gear" id="openSettings" title="Réglages" aria-label="Réglages">⚙️</button>
   </div>
 </header>
@@ -734,9 +731,10 @@
     <div>
       <div class="orb-clock"><b id="orbTime">--:--</b><span id="orbDate"></span></div>
       <div class="orb-actions">
+        <button type="button" id="voiceToggle">🔊 Voix : activée</button>
+        <button type="button" id="wakeToggle">👂 Réveil « Jarvis » : non</button>
         <button type="button" id="orbEarth" title="Ouvrir la Terre">🌍 Terre</button>
         <button type="button" id="orbSwitch">◉ Orbe seule</button>
-        <button type="button" id="orbBack" title="Tableau de bord complet">▦ Complet</button>
         <button type="button" data-orb-settings>⚙️</button>
       </div>
     </div>
@@ -802,7 +800,6 @@
       <div class="views" id="views">
         <button type="button" data-view="mix">◐ Mélange</button>
         <button type="button" data-view="orbe">◉ Orbe seule</button>
-        <button type="button" data-view="hud">▦ Complet</button>
       </div>
     </div>
     <div class="field">
@@ -2762,7 +2759,7 @@ function drawOrb() {
 }
 
 function currentView() {
-  return !orb.on ? "hud" : document.body.classList.contains("mix-mode") ? "mix" : "orbe";
+  return document.body.classList.contains("mix-mode") ? "mix" : "orbe";
 }
 // Les sous-titres reprennent la discussion
 function orbSync() {
@@ -2879,12 +2876,12 @@ document.addEventListener("click", (e) => {
   if (!card) return;
   // Une carte : le bras va chercher le module correspondant
   const target = { meteo: "meteo", maree: "marees", jour: "journee", foot: "foot", vacances: "vacances" }[card.dataset.mix];
-  if (target && window.openModule) openModule(target); else applyView("hud", true);
+  if (target && window.openModule) openModule(target);
 });
 
 function applyView(view, save) {
-  if (!["hud", "mix", "orbe"].includes(view)) view = "mix";
-  orb.on = view !== "hud";
+  if (view !== "orbe") view = "mix";  // l'ancien tableau de bord n'existe plus
+  orb.on = true;
   document.body.classList.toggle("orb-mode", orb.on);
   document.body.classList.toggle("mix-mode", view === "mix");
   $("orbSwitch").textContent = view === "mix" ? "◉ Orbe seule" : "◐ Mélange";
@@ -2894,9 +2891,7 @@ function applyView(view, save) {
   if (save) saveSettings({ vue: view, vue_choisie: true });
   if (orb.on) { readOrbColors(); orbSync(); requestAnimationFrame(drawOrb); }
 }
-$("orbToggle").onclick = () => applyView("mix", true);
 $("orbSwitch").onclick = () => applyView($("orbSwitch").dataset.to, true);
-$("orbBack").onclick = () => applyView("hud", true);
 document.querySelectorAll("#views button").forEach((b) => { b.onclick = () => applyView(b.dataset.view, true); });
 document.querySelector("[data-orb-settings]").onclick = () => { loadSettings(); openSettings(true); };
 $("orbCanvas").onclick = toggleMic;

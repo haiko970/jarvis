@@ -28,7 +28,7 @@ DEFAULTS = {
     "demarrage_mode": "discret",  # au démarrage du PC : "discret" (en arrière-plan) ou "complet" (fenêtre + brief)
     "dernier_brief": "",  # date du dernier brief, pour ne le faire qu'une fois par jour
     "theme": "jarvis",  # couleurs de l'interface
-    "vue": "mix",  # affichage : "mix" (boule + l'essentiel), "orbe" (la boule seule) ou "hud" (tableau de bord complet)
+    "vue": "mix",  # affichage : "mix" (la boule et l'essentiel autour) ou "orbe" (la boule seule)
     "vue_choisie": False,  # devient vrai quand l'utilisateur choisit lui-même un affichage
     "police": "classique",  # police d'écriture de l'interface
     "equipe": "",  # équipe de foot préférée (comme l'utilisateur l'a écrite)

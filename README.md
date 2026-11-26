@@ -26,13 +26,13 @@ Il peut agir sur ton PC :
 - 🏖️ afficher le compte à rebours des vacances d'été : un point par jour de l'année scolaire
 - 🎨 changer les couleurs de l'interface : J.A.R.V.I.S. (bleu), Iron Man (rouge et or), Hulk (vert),
   Thanos (violet) ou Furtif (blanc) — dans ⚙️ Réglages ou en disant « Jarvis, mets le thème Iron Man »
-- ◐ un affichage **épuré** (par défaut) : une boule vivante au centre, qui s'agite et lance des étincelles quand
-  Jarvis parle, avec ses paroles en sous-titres et seulement l'essentiel autour (météo, marée, journée, foot,
-  vacances, musique). Aussi en **orbe seule** ou en **tableau de bord complet** (boutons en haut, ou
-  « Jarvis, mode orbe / mode épuré / tableau de bord complet ») ; et le choix de la **police d'écriture**
+- ◉ une **orbe vivante** au centre de l'écran : un maillage de lumière qui s'agite quand Jarvis parle, avec ses
+  paroles en sous-titres et l'essentiel autour (météo, marée, journée, foot, vacances, musique), ou l'orbe seule
+  (« Jarvis, mode orbe ») ; et le choix de la **police d'écriture**
 - 🌍 des **modules** que la boule va chercher avec un bras de filaments : « Jarvis, ouvre la carte » (une Terre
   en 3D à faire tourner, avec le jour et la nuit, ta ville et la Station spatiale en direct), « montre-moi le
-  Japon », « montre la météo », « affiche les marées », « montre ma journée », « montre le ciel »… et « range ça »
+  Japon », « montre la météo », « affiche les marées », « montre ma journée », « montre le ciel », « montre mes
+  tâches », « montre la présence », « montre la conversation »… et « range ça »
 - 🛡️ surveiller le PC quand tu pars (« Jarvis, surveille le PC ») : si quelqu'un touche à la souris ou au
   clavier sans taper ton code secret, « Accès non autorisé », photo avec la webcam et PC verrouillé
 - ⚽ donner le score de ton équipe de foot (en direct pendant les matchs), son dernier résultat et son prochain match

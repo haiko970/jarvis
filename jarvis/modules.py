@@ -16,6 +16,9 @@ MODULES = {
     "foot": (r"foot|football", "Voici le foot."),
     "vacances": (r"vacances|compte a rebours", "Voici le compte à rebours des vacances."),
     "jeux": (r"temps de jeu|statistiques de jeu|stats de jeu", "Voici ton temps de jeu."),
+    "taches": (r"taches|liste de choses a faire|mails?|courriers?", "Voici tes tâches et tes mails."),
+    "presence": (r"presence|ruview|capteur", "Voici la présence dans la pièce."),
+    "discussion": (r"discussion|conversation|historique", "Voici notre discussion."),
 }
 
 # Pays : nom français → nom sur la carte (en anglais)
@@ -46,7 +49,8 @@ _VERBE = r"(?:ouvr(?:e|ir)|affich(?:e|er)|montr(?:e|er)|sor(?:s|tir)|mets|met|la
 _FERMER = re.compile(
     r"^(?:ferme|fermer|range|ranger|enleve|enlever|retire|retirer|cache|cacher)"
     r"(?:[- ](?:la|le|les|ce|cette|ca|moi ca|tout))*"
-    r"(?:\s+(?:carte|map|globe|terre|module|panneau|fenetre|meteo|marees?|ciel|journee|foot|vacances|tout))?$"
+    r"(?:\s+(?:carte|map|globe|terre|module|panneau|fenetre|meteo|marees?|ciel|journee|foot|vacances|taches|"
+    r"presence|discussion|conversation|tout))?$"
 )
 
 

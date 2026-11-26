@@ -247,6 +247,9 @@ const MODULES = {
   foot: { titre: "Foot", angle: 20, panel: () => $("footCard") },
   vacances: { titre: "Vacances d'été", angle: -10, panel: () => $("vacBody").closest("section") },
   jeux: { titre: "Temps de jeu", angle: 30, panel: () => $("playBody").closest("section") },
+  taches: { titre: "Tâches et mails", angle: -20, panel: () => $("taskBody").closest("section") },
+  presence: { titre: "Présence", angle: 150, panel: () => $("ruviewBody").closest("section") },
+  discussion: { titre: "Discussion", angle: 95, panel: () => $("chat").closest("section"), large: true },
 };
 const mod = { name: null, busy: false, edge: null, cleanup: null };
 
@@ -282,6 +285,13 @@ function mountModule(name) {
   holder.className = "mod-panel";
   holder.appendChild(panel);
   body.appendChild(holder);
+  if (m.large) {
+    panel.style.width = "100%"; panel.style.height = "100%";
+    holder.style.cssText = "width: 100%; height: 100%";
+    mod.cleanup = () => { home.parentNode.insertBefore(panel, home); home.remove(); panel.setAttribute("style", saved); };
+    requestAnimationFrame(scrollDown);
+    return;
+  }
   const fit = () => {
     const zoom = Math.min((body.clientWidth - 30) / w, (body.clientHeight - 20) / (panel.offsetHeight || 300), 2.4);
     holder.style.zoom = Math.max(1, zoom).toFixed(2);
@@ -297,7 +307,6 @@ async function openModule(name, options = {}) {
   if (!MODULES[name] || mod.busy) return;
   if (mod.name === name) { options.cible && earth.focus?.(options.cible); return; }
   if (mod.name) await closeModule();
-  if (!orb.on) applyView("mix");
   mod.busy = true;
   const o = orbScreen(), center = { x: o.x, y: o.y };
   const edge = edgePoint(MODULES[name].angle);
