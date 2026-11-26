@@ -750,10 +750,21 @@
   <section>
     <h3>☀️ Brief du jour</h3>
     <label class="toggle" id="autostartRow">
-      <span>Lancer Jarvis quand j'allume mon PC, avec mon brief<br>
+      <span>Lancer Jarvis quand j'allume mon PC<br>
       <span class="hint" id="autostartHint">Météo, rendez-vous, tâches, mails non lus…</span></span>
       <input type="checkbox" id="autostart">
     </label>
+    <div class="field">
+      <label for="startMode">Au démarrage du PC</label>
+      <select id="startMode">
+        <option value="discret">🤫 Discret : Jarvis attend près de l'horloge (Ctrl + Alt + J pour l'ouvrir)</option>
+        <option value="complet">🖥️ Ouvrir Jarvis en grand avec mon brief</option>
+      </select>
+      <p class="hint">En mode discret, rien ne s'ouvre : clique sur l'icône de Jarvis près de l'horloge
+        (dans la petite flèche ^ si tu ne la vois pas) ou appuie sur Ctrl + Alt + J.
+        Le brief se fait à la première ouverture de la journée. Fermer la fenêtre ne quitte pas Jarvis :
+        pour le quitter vraiment, dis « ferme-toi » ou clic droit sur l'icône → « Quitter Jarvis ».</p>
+    </div>
     <p><button class="btn" id="briefNow" type="button">☀️ Faire mon brief maintenant</button></p>
 
     <div class="field">
@@ -1514,6 +1525,8 @@ function fillBriefSettings(data) {
   $("pronotePassword").placeholder = data.pronote_ok ? "•••••••• (enregistré)" : "";
   $("pronoteStatus").textContent = data.pronote_ok ? "✅ Pronote configuré." : "";
   $("autostart").checked = !!data.autostart;
+  $("startMode").value = settings.demarrage_mode || "discret";
+  $("startMode").disabled = !data.autostart_supported;
   $("autostart").disabled = !data.autostart_supported;
   if (!data.autostart_supported) $("autostartHint").textContent = "Disponible seulement sous Windows.";
   showMailHelp();
@@ -1631,6 +1644,10 @@ $("checkUpdate").onclick = async () => {
 };
 $("mareeLieu").onchange = () => saveSettings({ maree_lieu: $("mareeLieu").value.trim() });
 $("agendaIcs").onchange = () => saveSettings({ agenda_ics: $("agendaIcs").value.trim() });
+$("startMode").onchange = async () => {
+  await saveSettings({ demarrage_mode: $("startMode").value });
+  if ($("autostart").checked) $("autostart").onchange();  // on refait le raccourci de démarrage
+};
 $("autostart").onchange = async () => {
   const res = await (await fetch("/api/autostart", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ on: $("autostart").checked }),

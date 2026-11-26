@@ -49,6 +49,9 @@ Il peut agir sur ton PC :
 - 📅 lire ton agenda (Google Agenda ou tout agenda avec un lien iCal)
 - ☀️ te faire un **brief du jour** et **se lancer tout seul quand tu allumes ton PC**
   (activé automatiquement sous Windows, désactivable dans ⚙️ Réglages → « Brief du jour »)
+- 🤫 démarrer **discrètement** avec le PC : rien ne s'ouvre, Jarvis attend près de l'horloge. Clique sur son
+  icône ou appuie sur **Ctrl + Alt + J** pour l'ouvrir ; le brief se fait à la première ouverture de la journée
+  (⚙️ Réglages → Brief du jour → « Au démarrage du PC » pour revenir à l'ouverture en grand)
 - 💬 discuter, expliquer, rédiger, traduire…
 
 Il fonctionne sous Windows, macOS et Linux.
@@ -145,6 +148,7 @@ jarvis/
 ├── maj.py        # mise à jour automatique depuis GitHub
 ├── version.json  # numéro de version (à augmenter à chaque nouveauté)
 ├── brief.py      # tâches, mails, agenda, brief du jour, démarrage automatique
+├── discret.py    # mode discret : icône près de l'horloge, Ctrl + Alt + J
 ├── pronote.py    # emploi du temps, devoirs et notes Pronote
 ├── elevenlabs.py # voix ElevenLabs (option)
 ├── config.py     # les réglages (voix, personnalité, prénom)

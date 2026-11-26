@@ -25,6 +25,8 @@ DEFAULTS = {
     "mail_script_cle": "",  # clé secrète partagée entre Jarvis et le script
     "agenda_ics": "",
     "maree_lieu": "",
+    "demarrage_mode": "discret",  # au démarrage du PC : "discret" (en arrière-plan) ou "complet" (fenêtre + brief)
+    "dernier_brief": "",  # date du dernier brief, pour ne le faire qu'une fois par jour
     "theme": "jarvis",  # couleurs de l'interface
     "equipe": "",  # équipe de foot préférée (comme l'utilisateur l'a écrite)
     "equipe_id": "",  # retrouvée sur ESPN : identifiant, championnat, nom et logo

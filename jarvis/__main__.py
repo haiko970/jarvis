@@ -66,11 +66,22 @@ def main() -> None:
         help="en mode voix, ne répondre que si la phrase contient « Jarvis »",
     )
     parser.add_argument("--brief", action="store_true", help="faire le brief du jour dès l'ouverture")
+    parser.add_argument("--discret", action="store_true", help="démarrer en arrière-plan, sans ouvrir la fenêtre")
     args = parser.parse_args()
+
+    if not (args.terminal or args.voix):
+        from . import discret
+        from .web import PREFERRED_PORT
+
+        # Jarvis tourne déjà (en arrière-plan) : on lui demande juste d'ouvrir sa fenêtre
+        if discret.already_running(PREFERRED_PORT):
+            if not args.discret:
+                print("✅ Jarvis était déjà lancé : sa fenêtre s'ouvre.")
+            return
 
     brain = Brain()
     # Au démarrage du PC, Ollama peut mettre un peu de temps à se lancer : on l'attend jusqu'à 2 minutes.
-    deadline = time.time() + (120 if args.brief else 0)
+    deadline = time.time() + (120 if args.brief or args.discret else 0)
     while True:
         try:
             brain.ensure_model(on_progress=show_download)
@@ -103,12 +114,14 @@ def main() -> None:
     atexit.register(ruview.arreter)
 
     # Pendant que la fenêtre s'ouvre, le cerveau se réveille et lit ses instructions.
-    threading.Thread(target=brain.warm_up, daemon=True).start()
+    # (En mode discret, il attend la première ouverture : le PC démarre plus vite et garde sa mémoire.)
+    if not args.discret:
+        threading.Thread(target=brain.warm_up, daemon=True).start()
 
     if not (args.terminal or args.voix):
         from .web import serve
 
-        serve(brain, with_brief=args.brief)
+        serve(brain, with_brief=args.brief, discret=args.discret)
         if systeme.STATE.get("restart"):  # une mise à jour vient d'être installée
             from . import maj
 

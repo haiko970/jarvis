@@ -599,16 +599,24 @@ def set_autostart(on: bool) -> tuple[bool, str]:
     if not on:
         link.unlink(missing_ok=True)
         return True, "Jarvis ne se lancera plus au démarrage."
+    discret = config.load()["demarrage_mode"] == "discret"
+    if discret:
+        # Mode discret : un petit script lance Jarvis sans aucune fenêtre noire
+        target = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "wscript.exe"
+        arguments = f'"{PROJECT_DIR / "lancer_discret.vbs"}"'
+    else:
+        target, arguments = PROJECT_DIR / "lancer_jarvis.bat", "brief"
     env = dict(
         os.environ,
         JARVIS_LINK=str(link),
-        JARVIS_TARGET=str(PROJECT_DIR / "lancer_jarvis.bat"),
+        JARVIS_TARGET=str(target),
+        JARVIS_ARGS=arguments,
         JARVIS_DIR=str(PROJECT_DIR),
         JARVIS_ICON=str(PROJECT_DIR / "jarvis" / "static" / "jarvis.ico"),
     )
     script = (
         "$s = (New-Object -ComObject WScript.Shell).CreateShortcut($env:JARVIS_LINK);"
-        "$s.TargetPath = $env:JARVIS_TARGET; $s.Arguments = 'brief';"
+        "$s.TargetPath = $env:JARVIS_TARGET; $s.Arguments = $env:JARVIS_ARGS;"
         "$s.WorkingDirectory = $env:JARVIS_DIR; $s.IconLocation = $env:JARVIS_ICON;"
         "$s.WindowStyle = 7; $s.Save()"  # 7 = fenêtre noire réduite
     )
@@ -618,6 +626,8 @@ def set_autostart(on: bool) -> tuple[bool, str]:
     )
     if result.returncode != 0:
         return False, f"Impossible de créer le lancement automatique : {result.stderr.strip()}"
+    if discret:
+        return True, "Jarvis se lancera discrètement à chaque démarrage du PC (icône près de l'horloge, Ctrl + Alt + J)."
     return True, "Jarvis se lancera à chaque démarrage du PC, avec ton brief."
 
 

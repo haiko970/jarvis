@@ -7,3 +7,5 @@ recurring-ical-events>=3
 pronotepy>=2.15
 psutil>=5.9
 sgp4>=2.23
+pystray>=0.19; sys_platform == "win32"
+pillow>=10; sys_platform == "win32"

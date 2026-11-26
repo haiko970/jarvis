@@ -1,5 +1,6 @@
 """Interface graphique de Jarvis : un petit serveur local + une page web ouverte dans sa propre fenêtre."""
 
+import datetime
 import json
 import os
 import platform
@@ -18,6 +19,7 @@ import ollama
 
 from . import brief as brief_module
 from . import config, dashboard, elevenlabs, maj, musique, powers, pronote, sentinelle, systeme, theme
+from . import discret as discret_module
 from . import foot, ruview, sporteasy
 from .brain import MODEL, Brain
 from .powers import EVENTS
@@ -82,9 +84,52 @@ def open_window(url: str) -> None:
         webbrowser.open(url)
 
 
-def serve(brain: Brain, with_brief: bool = False) -> None:
+def _jarvis_window_front() -> bool:
+    """Remet la fenêtre de Jarvis devant si elle est déjà ouverte. Renvoie False s'il n'y en a pas."""
+    if platform.system() != "Windows":
+        return False
+    import ctypes
+
+    windows = sentinelle._jarvis_windows()
+    for hwnd in windows:
+        ctypes.windll.user32.ShowWindow(hwnd, 9)  # restaurer si réduite
+        ctypes.windll.user32.SetForegroundWindow(hwnd)
+    return bool(windows)
+
+
+def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None:
     lock = threading.Lock()  # une seule question à la fois pour le cerveau
-    state = {"shutdown_timer": None}
+    # last_page : dernière fois que la fenêtre a donné signe de vie (pour savoir si elle est ouverte)
+    state = {"shutdown_timer": None, "last_page": 0.0, "warm": not discret}
+
+    def wake_brain() -> None:
+        """En mode discret, le cerveau ne se charge qu'à la première ouverture (le PC démarre plus vite)."""
+        if not state["warm"]:
+            state["warm"] = True
+            threading.Thread(target=brain.warm_up, daemon=True).start()
+
+    def page_open() -> bool:
+        return time.time() - state["last_page"] < 8
+
+    def show_window(brief: bool | None = None) -> None:
+        """Ouvre la fenêtre de Jarvis (ou la remet devant). Le brief n'est fait qu'une fois par jour."""
+        wake_brain()
+        if page_open() and _jarvis_window_front():
+            return
+        if brief is None:
+            brief = config.load()["dernier_brief"] != datetime.date.today().isoformat()
+        open_window(url_base + ("?brief=1" if brief else ""))
+
+    def quit_jarvis() -> None:
+        systeme.STATE["quit"] = True
+        schedule_stop(0.5)
+
+    def notify_loop() -> None:
+        """Fenêtre fermée : les rappels et annonces arrivent en notification Windows."""
+        while True:
+            time.sleep(3)
+            if not page_open() and not EVENTS.empty() and discret_module.notify(EVENTS.queue[0]):
+                EVENTS.get_nowait()
 
     def schedule_stop(delay: float) -> None:
         """Ferme la fenêtre de Jarvis puis arrête le serveur après `delay` secondes."""
@@ -124,6 +169,9 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
 
         def do_GET(self) -> None:
             cancel_shutdown()
+            if self.path != "/api/info":  # /api/info sert seulement à voir si Jarvis tourne déjà
+                state["last_page"] = time.time()
+                wake_brain()
             if self.path.split("?")[0] in ("/", "/index.html"):
                 self._send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
             elif self.path == "/jsQR.js":
@@ -195,6 +243,11 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
             if self.path == "/api/bye":
                 # La fenêtre a été fermée : on s'arrête, sauf si elle revient (simple rechargement).
                 sentinelle.page_closed()  # fermée pendant la surveillance : le PC se verrouille
+                state["last_page"] = 0.0
+                if discret and not systeme.STATE["quit"]:
+                    # Mode discret : Jarvis reste en arrière-plan, prêt à revenir (Ctrl + Alt + J)
+                    self._send(204, b"", "text/plain")
+                    return
                 cancel_shutdown()
                 state["shutdown_timer"] = threading.Timer(3, server.shutdown)
                 state["shutdown_timer"].start()
@@ -293,7 +346,14 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
                 self._json({"ok": ok, "message": message})
                 return
 
+            if self.path == "/api/ouvrir":
+                # Un deuxième lancement de Jarvis (raccourci du Bureau…) : on ouvre la fenêtre de celui-ci
+                threading.Thread(target=show_window, daemon=True).start()
+                self._json({"ok": True})
+                return
+
             if self.path == "/api/brief":
+                config.save({"dernier_brief": datetime.date.today().isoformat()})
                 self._stream_answer("", collect_brief=True)
                 return
 
@@ -465,15 +525,27 @@ def serve(brain: Brain, with_brief: bool = False) -> None:
 
     port = _free_port()
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    url = f"http://127.0.0.1:{port}/" + ("?brief=1" if with_brief else "")
+    url_base = f"http://127.0.0.1:{port}/"
+    url = url_base + ("?brief=1" if with_brief else "")
 
-    print(f"\n✅ Jarvis est prêt : sa fenêtre va s'ouvrir ({url})")
-    print("   Tu peux réduire cette fenêtre noire, mais ne la ferme pas.")
-    print("   Pour quitter, ferme simplement la fenêtre de Jarvis.\n")
-    open_window(url)
+    if discret:
+        # Au démarrage du PC : pas de fenêtre, Jarvis attend près de l'horloge
+        print(f"\n✅ Jarvis attend en arrière-plan ({url_base}). Ouvre-le avec {discret_module.RACCOURCI}.\n")
+        discret_module.start_tray(show_window, lambda: show_window(brief=True), quit_jarvis)
+        discret_module.start_hotkey(show_window)
+        threading.Thread(target=notify_loop, daemon=True).start()
+        threading.Timer(4, discret_module.notify, args=(
+            f"Je suis prêt. Clique sur mon icône près de l'horloge, ou appuie sur {discret_module.RACCOURCI}.",
+        )).start()
+    else:
+        print(f"\n✅ Jarvis est prêt : sa fenêtre va s'ouvrir ({url})")
+        print("   Tu peux réduire cette fenêtre noire, mais ne la ferme pas.")
+        print("   Pour quitter, ferme simplement la fenêtre de Jarvis.\n")
+        open_window(url)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
+        discret_module.stop_tray()
         server.server_close()
