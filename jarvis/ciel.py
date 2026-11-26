@@ -201,6 +201,49 @@ def iss_passes(lat: float, lon: float, hours: int = 72, start: datetime.datetime
     return result
 
 
+def iss_track(minutes: int = 95, step: int = 1, start: datetime.datetime | None = None,
+              tle: tuple[str, str] | None = None) -> list[dict]:
+    """Où est l'ISS au-dessus de la Terre (latitude, longitude), maintenant puis minute par minute."""
+    from sgp4.api import Satrec
+
+    sat = Satrec.twoline2rv(*(tle or _tle()))
+    start = (start or datetime.datetime.now(datetime.timezone.utc)).astimezone(datetime.timezone.utc)
+    points = []
+    for m in range(0, minutes + 1, step):
+        jd = _julian(start + datetime.timedelta(minutes=m))
+        day = math.floor(jd - 0.5) + 0.5
+        error, r, _ = sat.sgp4(day, jd - day)
+        if error:
+            continue
+        g = _sidereal(jd)
+        x, y = math.cos(g) * r[0] + math.sin(g) * r[1], -math.sin(g) * r[0] + math.cos(g) * r[1]
+        lon = math.degrees(math.atan2(y, x))
+        lat = math.degrees(math.atan2(r[2], math.hypot(x, y)))
+        points.append({"lat": round(lat, 2), "lon": round((lon + 540) % 360 - 180, 2),
+                       "alt": round(math.sqrt(sum(c * c for c in r)) - EARTH_RADIUS)})
+    return points
+
+
+def earth_data() -> dict:
+    """Pour la carte de la Terre : ta ville, la Station spatiale et le soleil (jour / nuit)."""
+    data = {"ville": None, "iss": None, "soleil": None}
+    try:
+        lat, lon, name = _coords()
+        data["ville"] = {"lat": lat, "lon": lon, "nom": name}
+    except Exception:
+        pass
+    try:
+        data["iss"] = iss_track()
+    except Exception as e:
+        data["iss_erreur"] = str(e)
+    # Le point de la Terre où le soleil est juste au-dessus (pour dessiner la nuit)
+    jd = _julian(datetime.datetime.now(datetime.timezone.utc))
+    ra, dec, _ = _sun(jd)
+    lon = math.degrees(ra - _sidereal(jd))
+    data["soleil"] = {"lat": round(math.degrees(dec), 2), "lon": round((lon + 540) % 360 - 180, 2)}
+    return data
+
+
 def sky_data() -> dict:
     """Tout le ciel d'aujourd'hui, pour le tableau de bord et pour les réponses."""
     lat, lon, name = _coords()

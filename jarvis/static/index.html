@@ -346,6 +346,47 @@
   }
   .orb-bar button:hover { border-color: var(--cyan); }
   body.listening .orb-bar #orbMic { background: var(--danger); color: #fff; border-color: var(--danger); }
+  /* ---------- Bras et modules ---------- */
+  #fxCanvas { position: fixed; inset: 0; z-index: 9; pointer-events: none; }
+  #modWin {
+    position: fixed; left: 50%; top: 50%; z-index: 8; width: min(980px, 72vw); height: min(540px, 62vh);
+    display: flex; flex-direction: column; transform-origin: 50% 50%; will-change: transform, opacity;
+    background: rgba(2, 6, 10, 0.72); backdrop-filter: blur(6px); border: 1px solid var(--line); border-radius: 18px;
+    box-shadow: 0 0 40px rgba(var(--c-rgb), 0.12);
+  }
+  #modWin[hidden] { display: none; }
+  .mod-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px 6px; }
+  .mod-title { font-family: var(--font-mono); letter-spacing: 0.35em; font-size: 12px; color: var(--cyan); text-transform: uppercase; }
+  #modClose { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 50%; width: 30px; height: 30px; cursor: pointer; }
+  #modClose:hover { color: var(--cyan); border-color: var(--cyan); }
+  .mod-body { flex: 1; min-height: 0; position: relative; display: grid; place-items: center; overflow: hidden; padding: 0 14px 14px; }
+  .mod-panel .hud { animation: none; }
+  /* Quand un module est ouvert, la boule se pousse dans le coin et les cartes s'effacent */
+  #orbCanvas { transition: transform 0.6s cubic-bezier(.6, 0, .3, 1); }
+  body.module-open #orbCanvas { transform: translate(-43vw, 22vh) scale(0.3); }
+  body.module-open .mix-side { opacity: 0; pointer-events: none; }
+  .mix-side { transition: opacity 0.4s; }
+  body.module-open .orb-sub { position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%); z-index: 8; width: min(760px, 80vw); }
+  body.module-open #orbSay { font-size: 17px; min-height: 0; }
+  body.module-open #orbUser { display: none; }
+  /* La Terre */
+  .earth { position: absolute; inset: 0; }
+  #earthCanvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  #earthCanvas:active { cursor: grabbing; }
+  .earth-info { position: absolute; left: 18px; top: 6px; pointer-events: none; }
+  .earth-info .k { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.25em; color: var(--muted); text-transform: uppercase; }
+  #earthPick { font-size: 22px; font-weight: 300; }
+  .earth-legend { position: absolute; left: 18px; bottom: 12px; display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; color: var(--muted); pointer-events: none; }
+  .earth-legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; }
+  .dot.me { background: #fff; } .dot.iss { background: var(--ok); } .dot.nuit { background: #000; border: 1px solid var(--line); }
+  .earth-tools { position: absolute; right: 16px; bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .earth-tools button {
+    background: rgba(var(--c-rgb), 0.06); border: 1px solid var(--line); color: var(--text); border-radius: 999px;
+    padding: 6px 12px; font: inherit; font-size: 12px; cursor: pointer; text-align: left;
+  }
+  .earth-tools button:hover { border-color: var(--cyan); color: var(--cyan); }
+  .earth-load { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
+
   /* Choix de la police et de l'affichage dans les réglages */
   .fonts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
   .fonts button {
@@ -693,6 +734,7 @@
     <div>
       <div class="orb-clock"><b id="orbTime">--:--</b><span id="orbDate"></span></div>
       <div class="orb-actions">
+        <button type="button" id="orbEarth" title="Ouvrir la Terre">🌍 Terre</button>
         <button type="button" id="orbSwitch">◉ Orbe seule</button>
         <button type="button" id="orbBack" title="Tableau de bord complet">▦ Complet</button>
         <button type="button" data-orb-settings>⚙️</button>
@@ -718,6 +760,12 @@
       <button type="submit" title="Envoyer">➤</button>
     </form>
   </div>
+</div>
+
+<canvas id="fxCanvas" aria-hidden="true"></canvas>
+<div id="modWin" hidden role="dialog" aria-labelledby="modTitle">
+  <div class="mod-head"><span class="mod-title" id="modTitle"></span><button type="button" id="modClose" title="Ranger (Échap)">✕</button></div>
+  <div class="mod-body" id="modBody"></div>
 </div>
 
 <div id="sentinel" hidden>
@@ -1596,6 +1644,9 @@ async function streamReply(url, payload) {
           scrollDown();
           setStatus("Réponse en cours…", "thinking");
           speakFinishedSentences(false);
+        } else if (ev.type === "action" && ev.action === "module") {
+          if (ev.module === "fermer") window.closeModule?.();
+          else window.openModule?.(ev.module, { cible: ev.cible });
         } else if (ev.type === "action" && ev.action === "vue") {
           applyView(ev.vue);
           settings.vue = ev.vue;
@@ -2707,88 +2758,7 @@ function orbMode() {
 function drawOrb() {
   if (!orb.on) return;
   requestAnimationFrame(drawOrb);
-  const cv = $("orbCanvas"), dpr = window.devicePixelRatio || 1;
-  const size = cv.clientWidth * dpr;
-  if (cv.width !== size) { cv.width = cv.height = size; }
-  const g = cv.getContext("2d"), W = size, R = W * 0.25, cx = W / 2, cy = W / 2;
-  const mode = orbMode();
-  orb.t += mode === "reflechit" ? 0.03 : 0.012;
-
-  // Le niveau d'agitation suit ce que fait Jarvis
-  let target = { repos: 0.05, ecoute: 0.22, reflechit: 0.14, parle: 0.3 }[mode];
-  if (mode === "parle") {
-    const audio = orbAudioLevel();
-    target = audio != null ? 0.12 + audio * 0.9 : 0.22 + orb.pulse * 0.5 + 0.06 * Math.sin(orb.t * 9);
-  }
-  orb.level += (target - orb.level) * 0.12;
-  orb.pulse *= 0.9;
-  const lvl = orb.level;
-  const [cr, cg, cb] = orb.colors.c, [or, og, ob] = orb.colors.ok;
-  const mix = mode === "ecoute" ? 0.65 : 0.15;  // à l'écoute, la boule prend la 2ᵉ couleur du thème
-  const col = [cr + (or - cr) * mix, cg + (og - cg) * mix, cb + (ob - cb) * mix].map(Math.round).join(",");
-
-  g.clearRect(0, 0, W, W);
-  g.globalCompositeOperation = "lighter";
-  // Halo
-  const halo = g.createRadialGradient(cx, cy, R * 0.3, cx, cy, R * (1.9 + lvl));
-  halo.addColorStop(0, `rgba(${col},${0.18 + lvl * 0.25})`);
-  halo.addColorStop(1, "rgba(0,0,0,0)");
-  g.fillStyle = halo; g.fillRect(0, 0, W, W);
-
-  // Plusieurs couches de « matière » qui ondulent : plus Jarvis parle fort, plus ça déborde
-  const layers = 5;
-  for (let i = 0; i < layers; i++) {
-    const ph = i * 1.7, amp = 0.025 + lvl * (0.16 + i * 0.03);
-    const breathe = 1 + 0.025 * Math.sin(orb.t * 1.3 + i) + lvl * 0.12;
-    g.beginPath();
-    for (let a = 0; a <= 128; a++) {
-      const th = (a / 128) * Math.PI * 2;
-      const wob = Math.sin(th * 2 + orb.t * 1.9 + ph) * 0.5 + Math.sin(th * 3 - orb.t * 2.6 + ph * 1.3) * 0.35
-        + Math.sin(th * 5 + orb.t * 3.7 + ph * 0.7) * 0.25 * (0.4 + lvl);
-      const r = R * breathe * (1 + amp * wob) * (1 - i * 0.07);
-      const x = cx + Math.cos(th) * r, y = cy + Math.sin(th) * r;
-      a ? g.lineTo(x, y) : g.moveTo(x, y);
-    }
-    g.closePath();
-    const fill = g.createRadialGradient(cx - R * 0.25, cy - R * 0.3, R * 0.05, cx, cy, R * 1.25);
-    fill.addColorStop(0, `rgba(255,255,255,${0.06 + lvl * 0.1})`);
-    fill.addColorStop(0.45, `rgba(${col},${0.16 + lvl * 0.08})`);
-    fill.addColorStop(1, `rgba(${i % 2 ? `${or},${og},${ob}` : col},0.02)`);
-    g.fillStyle = fill; g.fill();
-    g.strokeStyle = `rgba(${col},${0.25 + lvl * 0.35 - i * 0.03})`;
-    g.lineWidth = (1 + lvl * 1.5) * dpr; g.stroke();
-  }
-  // Cœur lumineux
-  const core = g.createRadialGradient(cx, cy, 0, cx, cy, R * (0.45 + lvl * 0.3));
-  core.addColorStop(0, `rgba(255,255,255,${0.35 + lvl * 0.4})`);
-  core.addColorStop(1, `rgba(${col},0)`);
-  g.fillStyle = core; g.beginPath(); g.arc(cx, cy, R * (0.45 + lvl * 0.3), 0, Math.PI * 2); g.fill();
-
-  // Quand il parle, de petites étincelles « sortent » de la boule
-  if (mode === "parle" && Math.random() < 0.25 + lvl) {
-    const th = Math.random() * Math.PI * 2;
-    orb.particles.push({ th, r: R * (0.95 + lvl * 0.2), v: (1 + Math.random() * 2.5 + lvl * 4) * dpr, life: 1 });
-  }
-  if (mode === "reflechit") {  // en réfléchissant, une orbite tourne autour
-    for (let k = 0; k < 3; k++) {
-      const th = orb.t * (2.2 + k * 0.6) + k * 2.1, rr = R * (1.35 + 0.08 * k);
-      g.fillStyle = `rgba(${col},0.8)`;
-      g.beginPath(); g.arc(cx + Math.cos(th) * rr, cy + Math.sin(th) * rr * 0.92, 2.6 * dpr, 0, Math.PI * 2); g.fill();
-    }
-  }
-  orb.particles = orb.particles.filter((p) => p.life > 0);
-  for (const p of orb.particles) {
-    p.r += p.v; p.life -= 0.018;
-    g.fillStyle = `rgba(${col},${p.life * 0.8})`;
-    g.beginPath(); g.arc(cx + Math.cos(p.th) * p.r, cy + Math.sin(p.th) * p.r, (1.2 + p.life * 1.8) * dpr, 0, Math.PI * 2); g.fill();
-  }
-  // Anneau fin, discret, qui rappelle le réacteur
-  g.globalCompositeOperation = "source-over";
-  g.strokeStyle = `rgba(${col},${0.12 + lvl * 0.2})`;
-  g.lineWidth = 1 * dpr;
-  g.setLineDash([2 * dpr, 9 * dpr]); g.lineDashOffset = -orb.t * 40;
-  g.beginPath(); g.arc(cx, cy, R * 1.6, 0, Math.PI * 2); g.stroke();
-  g.setLineDash([]);
+  if (window.orbFrame) orbFrame();  // le dessin de la boule est dans js/orbe.js
 }
 
 function currentView() {
@@ -2800,7 +2770,7 @@ function orbSync() {
   const lastJarvis = [...chat.querySelectorAll(".msg.jarvis")].pop();
   const lastUser = [...chat.querySelectorAll(".msg.user")].pop();
   let say = (lastJarvis?.textContent || "").trim();
-  const max = document.body.classList.contains("mix-mode") ? 160 : 240;  // la fin de ce qu'il dit
+  const max = document.body.classList.contains("module-open") ? 110 : document.body.classList.contains("mix-mode") ? 160 : 240;
   if (say.length > max) say = "…" + say.slice(-max).replace(/^\S*\s/, "");
   if ($("orbSay").textContent !== say) $("orbSay").textContent = say;
   const user = lastUser && (!lastJarvis || lastUser.compareDocumentPosition(lastJarvis) & Node.DOCUMENT_POSITION_FOLLOWING)
@@ -2905,7 +2875,11 @@ function renderMix() {
 // Un clic sur une carte (pas sur ses boutons) montre le tableau de bord complet
 document.addEventListener("click", (e) => {
   if (e.target.closest("[data-media]")) return;
-  if (e.target.closest(".mix-card")) applyView("hud", true);
+  const card = e.target.closest(".mix-card");
+  if (!card) return;
+  // Une carte : le bras va chercher le module correspondant
+  const target = { meteo: "meteo", maree: "marees", jour: "journee", foot: "foot", vacances: "vacances" }[card.dataset.mix];
+  if (target && window.openModule) openModule(target); else applyView("hud", true);
 });
 
 function applyView(view, save) {
@@ -2969,5 +2943,7 @@ if (new URLSearchParams(location.search).get("brief")) setTimeout(runBrief, 300)
 // Fermer la fenêtre arrête aussi Jarvis.
 window.addEventListener("pagehide", () => navigator.sendBeacon("/api/bye"));
 </script>
+<script src="/js/orbe.js"></script>
+<script>$("orbEarth").onclick = () => openModule("terre");</script>
 </body>
 </html>

@@ -20,7 +20,7 @@ import ollama
 from . import brief as brief_module
 from . import config, dashboard, elevenlabs, maj, musique, powers, pronote, sentinelle, systeme, theme
 from . import discret as discret_module
-from . import foot, ruview, sporteasy
+from . import ciel, foot, modules, ruview, sporteasy
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -176,6 +176,12 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                 self._send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
             elif self.path == "/jsQR.js":
                 self._send(200, (PAGE.parent / "jsQR.js").read_bytes(), "text/javascript; charset=utf-8")
+            elif re.fullmatch(r"/(lib|js)/[\w.-]+\.(js|json)", self.path) and (PAGE.parent / self.path.lstrip("/")).is_file():
+                # Les scripts de la page (static/js) et les bibliothèques de la carte de la Terre (static/lib)
+                kind = "text/javascript" if self.path.endswith(".js") else "application/json"
+                self._send(200, (PAGE.parent / self.path.lstrip("/")).read_bytes(), kind + "; charset=utf-8")
+            elif self.path == "/api/terre":
+                self._json(ciel.earth_data())
             elif self.path.startswith("/api/dashboard"):
                 self._json(dashboard.collect(force="force=1" in self.path))
             elif self.path == "/api/media":
@@ -456,6 +462,10 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
 
             text = json.loads(raw or b"{}").get("text", "").strip()
             command = systeme.quick_command(text)
+            module = None if command else modules.quick_module(text)
+            if module:
+                self._stream_answer("", quick="module:" + json.dumps(module, ensure_ascii=False))
+                return
             vue = None if command else theme.quick_view(text)
             if vue:
                 self._stream_answer("", quick="vue:" + vue)
@@ -496,6 +506,12 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                 if quick == "sentinelle":
                     emit({"type": "tool", "name": "activer_sentinelle", "args": {}})
                     emit({"type": "text", "text": sentinelle.activer_sentinelle()})
+                    quick, text = None, ""
+                if quick and quick.startswith("module:"):
+                    # « Ouvre la carte » : la page envoie le bras chercher le module
+                    action = json.loads(quick[7:])
+                    emit({"type": "action", "action": "module", "module": action["module"], "cible": action.get("cible")})
+                    emit({"type": "text", "text": action["texte"]})
                     quick, text = None, ""
                 if quick and quick.startswith("vue:"):
                     config.save({"vue": quick[4:], "vue_choisie": True})

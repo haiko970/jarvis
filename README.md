@@ -30,6 +30,9 @@ Il peut agir sur ton PC :
   Jarvis parle, avec ses paroles en sous-titres et seulement l'essentiel autour (météo, marée, journée, foot,
   vacances, musique). Aussi en **orbe seule** ou en **tableau de bord complet** (boutons en haut, ou
   « Jarvis, mode orbe / mode épuré / tableau de bord complet ») ; et le choix de la **police d'écriture**
+- 🌍 des **modules** que la boule va chercher avec un bras de filaments : « Jarvis, ouvre la carte » (une Terre
+  en 3D à faire tourner, avec le jour et la nuit, ta ville et la Station spatiale en direct), « montre-moi le
+  Japon », « montre la météo », « affiche les marées », « montre ma journée », « montre le ciel »… et « range ça »
 - 🛡️ surveiller le PC quand tu pars (« Jarvis, surveille le PC ») : si quelqu'un touche à la souris ou au
   clavier sans taper ton code secret, « Accès non autorisé », photo avec la webcam et PC verrouillé
 - ⚽ donner le score de ton équipe de foot (en direct pendant les matchs), son dernier résultat et son prochain match
