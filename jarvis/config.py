@@ -28,6 +28,8 @@ DEFAULTS = {
     "demarrage_mode": "discret",  # au démarrage du PC : "discret" (en arrière-plan) ou "complet" (fenêtre + brief)
     "dernier_brief": "",  # date du dernier brief, pour ne le faire qu'une fois par jour
     "theme": "jarvis",  # couleurs de l'interface
+    "vue": "hud",  # affichage : "hud" (tableau de bord) ou "orbe" (la boule)
+    "police": "classique",  # police d'écriture de l'interface
     "equipe": "",  # équipe de foot préférée (comme l'utilisateur l'a écrite)
     "equipe_id": "",  # retrouvée sur ESPN : identifiant, championnat, nom et logo
     "equipe_ligue": "",

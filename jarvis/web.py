@@ -456,6 +456,10 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
 
             text = json.loads(raw or b"{}").get("text", "").strip()
             command = systeme.quick_command(text)
+            vue = None if command else theme.quick_view(text)
+            if vue:
+                self._stream_answer("", quick="vue:" + vue)
+                return
             couleur = None if command else theme.quick_theme(text)
             if not command and sentinelle.quick(text):
                 self._stream_answer("", quick="sentinelle")
@@ -492,6 +496,11 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                 if quick == "sentinelle":
                     emit({"type": "tool", "name": "activer_sentinelle", "args": {}})
                     emit({"type": "text", "text": sentinelle.activer_sentinelle()})
+                    quick, text = None, ""
+                if quick and quick.startswith("vue:"):
+                    config.save({"vue": quick[4:]})
+                    emit({"type": "action", "action": "vue", "vue": quick[4:]})
+                    emit({"type": "text", "text": "Voici l'orbe." if quick[4:] == "orbe" else "Voici le tableau de bord."})
                     quick, text = None, ""
                 if quick and quick.startswith("theme:"):
                     emit({"type": "tool", "name": "changer_theme", "args": {}})

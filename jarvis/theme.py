@@ -82,6 +82,23 @@ def quick_theme(text: str) -> str | None:
     return find_theme(re.sub(r"^\W*(ok |dis |hey |eh )?jarvis\W*", "", phrase))
 
 
+# « Jarvis, mode orbe » / « mets le tableau de bord » : changer d'affichage
+_VUE_ORBE = re.compile(r"\b(orbe|boule|sphere)\b")
+_VUE_HUD = re.compile(r"\b(tableau de bord|dashboard|hud|ecran de controle)\b")
+_VUE_VERBE = re.compile(r"\b(mode|vue|affichage|interface|mets?|passe|remets?|affiche|montre)\b")
+
+
+def quick_view(text: str) -> str | None:
+    phrase = _simple(text)
+    if len(phrase.split()) > 10 or not _VUE_VERBE.search(phrase):
+        return None
+    if _VUE_ORBE.search(phrase):
+        return "orbe"
+    if _VUE_HUD.search(phrase):
+        return "hud"
+    return None
+
+
 def run_quick(key: str) -> str:
     changer_theme(key)
     return f"C'est fait, je passe au thème {THEMES[key]}."

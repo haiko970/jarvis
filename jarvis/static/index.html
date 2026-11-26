@@ -5,7 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>J.A.R.V.I.S.</title>
 <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23050b14' stroke='%234fd8ff' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%234fd8ff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600&family=Orbitron:wght@400;600&family=Rajdhani:wght@400;500;600&family=Sora:wght@200;300;400;600&family=Space+Grotesk:wght@300;400;600&family=Space+Mono&display=swap">
 <style>
+  /* ---------- Polices d'écriture (choisies dans les réglages) ---------- */
+  :root {
+    --font-text: "Segoe UI", "Bahnschrift", system-ui, -apple-system, sans-serif;
+    --font-mono: "Bahnschrift", "Consolas", "Segoe UI", monospace;
+  }
+  :root[data-font="orbitron"] { --font-text: "Exo 2", "Segoe UI", sans-serif; --font-mono: "Orbitron", "Bahnschrift", monospace; }
+  :root[data-font="rajdhani"] { --font-text: "Rajdhani", "Segoe UI", sans-serif; --font-mono: "Rajdhani", "Bahnschrift", monospace; }
+  :root[data-font="sora"] { --font-text: "Sora", "Segoe UI", sans-serif; --font-mono: "Sora", "Bahnschrift", sans-serif; }
+  :root[data-font="space"] { --font-text: "Space Grotesk", "Segoe UI", sans-serif; --font-mono: "Space Mono", "Consolas", monospace; }
+  :root[data-font="rajdhani"] body { font-size: 15px; } /* Rajdhani est plus petite : on grossit un peu */
+
   /* ---------- Thèmes de couleur ---------- */
   :root {
     --c-rgb: 79, 216, 255;      /* couleur principale (traits, textes lumineux) */
@@ -64,7 +78,7 @@
       var(--hex),
       var(--bg);
     color: var(--text);
-    font: 14px/1.45 "Segoe UI", "Bahnschrift", system-ui, -apple-system, sans-serif;
+    font: 14px/1.45 var(--font-text);
     overflow: hidden;
   }
   /* Tout le tableau de bord est dessiné à 1366×720 puis agrandi/réduit pour remplir la fenêtre,
@@ -77,7 +91,7 @@
     content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 5;
     background: repeating-linear-gradient(0deg, rgba(var(--c-rgb), 0.025) 0 1px, transparent 1px 3px);
   }
-  .mono { font-family: "Bahnschrift", "Consolas", "Segoe UI", monospace; letter-spacing: 0.06em; }
+  .mono { font-family: var(--font-mono); letter-spacing: 0.06em; }
   .glow { color: var(--cyan); text-shadow: var(--glow); }
 
   /* ---------- Barre du haut ---------- */
@@ -255,6 +269,62 @@
   .res.V { color: var(--ok); } .res.N { color: var(--warn); } .res.D { color: var(--danger); }
   .live { color: var(--danger); animation: blink 1.2s infinite; letter-spacing: 0.12em; font-size: 9.5px; }
   @keyframes blink { 50% { opacity: 0.35; } }
+
+  /* ---------- Vue « Orbe » : une boule vivante qui parle ---------- */
+  #orbView {
+    position: fixed; inset: 0; z-index: 8; display: none; color: var(--text);
+    background: radial-gradient(circle at 50% 42%, rgba(var(--c-rgb), 0.10), transparent 55%), var(--bg);
+    grid-template-rows: auto 1fr auto; padding: 22px 28px 26px;
+  }
+  body.orb-mode #orbView { display: grid; }
+  body.orb-mode #stage { visibility: hidden; }
+  .orb-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .orb-name { font-family: var(--font-mono); letter-spacing: 0.5em; font-size: 13px; color: var(--cyan); }
+  .orb-status { color: var(--muted); font-size: 13px; margin-top: 4px; letter-spacing: 0.05em; }
+  .orb-clock { text-align: right; font-family: var(--font-mono); }
+  .orb-clock b { display: block; font-size: 34px; font-weight: 300; letter-spacing: 0.08em; color: var(--text); }
+  .orb-clock span { color: var(--muted); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; }
+  .orb-actions { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; }
+  .orb-actions button {
+    background: transparent; border: 1px solid var(--line); color: var(--muted); border-radius: 999px;
+    padding: 6px 12px; font: inherit; font-size: 12px; cursor: pointer;
+  }
+  .orb-actions button:hover { color: var(--cyan); border-color: var(--cyan); }
+  .orb-center { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; }
+  #orbCanvas { width: min(50vh, 64vw); height: min(50vh, 64vw); cursor: pointer; flex-shrink: 1; min-height: 0; }
+  .orb-sub { width: min(900px, 92vw); text-align: center; margin-top: -3vh; }
+  #orbUser { color: var(--muted); font-size: 15px; min-height: 1.3em; opacity: 0.8; }
+  #orbSay {
+    font-size: clamp(18px, 2.4vw, 27px); font-weight: 300; line-height: 1.35; min-height: 2.7em; margin-top: 6px;
+    text-shadow: 0 0 18px rgba(var(--c-rgb), 0.35);
+  }
+  .orb-info { display: flex; justify-content: center; gap: 22px; color: var(--muted); font-size: 13px; margin: 14px 0 12px; }
+  .orb-info b { color: var(--text); font-weight: 400; }
+  .orb-bar { display: flex; gap: 10px; width: min(720px, 92vw); margin: 0 auto; }
+  .orb-bar input {
+    flex: 1; background: rgba(var(--c-rgb), 0.06); border: 1px solid var(--line); border-radius: 999px;
+    color: var(--text); padding: 13px 20px; font: inherit; font-size: 15px; outline: none;
+  }
+  .orb-bar input:focus { border-color: var(--cyan); box-shadow: var(--glow); }
+  .orb-bar button {
+    width: 48px; border-radius: 50%; border: 1px solid var(--line); background: rgba(var(--c-rgb), 0.06);
+    color: var(--cyan); font-size: 18px; cursor: pointer;
+  }
+  .orb-bar button:hover { border-color: var(--cyan); }
+  body.listening .orb-bar #orbMic { background: var(--danger); color: #fff; border-color: var(--danger); }
+  /* Choix de la police et de l'affichage dans les réglages */
+  .fonts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .fonts button {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text); cursor: pointer;
+    padding: 8px 2px 6px; display: grid; justify-items: center; gap: 2px; font-size: 10.5px;
+  }
+  .fonts button b { font-size: 19px; font-weight: 500; line-height: 1.1; }
+  .fonts button.on, .views button.on { border-color: var(--cyan); box-shadow: var(--glow); }
+  .views { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .views button {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text); cursor: pointer;
+    padding: 10px; font: inherit; font-size: 13px;
+  }
 
   /* ---------- Sentinelle ---------- */
   #sentinel {
@@ -477,6 +547,7 @@
     <div class="date" id="clockDate"></div>
   </div>
   <div class="top-actions">
+    <button class="pill" id="orbToggle" type="button" title="Passer à la vue Orbe">◉ Orbe</button>
     <button class="pill" id="voiceToggle" type="button">🔊 Voix : activée</button>
     <button class="pill" id="wakeToggle" type="button">👂 Réveil « Jarvis » : non</button>
     <button class="gear" id="openSettings" title="Réglages" aria-label="Réglages">⚙️</button>
@@ -579,6 +650,37 @@
 </div><!-- /stage -->
 
 <div class="overlay" id="overlay"></div>
+<div id="orbView" aria-label="Vue Orbe">
+  <div class="orb-top">
+    <div>
+      <div class="orb-name">JARVIS</div>
+      <div class="orb-status" id="orbStatus">En ligne</div>
+    </div>
+    <div>
+      <div class="orb-clock"><b id="orbTime">--:--</b><span id="orbDate"></span></div>
+      <div class="orb-actions">
+        <button type="button" id="orbBack" title="Revenir au tableau de bord">▦ Tableau de bord</button>
+        <button type="button" data-orb-settings>⚙️</button>
+      </div>
+    </div>
+  </div>
+  <div class="orb-center">
+    <canvas id="orbCanvas" title="Clique pour parler"></canvas>
+    <div class="orb-sub">
+      <div id="orbUser"></div>
+      <div id="orbSay">Bonjour. Je vous écoute.</div>
+    </div>
+  </div>
+  <div>
+    <div class="orb-info" id="orbInfo"></div>
+    <form class="orb-bar" id="orbForm" autocomplete="off">
+      <button type="button" id="orbMic" title="Parler">🎙️</button>
+      <input id="orbInput" placeholder="Parle-moi, ou écris ici…" aria-label="Ta demande">
+      <button type="submit" title="Envoyer">➤</button>
+    </form>
+  </div>
+</div>
+
 <div id="sentinel" hidden>
   <div class="sn-box">
     <svg class="sn-shield" viewBox="0 0 120 120" aria-hidden="true" fill="none" stroke="currentColor">
@@ -608,6 +710,17 @@
     <h3>🎨 Thème de couleur</h3>
     <div class="themes" id="themes"></div>
     <p class="hint">Tu peux aussi dire : « Jarvis, mets le thème Iron Man ».</p>
+    <div class="field" style="margin-top: 12px">
+      <label>Affichage</label>
+      <div class="views" id="views">
+        <button type="button" data-view="hud">▦ Tableau de bord</button>
+        <button type="button" data-view="orbe">◉ Orbe</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Police d'écriture</label>
+      <div class="fonts" id="fonts"></div>
+    </div>
   </section>
 
   <section>
@@ -1069,6 +1182,8 @@ async function loadSettings() {
     settings = data.settings;
     window.briefData = data;
     applyTheme(settings.theme);
+    if (settings.police) applyFont(settings.police);
+    if (settings.vue && settings.vue !== (orb.on ? "orbe" : "hud")) applyView(settings.vue);
     const sel = $("personnalite");
     sel.innerHTML = "";
     for (const [key, label] of Object.entries(data.personnalites)) sel.add(new Option(label, key));
@@ -1303,6 +1418,7 @@ async function pumpAudio() {
     if (job.url) {
       await new Promise((done) => {
         audioEl = new Audio(job.url);
+        if (orb.on) orbListenTo(audioEl);
         audioEl.onended = audioEl.onerror = done;
         audioEl.play().catch((e) => { if (e.name === "NotAllowedError") showListenButton(); done(); });
       });
@@ -1327,6 +1443,8 @@ function speakQueued(text, force) {
   if (settings.voix_moteur === "elevenlabs") return speakEleven(text);
   if (!hasTTS) return;
   const u = browserUtterance(text);
+  u.onboundary = () => orbKick();
+  u.onstart = () => orbKick(0.6);
   startUtterance();
   u.onerror = (e) => {
     if (e.error === "not-allowed") showListenButton();
@@ -1436,6 +1554,9 @@ async function streamReply(url, payload) {
           scrollDown();
           setStatus("Réponse en cours…", "thinking");
           speakFinishedSentences(false);
+        } else if (ev.type === "action" && ev.action === "vue") {
+          applyView(ev.vue);
+          settings.vue = ev.vue;
         } else if (ev.type === "action" && ev.action === "theme") {
           applyTheme(ev.theme);
           settings.theme = ev.theme;
@@ -2278,7 +2399,7 @@ function ring(value, label, max = 100, text) {
       <circle cx="32" cy="32" r="${r}" fill="none" stroke="${color}" stroke-width="5" stroke-dasharray="${c * v} ${c}"
         transform="rotate(-90 32 32)" style="filter: drop-shadow(0 0 3px ${color}); transition: stroke-dasharray .6s"/>
       <circle cx="32" cy="32" r="19" fill="none" stroke="currentColor" stroke-opacity="0.3" stroke-dasharray="2 3"/>
-      <text x="32" y="36" text-anchor="middle" style="fill: var(--text)" font-size="12" font-family="Bahnschrift, Segoe UI">${text ?? (value == null ? "—" : value + "%")}</text>
+      <text x="32" y="36" text-anchor="middle" style="fill: var(--text); font-family: var(--font-mono)" font-size="12">${text ?? (value == null ? "—" : value + "%")}</text>
     </svg><div class="lbl mono">${label}</div></div>`;
 }
 // ---------- Tâches et mails ----------
@@ -2498,6 +2619,208 @@ setInterval(() => {
 // Après avoir changé les réglages (ville, marées, Pronote…), on rafraîchit tout.
 $("closeSettings").addEventListener("click", () => loadDashboard(true));
 $("overlay").addEventListener("click", () => loadDashboard(true));
+
+// ---------- Vue « Orbe » : une boule vivante qui respire, et qui s'anime quand Jarvis parle ----------
+const orb = {
+  on: false, level: 0, pulse: 0, t: 0, particles: [], analyser: null, audioCtx: null,
+  colors: { c: [79, 216, 255], ok: [93, 255, 180] },
+};
+function readOrbColors() {
+  const css = getComputedStyle(document.documentElement);
+  const rgb = (name) => css.getPropertyValue(name).split(",").map((n) => parseInt(n, 10) || 0);
+  orb.colors = { c: rgb("--c-rgb"), ok: rgb("--ok-rgb") };
+}
+// Chaque mot prononcé donne une petite impulsion à la boule
+function orbKick(strength = 0.45) { orb.pulse = Math.min(1.2, orb.pulse + strength); }
+// Voix ElevenLabs : on écoute vraiment le son pour faire bouger la boule
+function orbListenTo(audio) {
+  try {
+    orb.audioCtx = orb.audioCtx || new AudioContext();
+    if (orb.audioCtx.state !== "running") orb.audioCtx.resume();
+    if (orb.audioCtx.state !== "running") return;  // sans ça, le son serait coupé
+    const source = orb.audioCtx.createMediaElementSource(audio);
+    const analyser = orb.audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser); analyser.connect(orb.audioCtx.destination);
+    orb.analyser = analyser;
+    audio.addEventListener("ended", () => { if (orb.analyser === analyser) orb.analyser = null; });
+  } catch (e) {}
+}
+function orbAudioLevel() {
+  if (!orb.analyser) return null;
+  const data = new Uint8Array(orb.analyser.frequencyBinCount);
+  orb.analyser.getByteFrequencyData(data);
+  let sum = 0;
+  for (let i = 2; i < 48; i++) sum += data[i];
+  return Math.min(1, sum / (46 * 150));
+}
+
+function orbMode() {
+  if (document.body.classList.contains("listening")) return "ecoute";
+  if (speaking) return "parle";
+  if (busy) return "reflechit";
+  return "repos";
+}
+function drawOrb() {
+  if (!orb.on) return;
+  requestAnimationFrame(drawOrb);
+  const cv = $("orbCanvas"), dpr = window.devicePixelRatio || 1;
+  const size = cv.clientWidth * dpr;
+  if (cv.width !== size) { cv.width = cv.height = size; }
+  const g = cv.getContext("2d"), W = size, R = W * 0.25, cx = W / 2, cy = W / 2;
+  const mode = orbMode();
+  orb.t += mode === "reflechit" ? 0.03 : 0.012;
+
+  // Le niveau d'agitation suit ce que fait Jarvis
+  let target = { repos: 0.05, ecoute: 0.22, reflechit: 0.14, parle: 0.3 }[mode];
+  if (mode === "parle") {
+    const audio = orbAudioLevel();
+    target = audio != null ? 0.12 + audio * 0.9 : 0.22 + orb.pulse * 0.5 + 0.06 * Math.sin(orb.t * 9);
+  }
+  orb.level += (target - orb.level) * 0.12;
+  orb.pulse *= 0.9;
+  const lvl = orb.level;
+  const [cr, cg, cb] = orb.colors.c, [or, og, ob] = orb.colors.ok;
+  const mix = mode === "ecoute" ? 0.65 : 0.15;  // à l'écoute, la boule prend la 2ᵉ couleur du thème
+  const col = [cr + (or - cr) * mix, cg + (og - cg) * mix, cb + (ob - cb) * mix].map(Math.round).join(",");
+
+  g.clearRect(0, 0, W, W);
+  g.globalCompositeOperation = "lighter";
+  // Halo
+  const halo = g.createRadialGradient(cx, cy, R * 0.3, cx, cy, R * (1.9 + lvl));
+  halo.addColorStop(0, `rgba(${col},${0.18 + lvl * 0.25})`);
+  halo.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = halo; g.fillRect(0, 0, W, W);
+
+  // Plusieurs couches de « matière » qui ondulent : plus Jarvis parle fort, plus ça déborde
+  const layers = 5;
+  for (let i = 0; i < layers; i++) {
+    const ph = i * 1.7, amp = 0.025 + lvl * (0.16 + i * 0.03);
+    const breathe = 1 + 0.025 * Math.sin(orb.t * 1.3 + i) + lvl * 0.12;
+    g.beginPath();
+    for (let a = 0; a <= 128; a++) {
+      const th = (a / 128) * Math.PI * 2;
+      const wob = Math.sin(th * 2 + orb.t * 1.9 + ph) * 0.5 + Math.sin(th * 3 - orb.t * 2.6 + ph * 1.3) * 0.35
+        + Math.sin(th * 5 + orb.t * 3.7 + ph * 0.7) * 0.25 * (0.4 + lvl);
+      const r = R * breathe * (1 + amp * wob) * (1 - i * 0.07);
+      const x = cx + Math.cos(th) * r, y = cy + Math.sin(th) * r;
+      a ? g.lineTo(x, y) : g.moveTo(x, y);
+    }
+    g.closePath();
+    const fill = g.createRadialGradient(cx - R * 0.25, cy - R * 0.3, R * 0.05, cx, cy, R * 1.25);
+    fill.addColorStop(0, `rgba(255,255,255,${0.06 + lvl * 0.1})`);
+    fill.addColorStop(0.45, `rgba(${col},${0.16 + lvl * 0.08})`);
+    fill.addColorStop(1, `rgba(${i % 2 ? `${or},${og},${ob}` : col},0.02)`);
+    g.fillStyle = fill; g.fill();
+    g.strokeStyle = `rgba(${col},${0.25 + lvl * 0.35 - i * 0.03})`;
+    g.lineWidth = (1 + lvl * 1.5) * dpr; g.stroke();
+  }
+  // Cœur lumineux
+  const core = g.createRadialGradient(cx, cy, 0, cx, cy, R * (0.45 + lvl * 0.3));
+  core.addColorStop(0, `rgba(255,255,255,${0.35 + lvl * 0.4})`);
+  core.addColorStop(1, `rgba(${col},0)`);
+  g.fillStyle = core; g.beginPath(); g.arc(cx, cy, R * (0.45 + lvl * 0.3), 0, Math.PI * 2); g.fill();
+
+  // Quand il parle, de petites étincelles « sortent » de la boule
+  if (mode === "parle" && Math.random() < 0.25 + lvl) {
+    const th = Math.random() * Math.PI * 2;
+    orb.particles.push({ th, r: R * (0.95 + lvl * 0.2), v: (1 + Math.random() * 2.5 + lvl * 4) * dpr, life: 1 });
+  }
+  if (mode === "reflechit") {  // en réfléchissant, une orbite tourne autour
+    for (let k = 0; k < 3; k++) {
+      const th = orb.t * (2.2 + k * 0.6) + k * 2.1, rr = R * (1.35 + 0.08 * k);
+      g.fillStyle = `rgba(${col},0.8)`;
+      g.beginPath(); g.arc(cx + Math.cos(th) * rr, cy + Math.sin(th) * rr * 0.92, 2.6 * dpr, 0, Math.PI * 2); g.fill();
+    }
+  }
+  orb.particles = orb.particles.filter((p) => p.life > 0);
+  for (const p of orb.particles) {
+    p.r += p.v; p.life -= 0.018;
+    g.fillStyle = `rgba(${col},${p.life * 0.8})`;
+    g.beginPath(); g.arc(cx + Math.cos(p.th) * p.r, cy + Math.sin(p.th) * p.r, (1.2 + p.life * 1.8) * dpr, 0, Math.PI * 2); g.fill();
+  }
+  // Anneau fin, discret, qui rappelle le réacteur
+  g.globalCompositeOperation = "source-over";
+  g.strokeStyle = `rgba(${col},${0.12 + lvl * 0.2})`;
+  g.lineWidth = 1 * dpr;
+  g.setLineDash([2 * dpr, 9 * dpr]); g.lineDashOffset = -orb.t * 40;
+  g.beginPath(); g.arc(cx, cy, R * 1.6, 0, Math.PI * 2); g.stroke();
+  g.setLineDash([]);
+}
+
+// Les sous-titres reprennent la discussion
+function orbSync() {
+  if (!orb.on) return;
+  const lastJarvis = [...chat.querySelectorAll(".msg.jarvis")].pop();
+  const lastUser = [...chat.querySelectorAll(".msg.user")].pop();
+  let say = (lastJarvis?.textContent || "").trim();
+  if (say.length > 240) say = "…" + say.slice(-240).replace(/^\S*\s/, "");
+  if ($("orbSay").textContent !== say) $("orbSay").textContent = say;
+  const user = lastUser && (!lastJarvis || lastUser.compareDocumentPosition(lastJarvis) & Node.DOCUMENT_POSITION_FOLLOWING)
+    ? "« " + lastUser.textContent.trim() + " »" : "";
+  if ($("orbUser").textContent !== user) $("orbUser").textContent = user;
+  $("orbStatus").textContent = statusEl.textContent;
+  $("orbTime").textContent = $("clockTime").textContent;
+  $("orbDate").textContent = $("clockDate").textContent;
+  const d = window.lastDash || {}, bits = [];
+  const w = d.meteo?.data;
+  if (w) bits.push(`<span>${esc(w.temp)}° <b>${esc(w.desc)}</b></span>`);
+  const hi = d.marees?.data?.extremes?.find((e) => e.type === "haute" && e.minutes >= nowMinutes());
+  if (hi) bits.push(`<span>Marée haute <b>${esc(hi.heure)}</b></span>`);
+  const v = d.vacances?.data;
+  if (v && !v.en_vacances) bits.push(`<span>Vacances dans <b>${esc(v.restants)} jours</b></span>`);
+  const html = bits.join("");
+  if ($("orbInfo").innerHTML !== html) $("orbInfo").innerHTML = html;
+}
+setInterval(orbSync, 300);
+
+function applyView(view, save) {
+  orb.on = view === "orbe";
+  document.body.classList.toggle("orb-mode", orb.on);
+  document.querySelectorAll("#views button").forEach((b) => b.classList.toggle("on", b.dataset.view === view));
+  try { localStorage.setItem("jarvis_vue", view); } catch (e) {}
+  if (save) saveSettings({ vue: view });
+  if (orb.on) { readOrbColors(); orbSync(); requestAnimationFrame(drawOrb); }
+}
+$("orbToggle").onclick = () => applyView("orbe", true);
+$("orbBack").onclick = () => applyView("hud", true);
+document.querySelectorAll("#views button").forEach((b) => { b.onclick = () => applyView(b.dataset.view, true); });
+document.querySelector("[data-orb-settings]").onclick = () => { loadSettings(); openSettings(true); };
+$("orbCanvas").onclick = toggleMic;
+$("orbMic").onclick = toggleMic;
+$("orbForm").onsubmit = (e) => {
+  e.preventDefault();
+  const text = $("orbInput").value;
+  $("orbInput").value = "";
+  send(text);
+};
+// Les couleurs de la boule suivent le thème
+new MutationObserver(readOrbColors).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+try { applyView(localStorage.getItem("jarvis_vue") || "hud"); } catch (e) { applyView("hud"); }
+
+// ---------- Polices d'écriture ----------
+const FONTS = {
+  classique: { nom: "Classique", css: '"Segoe UI", "Bahnschrift", sans-serif' },
+  orbitron: { nom: "Orbitron", css: '"Orbitron", sans-serif' },
+  rajdhani: { nom: "Rajdhani", css: '"Rajdhani", sans-serif' },
+  sora: { nom: "Sora", css: '"Sora", sans-serif' },
+  space: { nom: "Space", css: '"Space Grotesk", sans-serif' },
+};
+function applyFont(name) {
+  if (!FONTS[name]) name = "classique";
+  if (name === "classique") delete document.documentElement.dataset.font;
+  else document.documentElement.dataset.font = name;
+  document.querySelectorAll("#fonts button").forEach((b) => b.classList.toggle("on", b.dataset.font === name));
+  try { localStorage.setItem("jarvis_police", name); } catch (e) {}
+}
+for (const [key, f] of Object.entries(FONTS)) {
+  const b = document.createElement("button");
+  b.type = "button"; b.dataset.font = key;
+  b.innerHTML = `<b style='font-family: ${f.css}'>Aa 18:42</b>${f.nom}`;
+  b.onclick = () => { applyFont(key); saveSettings({ police: key }); };
+  $("fonts").appendChild(b);
+}
+try { applyFont(localStorage.getItem("jarvis_police") || "classique"); } catch (e) { applyFont("classique"); }
 
 loadSettings();
 
