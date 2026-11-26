@@ -20,7 +20,7 @@ import ollama
 from . import brief as brief_module
 from . import config, dashboard, elevenlabs, maj, musique, powers, pronote, sentinelle, systeme, theme
 from . import discret as discret_module
-from . import ciel, foot, modules, ruview, sporteasy
+from . import ciel, connaissances, foot, modules, ruview, sporteasy
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -180,6 +180,8 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                 # Les scripts de la page (static/js) et les bibliothèques de la carte de la Terre (static/lib)
                 kind = "text/javascript" if self.path.endswith(".js") else "application/json"
                 self._send(200, (PAGE.parent / self.path.lstrip("/")).read_bytes(), kind + "; charset=utf-8")
+            elif self.path == "/api/connaissances":
+                self._json(connaissances.load())
             elif self.path == "/api/terre":
                 self._json(ciel.earth_data())
             elif self.path.startswith("/api/dashboard"):
@@ -385,6 +387,17 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                 self._json({"ok": ok, "message": message})
                 return
 
+            if self.path == "/api/connaissances":
+                data = json.loads(raw or b"{}")
+                if data.get("action") == "oublier_lien":
+                    connaissances.forget_link(str(data.get("de")), str(data.get("rel")), str(data.get("vers")))
+                elif data.get("action") == "oublier_noeud":
+                    connaissances.forget(connaissances.load()["noeuds"].get(str(data.get("id")), {}).get("nom", ""))
+                elif data.get("action") == "ajouter":
+                    connaissances.add(str(data.get("de", "")), str(data.get("rel", "")), str(data.get("vers", "")), source="manuel")
+                self._json(connaissances.load())
+                return
+
             if self.path == "/api/sporteasy":
                 lien = str(json.loads(raw or b"{}").get("lien", "")).strip()
                 if lien and not re.match(r"^(https?|webcal)://", lien):
@@ -534,8 +547,12 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                 if not text:
                     finish()
                     return
+                try:  # ce que Jarvis sait déjà des personnes et des choses citées
+                    context = connaissances.context_for(text)
+                except Exception:
+                    context = None
                 with lock:
-                    for event in brain.ask_stream(text):
+                    for event in brain.ask_stream(text, context):
                         if event[0] == "text":
                             emit({"type": "text", "text": event[1]})
                         else:

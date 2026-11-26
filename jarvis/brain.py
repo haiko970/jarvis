@@ -28,7 +28,7 @@ Tu parles toujours français.
 Tu tournes sur l'ordinateur de l'utilisateur et tu peux agir dessus grâce à tes outils
 (ouvrir des sites et des applications, gérer des notes, consulter l'heure, la météo et le système,
 chercher sur internet, régler le volume, contrôler la musique et Spotify, dire quelle musique joue,
-lancer des jeux vidéo Steam et Epic Games, programmer des minuteurs et des rappels, changer les couleurs de son interface, donner le score de l'équipe de foot préférée et les grands matchs de foot du soir, donner les matchs, entraînements et convocations de son club (SportEasy), décrire le ciel : lune, soleil, passages de la Station spatiale, surveiller le PC en mode sentinelle, dire s'il y a quelqu'un dans la pièce grâce au capteur WiFi RuView). Utilise un outil dès qu'il est utile plutôt que d'inventer une réponse,
+lancer des jeux vidéo Steam et Epic Games, retenir ce que l'utilisateur te raconte dans ta carte de connaissances, programmer des minuteurs et des rappels, changer les couleurs de son interface, donner le score de l'équipe de foot préférée et les grands matchs de foot du soir, donner les matchs, entraînements et convocations de son club (SportEasy), décrire le ciel : lune, soleil, passages de la Station spatiale, surveiller le PC en mode sentinelle, dire s'il y a quelqu'un dans la pièce grâce au capteur WiFi RuView). Utilise un outil dès qu'il est utile plutôt que d'inventer une réponse,
 en particulier pour l'heure, la date, la météo et l'actualité.
 Tes réponses sont lues à voix haute : parle comme à l'oral, en phrases simples et naturelles.
 Sois concis (2 à 4 phrases en général). N'utilise JAMAIS de mise en forme : pas d'astérisques,
@@ -52,7 +52,10 @@ def build_system_prompt() -> str:
         parts.append("Ce que tu sais sur l'utilisateur :\n" + "\n".join(profile))
     parts.append(
         "Sers-toi de ces informations sans redemander ce que tu sais déjà. "
-        "Quand l'utilisateur te confie une info personnelle durable, retiens-la avec retenir_info ; "
+        "Tu as une carte de connaissances : quand l'utilisateur te parle de lui ou de ses proches "
+        "(amis, famille, école, club, jeux, passions, dates importantes), note chaque info durable avec "
+        "noter_connaissance, sous forme sujet → lien → objet (« moi » = l'utilisateur), sans le lui dire en détail. "
+        "Pour une info qui ne se met pas sous forme de lien, utilise retenir_info ; "
         "quand l'utilisateur mentionne sa ville, enregistre-la avec definir_ville."
     )
     parts.append(f"Nous sommes le {datetime.date.today().strftime('%d/%m/%Y')}.")
@@ -154,16 +157,24 @@ class Brain:
             rest.pop(0)
         self.messages = [self.messages[0]] + rest
 
-    def ask_stream(self, text: str):
-        """Pose une question. Renvoie au fur et à mesure ("text", morceau) et ("tool", nom, arguments)."""
+    def ask_stream(self, text: str, context: str | None = None):
+        """Pose une question. Renvoie au fur et à mesure ("text", morceau) et ("tool", nom, arguments).
+        `context` : infos utiles pour cette question seulement (extrait de la carte de connaissances)."""
         with self.lock:
             self.messages.append({"role": "user", "content": text})
             self._trim()
             said_something = False
+            asked_at = len(self.messages) - 1
+
+            def with_context() -> list:
+                # Le contexte est glissé juste avant la question, sans rester dans la conversation
+                if not context:
+                    return self.messages
+                return self.messages[:asked_at] + [{"role": "system", "content": context}] + self.messages[asked_at:]
 
             for _ in range(8):  # garde-fou contre les boucles infinies
                 content, calls = "", []
-                for chunk in self._stream(self.messages):
+                for chunk in self._stream(with_context()):
                     message = chunk.message
                     if message.content:
                         if not content and said_something:

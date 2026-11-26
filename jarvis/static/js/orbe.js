@@ -605,3 +605,218 @@ function buildEarth(body) {
   return () => { st.alive = false; clearInterval(infoTimer); earth.focus = null; };
 }
 earth.focus = null;
+
+// ---------- Le module « Carte de connaissances » : une constellation de ce que Jarvis sait de toi ----------
+const KG_COLORS = {
+  moi: [255, 255, 255], personne: [255, 184, 120], lieu: [120, 200, 255], ecole: [185, 150, 255], club: [120, 255, 170],
+  jeu: [255, 120, 205], animal: [255, 222, 120], objet: [205, 205, 215], evenement: [255, 140, 120], date: [150, 232, 232],
+  passion: [255, 150, 175], autre: [170, 190, 210],
+};
+const KG_NAMES = {
+  moi: "Toi", personne: "Personnes", lieu: "Lieux", ecole: "École", club: "Clubs", jeu: "Jeux", animal: "Animaux",
+  objet: "Objets", evenement: "Événements", date: "Dates", passion: "Passions", autre: "Autres",
+};
+
+function buildGraph(body) {
+  body.innerHTML = `<div class="kg">
+    <canvas id="kgCanvas"></canvas>
+    <div class="kg-legend" id="kgLegend"></div>
+    <div class="kg-side" id="kgSide"></div>
+    <form class="kg-add" id="kgAdd" autocomplete="off" title="Ajouter une info à la main">
+      <input name="de" placeholder="Léa"><input name="rel" placeholder="amie de"><input name="vers" placeholder="moi">
+      <button type="submit" title="Ajouter">＋</button>
+    </form>
+    <div class="kg-empty" id="kgEmpty" hidden>Ta carte est presque vide. Parle-moi de toi : tes amis, ta famille,
+      tes jeux, ton club… je la remplirai au fil de nos discussions.</div>
+  </div>`;
+  const cv = $("kgCanvas");
+  const st = { nodes: new Map(), links: [], yaw: 0.4, pitch: -0.25, zoom: 1, sel: null, hover: null, drag: null, alive: true, last: 0 };
+
+  const refresh = async () => {
+    let data;
+    try { data = await (await fetch("/api/connaissances")).json(); } catch (e) { return; }
+    apply(data);
+  };
+  const apply = (data) => {
+    const keep = new Map();
+    for (const [id, n] of Object.entries(data.noeuds)) {
+      const old = st.nodes.get(id);
+      // Un nouveau point apparaît près de ses voisins (ou au hasard), puis trouve sa place
+      const a = Math.random() * 6.28, b = Math.acos(2 * Math.random() - 1), r = id === "moi" ? 0 : 90;
+      keep.set(id, old ? Object.assign(old, n) : { id, ...n, x: r * Math.sin(b) * Math.cos(a), y: r * Math.cos(b), z: r * Math.sin(b) * Math.sin(a), vx: 0, vy: 0, vz: 0, born: performance.now() });
+    }
+    st.nodes = keep;
+    st.links = data.liens.filter((l) => keep.has(l.de) && keep.has(l.vers));
+    for (const n of keep.values()) n.deg = 0;
+    for (const l of st.links) { keep.get(l.de).deg++; keep.get(l.vers).deg++; }
+    $("kgEmpty").hidden = st.links.length > 2;
+    const types = [...new Set([...keep.values()].map((n) => n.type))];
+    $("kgLegend").innerHTML = types.map((t) => `<span><i style="background: rgb(${(KG_COLORS[t] || KG_COLORS.autre).join(",")})"></i>${KG_NAMES[t] || t}</span>`).join("");
+    if (st.sel && !keep.has(st.sel)) st.sel = null;
+    showSide();
+    for (let i = 0; i < 120; i++) layoutStep(1);
+  };
+  // Une toile qui s'organise toute seule : les points se repoussent, les liens les rapprochent
+  const layoutStep = (k) => {
+    const nodes = [...st.nodes.values()];
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i];
+      for (let j = i + 1; j < nodes.length; j++) {
+        const b = nodes[j];
+        let dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
+        const d2 = dx * dx + dy * dy + dz * dz + 0.01, f = (1800 / d2) * k;
+        const d = Math.sqrt(d2);
+        dx /= d; dy /= d; dz /= d;
+        a.vx += dx * f; a.vy += dy * f; a.vz += dz * f; b.vx -= dx * f; b.vy -= dy * f; b.vz -= dz * f;
+      }
+    }
+    for (const l of st.links) {
+      const a = st.nodes.get(l.de), b = st.nodes.get(l.vers);
+      const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z, d = Math.hypot(dx, dy, dz) || 1;
+      const f = (d - 70) * 0.02 * k;
+      a.vx += (dx / d) * f; a.vy += (dy / d) * f; a.vz += (dz / d) * f;
+      b.vx -= (dx / d) * f; b.vy -= (dy / d) * f; b.vz -= (dz / d) * f;
+    }
+    for (const n of nodes) {
+      if (n.id === "moi") { n.x = n.y = n.z = 0; n.vx = n.vy = n.vz = 0; continue; }
+      n.vx -= n.x * 0.004; n.vy -= n.y * 0.004; n.vz -= n.z * 0.004;  // tout reste groupé autour de toi
+      n.x += (n.vx = n.vx * 0.6); n.y += (n.vy = n.vy * 0.6); n.z += (n.vz = n.vz * 0.6);
+    }
+  };
+  const neighbors = (id) => st.links.filter((l) => l.de === id || l.vers === id);
+  const nameOf = (id) => (id === "moi" ? "toi" : st.nodes.get(id)?.nom || id);
+  const showSide = () => {
+    const side = $("kgSide");
+    const n = st.sel && st.nodes.get(st.sel);
+    if (!n) {
+      side.innerHTML = `<div class="k">Ta carte</div><div class="v">${st.nodes.size} points · ${st.links.length} liens</div>
+        <div class="s">Clique sur un point pour voir ce que je sais. Glisse pour tourner, molette pour zoomer.</div>`;
+      return;
+    }
+    const rows = neighbors(n.id).map((l, i) => {
+      const txt = l.de === n.id ? `→ ${esc(l.rel)} → <b>${esc(nameOf(l.vers))}</b>` : `<b>${esc(nameOf(l.de))}</b> → ${esc(l.rel)} →`;
+      return `<li>${txt}<button type="button" data-kg-del="${i}" title="Oublier ce lien">✕</button></li>`;
+    });
+    side.innerHTML = `<div class="k">${esc(KG_NAMES[n.type] || n.type)}</div><div class="v">${esc(n.id === "moi" ? n.nom + " (toi)" : n.nom)}</div>
+      <ul>${rows.join("") || "<li>Aucun lien.</li>"}</ul>
+      ${n.id !== "moi" ? '<button type="button" class="kg-forget" data-kg-forget>🗑 Oublier ce point</button>' : ""}`;
+    side.querySelectorAll("[data-kg-del]").forEach((b) => {
+      b.onclick = async () => {
+        const l = neighbors(n.id)[+b.dataset.kgDel];
+        apply(await (await fetch("/api/connaissances", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "oublier_lien", de: l.de, rel: l.rel, vers: l.vers }) })).json());
+      };
+    });
+    const forget = side.querySelector("[data-kg-forget]");
+    if (forget) forget.onclick = async () => {
+      st.sel = null;
+      apply(await (await fetch("/api/connaissances", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "oublier_noeud", id: n.id }) })).json());
+    };
+  };
+  $("kgAdd").onsubmit = async (e) => {
+    e.preventDefault();
+    const f = e.target, data = { action: "ajouter", de: f.de.value.trim(), rel: f.rel.value.trim(), vers: f.vers.value.trim() };
+    if (!data.de || !data.rel || !data.vers) return;
+    apply(await (await fetch("/api/connaissances", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) })).json());
+    f.reset();
+  };
+
+  let projected = [];
+  const draw = () => {
+    if (!st.alive) return;
+    requestAnimationFrame(draw);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = cv.clientWidth * dpr, h = cv.clientHeight * dpr;
+    if (!w || !h) return;
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    layoutStep(0.15);
+    if (!st.drag) st.yaw += 0.0018;
+    const g = cv.getContext("2d"), now = performance.now();
+    g.clearRect(0, 0, w, h);
+    // La toile remplit la fenêtre (à gauche du panneau d'infos), puis la molette zoome
+    let radius = 60;
+    for (const n of st.nodes.values()) radius = Math.max(radius, Math.hypot(n.x, n.y, n.z));
+    const side = 280 * dpr, cxs = (w - side) / 2, F = 600;
+    const fit = Math.min(cxs, h / 2 - 40 * dpr) * 0.8 / radius;
+    st.fit = st.fit ? st.fit + (fit - st.fit) * 0.05 : fit;  // en douceur quand la toile grandit
+    const scale = st.fit * st.zoom;
+    const cy = Math.cos(st.yaw), sy = Math.sin(st.yaw), cp = Math.cos(st.pitch), sp = Math.sin(st.pitch);
+    projected = [];
+    for (const n of st.nodes.values()) {
+      const x1 = n.x * cy - n.z * sy, z1 = n.x * sy + n.z * cy;
+      const y2 = n.y * cp - z1 * sp, z2 = n.y * sp + z1 * cp;
+      const s = F / (F + z2);
+      projected.push({ n, x: cxs + x1 * s * scale, y: h / 2 - 22 * dpr + y2 * s * scale, z: z2, s });
+    }
+    const pos = new Map(projected.map((p) => [p.n.id, p]));
+    const focus = st.hover || st.sel;
+    const near = new Set(focus ? neighbors(focus).flatMap((l) => [l.de, l.vers]) : []);
+    // Les liens : des filaments lumineux
+    g.globalCompositeOperation = "lighter";
+    for (const l of st.links) {
+      const a = pos.get(l.de), b = pos.get(l.vers);
+      const lit = focus && (l.de === focus || l.vers === focus);
+      const depth = Math.max(0.25, Math.min(1, 0.65 - (a.z + b.z) / 600));
+      g.strokeStyle = lit ? `rgba(${orb.colors.c.join(",")},0.85)` : `rgba(${orb.colors.c.join(",")},${0.22 * depth})`;
+      g.lineWidth = (lit ? 1.6 : 0.8) * dpr;
+      // Un filament légèrement courbé, qui ondule
+      const mx = (a.x + b.x) / 2 + noise3(a.x * 0.01, b.y * 0.01, now / 2500) * 18 * dpr;
+      const my = (a.y + b.y) / 2 + noise3(b.x * 0.01, a.y * 0.01, now / 2500 + 5) * 18 * dpr;
+      g.beginPath(); g.moveTo(a.x, a.y); g.quadraticCurveTo(mx, my, b.x, b.y); g.stroke();
+    }
+    // Les points, du plus loin au plus proche
+    projected.sort((p, q) => q.z - p.z);
+    const font = getComputedStyle(document.body).fontFamily;
+    for (const p of projected) {
+      const n = p.n, col = (KG_COLORS[n.type] || KG_COLORS.autre).join(",");
+      const grow = Math.min(1, (now - (n.born || 0)) / 900);  // un nouveau point « éclot »
+      const r = (n.id === "moi" ? 9 : 3.2 + Math.sqrt(n.deg) * 1.6) * p.s * dpr * Math.max(0.2, grow);
+      const dim = focus && n.id !== focus && !near.has(n.id) ? 0.25 : 1;
+      const glow = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 4);
+      glow.addColorStop(0, `rgba(${col},${0.45 * dim})`); glow.addColorStop(1, "rgba(0,0,0,0)");
+      g.fillStyle = glow; g.beginPath(); g.arc(p.x, p.y, r * 4, 0, 7); g.fill();
+      g.fillStyle = `rgba(${col},${0.95 * dim})`; g.beginPath(); g.arc(p.x, p.y, r, 0, 7); g.fill();
+      if (n.id === st.sel) { g.strokeStyle = `rgba(${col},0.9)`; g.lineWidth = 1.2 * dpr; g.beginPath(); g.arc(p.x, p.y, r + 6 * dpr, 0, 7); g.stroke(); }
+      const label = st.nodes.size <= 30 || n.deg >= 2 || n.id === focus || near.has(n.id) || n.id === "moi";
+      if (label && dim === 1) {
+        g.globalCompositeOperation = "source-over";
+        g.font = `${(n.id === "moi" ? 13 : 11.5) * dpr}px ${font}`;
+        g.fillStyle = `rgba(235,245,255,${0.5 + 0.5 * Math.min(1, p.s)})`;
+        g.fillText(n.id === "moi" ? n.nom : n.nom, p.x + r + 5 * dpr, p.y + 4 * dpr);
+        g.globalCompositeOperation = "lighter";
+      }
+    }
+    g.globalCompositeOperation = "source-over";
+  };
+  const pick = (e) => {
+    const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
+    const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
+    let best = null, bd = 16 * dpr;
+    for (const p of projected) { const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = p.n.id; } }
+    return best;
+  };
+  cv.onpointerdown = (e) => { st.drag = { x: e.clientX, y: e.clientY, yaw: st.yaw, pitch: st.pitch, moved: false }; cv.setPointerCapture(e.pointerId); };
+  cv.onpointermove = (e) => {
+    if (st.drag) {
+      const dx = e.clientX - st.drag.x, dy = e.clientY - st.drag.y;
+      if (Math.abs(dx) + Math.abs(dy) > 3) st.drag.moved = true;
+      st.yaw = st.drag.yaw + dx * 0.008; st.pitch = Math.max(-1.3, Math.min(1.3, st.drag.pitch + dy * 0.008));
+    } else {
+      st.hover = pick(e); cv.style.cursor = st.hover ? "pointer" : "grab";
+    }
+  };
+  cv.onpointerup = (e) => {
+    const moved = st.drag?.moved;
+    st.drag = null;
+    if (!moved) { st.sel = pick(e); showSide(); }
+  };
+  cv.onpointerleave = () => { st.hover = null; };
+  cv.onwheel = (e) => { e.preventDefault(); st.zoom = Math.max(0.4, Math.min(4, st.zoom * Math.exp(-e.deltaY * 0.0012))); };
+
+  refresh().then(() => requestAnimationFrame(draw));
+  // Pendant que tu parles avec Jarvis, les nouvelles infos apparaissent sur la carte
+  const timer = setInterval(refresh, 6000);
+  return () => { st.alive = false; clearInterval(timer); };
+}
+MODULES.connaissances = { titre: "Carte de connaissances", angle: -120, build: buildGraph };

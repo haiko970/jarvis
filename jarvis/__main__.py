@@ -105,6 +105,10 @@ def main() -> None:
     from . import foot
 
     threading.Thread(target=foot.announce_loop, daemon=True).start()
+    # La carte de connaissances se remplit de ce que Jarvis sait déjà (ville, jeux, matières…)
+    from . import connaissances
+
+    threading.Thread(target=connaissances.refresh_auto, daemon=True).start()
     # RuView (présence par le WiFi) tourne à côté de Jarvis, s'il est installé
     import atexit
 

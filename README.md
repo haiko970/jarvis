@@ -33,6 +33,10 @@ Il peut agir sur ton PC :
   en 3D à faire tourner, avec le jour et la nuit, ta ville et la Station spatiale en direct), « montre-moi le
   Japon », « montre la météo », « affiche les marées », « montre ma journée », « montre le ciel », « montre mes
   tâches », « montre la présence », « montre la conversation »… et « range ça »
+- 🕸️ une **carte de connaissances** : Jarvis note au fil des discussions ce que tu lui racontes (tes amis, ta
+  famille, ton club, tes jeux, les dates importantes) sous forme de points reliés, et s'en sert pour te répondre.
+  « Jarvis, montre ma carte » l'affiche en constellation 3D : clique sur un point pour voir ses liens, en effacer
+  ou en ajouter. Tout reste sur ton PC (~/.jarvis_connaissances.json)
 - 🛡️ surveiller le PC quand tu pars (« Jarvis, surveille le PC ») : si quelqu'un touche à la souris ou au
   clavier sans taper ton code secret, « Accès non autorisé », photo avec la webcam et PC verrouillé
 - ⚽ donner le score de ton équipe de foot (en direct pendant les matchs), son dernier résultat et son prochain match

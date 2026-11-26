@@ -387,6 +387,30 @@
   .earth-tools button:hover { border-color: var(--cyan); color: var(--cyan); }
   .earth-load { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
 
+  /* La carte de connaissances */
+  .kg { position: absolute; inset: 0; }
+  #kgCanvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  .kg-legend { position: absolute; left: 16px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 4px 12px; max-width: 55%;
+    font-size: 12px; color: var(--muted); pointer-events: none; }
+  .kg-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .kg-side { position: absolute; right: 14px; top: 4px; width: 250px; max-height: calc(100% - 70px); overflow-y: auto;
+    background: rgba(2, 8, 14, 0.6); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: 13px; }
+  .kg-side .k { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.25em; color: var(--muted); text-transform: uppercase; }
+  .kg-side .v { font-size: 19px; font-weight: 300; margin: 2px 0 6px; }
+  .kg-side .s { color: var(--muted); font-size: 12px; }
+  .kg-side ul { list-style: none; margin: 0; padding: 0; }
+  .kg-side li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px solid rgba(var(--c-rgb), 0.1); }
+  .kg-side li b { color: var(--cyan); font-weight: 500; }
+  .kg-side li button, .kg-forget { background: none; border: none; color: var(--muted); cursor: pointer; font: inherit; }
+  .kg-side li button:hover, .kg-forget:hover { color: var(--danger); }
+  .kg-forget { margin-top: 8px; font-size: 12px; padding: 0; }
+  .kg-add { position: absolute; right: 14px; bottom: 12px; display: flex; gap: 4px; }
+  .kg-add input { width: 78px; background: rgba(var(--c-rgb), 0.06); border: 1px solid var(--line); border-radius: 8px;
+    color: var(--text); padding: 5px 7px; font: inherit; font-size: 12px; }
+  .kg-add button { background: none; border: 1px solid var(--line); color: var(--cyan); border-radius: 8px; cursor: pointer; width: 30px; }
+  .kg-empty { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); width: min(420px, 60%); text-align: center;
+    color: var(--muted); font-size: 13px; pointer-events: none; }
+
   /* Choix de la police et de l'affichage dans les réglages */
   .fonts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
   .fonts button {
@@ -878,6 +902,7 @@
 
   <section>
     <h3>🧠 Ce que Jarvis sait de toi</h3>
+    <p><button class="btn" type="button" id="openKg">🕸️ Voir ma carte de connaissances</button></p>
     <div class="field">
       <label for="ville">Ta ville (pour la météo)</label>
       <input type="text" id="ville" maxlength="60" placeholder="ex. Lyon">
@@ -1140,6 +1165,7 @@ const TOOL_LABELS = {
   minuteur: "⏰ Minuteur", lister_minuteurs: "⏰ Minuteurs", annuler_minuteurs: "⏰ Annulés",
   definir_ville: "📍 Ville enregistrée", changer_theme: "🎨 Thème",
   ciel: "🌙 Ciel", score_equipe: "⚽ Score", definir_equipe: "⚽ Équipe enregistrée", mes_matchs: "⚽ SportEasy", matchs_du_soir: "⚽ Matchs du soir",
+  noter_connaissance: "🕸️ Noté dans ma carte", chercher_connaissance: "🕸️ Carte de connaissances", oublier_connaissance: "🕸️ Oublié",
   activer_sentinelle: "🛡️ Sentinelle", rapport_sentinelle: "🛡️ Rapport sentinelle", retenir_info: "🧠 Retenu", oublier_info: "🧠 Oublié",
   fermer_jarvis: "⏻ Extinction de Jarvis", eteindre_ordinateur: "⏻ Extinction du PC", annuler_extinction: "↺ Extinction annulée",
   ajouter_tache: "✅ Tâche ajoutée", lister_taches: "📋 Tâches", terminer_tache: "✔️ Tâche faite",
@@ -2939,6 +2965,9 @@ if (new URLSearchParams(location.search).get("brief")) setTimeout(runBrief, 300)
 window.addEventListener("pagehide", () => navigator.sendBeacon("/api/bye"));
 </script>
 <script src="/js/orbe.js"></script>
-<script>$("orbEarth").onclick = () => openModule("terre");</script>
+<script>
+$("orbEarth").onclick = () => openModule("terre");
+$("openKg").onclick = () => { openSettings(false); openModule("connaissances"); };
+</script>
 </body>
 </html>

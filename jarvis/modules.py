@@ -8,6 +8,9 @@ import unicodedata
 
 # Ce qu'on peut ouvrir, avec les mots qui le désignent et ce que Jarvis répond
 MODULES = {
+    # (avant « terre » : « ma carte de connaissances » ne doit pas ouvrir la carte du monde)
+    "connaissances": (r"carte de connaissances?|carte mentale|connaissances|(?:ta|ma) memoire|ma carte"
+                      r"|ce que tu sais (?:sur|de) moi", "Voici ta carte de connaissances."),
     "terre": (r"carte|map|globe|terre|monde|planete|mappemonde", "Voici la Terre."),
     "meteo": (r"meteo", "Voici la météo."),
     "marees": (r"marees?", "Voici les marées."),
@@ -50,7 +53,7 @@ _FERMER = re.compile(
     r"^(?:ferme|fermer|range|ranger|enleve|enlever|retire|retirer|cache|cacher)"
     r"(?:[- ](?:la|le|les|ce|cette|ca|moi ca|tout))*"
     r"(?:\s+(?:carte|map|globe|terre|module|panneau|fenetre|meteo|marees?|ciel|journee|foot|vacances|taches|"
-    r"presence|discussion|conversation|tout))?$"
+    r"presence|discussion|conversation|connaissances|memoire|tout)(?:\s.*)?)?$"
 )
 
 
