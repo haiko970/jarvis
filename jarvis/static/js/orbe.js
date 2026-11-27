@@ -428,6 +428,7 @@ function buildEarth(body) {
     rot: [2, -30, 0], scale: 0, base: 0, spin: true, follow: false, drag: null, moved: false,
     data: null, pick: null, info: null, lastMove: 0, anim: null, alive: true,
   };
+  const oeil = creerOeil(st, body.querySelector(".earth"));  // avions, bateaux, satellites… en direct
   const setLegend = () => {
     const d = st.info || {};
     const bits = [];
@@ -473,6 +474,7 @@ function buildEarth(body) {
   };
   const nameOf = (f) => PAYS_FR[f.properties.name] || f.properties.name;
   earth.focus = (target) => {
+    st.centered = true;  // on montre un pays : la Terre ne revient pas sur ta ville
     if (!st.data) { st.pending = target; return; }
     const f = st.data.low.find((x) => x.properties.name === target);
     if (!f) return;
@@ -500,7 +502,7 @@ function buildEarth(body) {
         let dl = ((-iss.lon - st.rot[0] + 540) % 360) - 180;
         st.rot[0] += dl * 0.05; st.rot[1] += (-iss.lat - st.rot[1]) * 0.05;
       }
-    } else if (st.spin && !st.drag && now - st.lastMove > 2500) st.rot[0] += 0.06;
+    } else if (st.spin && !st.drag && !oeil.occupe() && now - st.lastMove > 2500) st.rot[0] += 0.06;
     const g = cv.getContext("2d");
     const proj = d3.geoOrthographic().rotate(st.rot).scale(st.scale).translate([w / 2, h / 2]).clipAngle(90).precision(0.6);
     const path = d3.geoPath(proj, g);
@@ -531,6 +533,8 @@ function buildEarth(body) {
       const night = d3.geoCircle().center([sun.lon + 180, -sun.lat]).radius(90)();
       g.beginPath(); path(night); g.fillStyle = "rgba(0,0,0,0.42)"; g.fill();
     }
+    // L'œil : tout ce qui bouge sur la planète, en direct
+    oeil.draw(g, proj, dpr, now);
     // Le bord de la Terre
     g.beginPath(); path({ type: "Sphere" }); g.strokeStyle = `rgba(${c},0.75)`; g.lineWidth = 1.2 * dpr; g.stroke();
     // La trajectoire et la position de la Station spatiale
@@ -577,6 +581,7 @@ function buildEarth(body) {
     st.drag = null; st.lastMove = performance.now();
     if (wasDrag || !st.data) return;
     const proj = d3.geoOrthographic().rotate(st.rot).scale(st.scale).translate([cv.width / 2, cv.height / 2]);
+    if (oeil.pick(proj, ...pos(e), Math.min(window.devicePixelRatio || 1, 2))) return;  // un avion, un bateau, une caméra…
     const lonlat = proj.invert(pos(e));
     const f = lonlat && st.data.low.find((x) => d3.geoContains(x, lonlat));
     st.pick = f || null;
@@ -584,7 +589,7 @@ function buildEarth(body) {
   };
   cv.onwheel = (e) => {
     e.preventDefault();
-    st.scale = Math.max(st.base * 0.7, Math.min(st.base * 9, st.scale * Math.exp(-e.deltaY * 0.0012)));
+    st.scale = Math.max(st.base * 0.7, Math.min(st.base * 60, st.scale * Math.exp(-e.deltaY * 0.0012)));
     st.lastMove = performance.now(); st.anim = null;
   };
   body.querySelector(".earth-tools").onclick = (e) => {
@@ -602,7 +607,7 @@ function buildEarth(body) {
     if (st.pending) { earth.focus(st.pending); st.pending = null; }
   }).catch(() => { $("earthLoad").textContent = "Impossible de charger la carte."; });
 
-  return () => { st.alive = false; clearInterval(infoTimer); earth.focus = null; };
+  return () => { st.alive = false; clearInterval(infoTimer); oeil.stop(); earth.focus = null; };
 }
 earth.focus = null;
 

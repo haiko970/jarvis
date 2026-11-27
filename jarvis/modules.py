@@ -11,7 +11,8 @@ MODULES = {
     # (avant « terre » : « ma carte de connaissances » ne doit pas ouvrir la carte du monde)
     "connaissances": (r"carte de connaissances?|carte mentale|connaissances|(?:ta|ma) memoire|ma carte"
                       r"|ce que tu sais (?:sur|de) moi", "Voici ta carte de connaissances."),
-    "terre": (r"carte|map|globe|terre|monde|planete|mappemonde", "Voici la Terre."),
+    "terre": (r"carte|map|globe|terre|monde|planete|mappemonde|avions?|satellites?|bateaux|navires|seismes?"
+              r"|tremblements? de terre|cameras?|webcams?|oeil|œil", "Voici la Terre, en direct."),
     "meteo": (r"meteo", "Voici la météo."),
     "marees": (r"marees?", "Voici les marées."),
     "journee": (r"journee|emploi du temps|agenda|planning|programme", "Voici ta journée."),

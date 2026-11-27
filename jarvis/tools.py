@@ -12,7 +12,7 @@ import webbrowser
 from pathlib import Path
 
 from . import brief, config, jeux, musique, powers, pronote, systeme, temps_jeu, theme, vacances
-from . import ciel, connaissances, foot, godseye, ruview, sentinelle, sporteasy
+from . import ciel, connaissances, foot, godseye, oeil, ruview, sentinelle, sporteasy
 
 NOTES_FILE = Path.home() / ".jarvis_notes.json"
 
@@ -305,7 +305,7 @@ HANDLERS = {
 }
 
 TOOLS += powers.TOOLS + brief.TOOLS + pronote.TOOLS + systeme.TOOLS + jeux.TOOLS + musique.TOOLS + temps_jeu.TOOLS + vacances.TOOLS + theme.TOOLS
-TOOLS += ciel.TOOLS + foot.TOOLS + sentinelle.TOOLS + sporteasy.TOOLS + ruview.TOOLS + connaissances.TOOLS + godseye.TOOLS
+TOOLS += ciel.TOOLS + foot.TOOLS + sentinelle.TOOLS + sporteasy.TOOLS + ruview.TOOLS + connaissances.TOOLS + godseye.TOOLS + oeil.TOOLS
 HANDLERS.update(powers.HANDLERS)
 HANDLERS.update(brief.HANDLERS)
 HANDLERS.update(pronote.HANDLERS)
@@ -322,6 +322,7 @@ HANDLERS.update(sporteasy.HANDLERS)
 HANDLERS.update(connaissances.HANDLERS)
 HANDLERS.update(ruview.HANDLERS)
 HANDLERS.update(godseye.HANDLERS)
+HANDLERS.update(oeil.HANDLERS)
 
 
 def run_tool(name: str, args: dict) -> tuple[str, bool]:

@@ -10,6 +10,7 @@ import socket
 import subprocess
 import threading
 import time
+import urllib.parse
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -20,7 +21,7 @@ import ollama
 from . import brief as brief_module
 from . import config, dashboard, elevenlabs, maj, musique, powers, pronote, sentinelle, systeme, theme
 from . import discret as discret_module
-from . import ciel, connaissances, foot, godseye, modules, ruview, sporteasy
+from . import ciel, connaissances, foot, godseye, modules, oeil, ruview, sporteasy
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -167,6 +168,31 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
         def _json(self, data: dict, code: int = 200) -> None:
             self._send(code, json.dumps(data, ensure_ascii=False).encode(), "application/json")
 
+        def _oeil(self) -> None:
+            """L'œil de Jarvis : avions, bateaux, satellites, séismes et caméras en direct."""
+            url = urllib.parse.urlparse(self.path)
+            q = {k: v[0] for k, v in urllib.parse.parse_qs(url.query).items()}
+            quoi = url.path.rsplit("/", 1)[-1]
+            try:
+                lat, lon = float(q.get("lat", 0)), float(q.get("lon", 0))
+                if quoi == "avions":
+                    lat, lon = max(-85, min(85, lat)), ((lon + 540) % 360) - 180
+                    self._json(oeil.avions_large(lat, lon) if q.get("large") else oeil.avions(lat, lon))
+                elif quoi == "militaires":
+                    self._json(oeil.avions_militaires())
+                elif quoi == "bateaux":
+                    self._json(oeil.bateaux(lat, lon))
+                elif quoi == "satellites":
+                    self._json(oeil.satellites(q.get("groupe", "principaux")))
+                elif quoi == "seismes":
+                    self._json(oeil.seismes())
+                elif quoi == "cameras":
+                    self._json(oeil.cameras(lat, lon) if "lat" in q else oeil.cameras())
+                else:
+                    self._send(404, b"", "text/plain")
+            except Exception as e:  # service injoignable : la page affiche le message
+                self._json({"erreur": "service injoignable pour le moment" + (f" ({e})" if str(e) else "")}, code=502)
+
         def do_GET(self) -> None:
             cancel_shutdown()
             if self.path != "/api/info":  # /api/info sert seulement à voir si Jarvis tourne déjà
@@ -184,6 +210,8 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                 self._json(connaissances.load())
             elif self.path == "/api/terre":
                 self._json(ciel.earth_data())
+            elif self.path.startswith("/api/oeil/"):
+                self._oeil()
             elif self.path.startswith("/api/dashboard"):
                 self._json(dashboard.collect(force="force=1" in self.path))
             elif self.path == "/api/media":
@@ -203,6 +231,8 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                 settings.pop("pronote_jeton_secours", None)
                 settings.pop("sentinelle_code_secours", None)
                 settings.pop("sporteasy_ics_secours", None)
+                settings.pop("aisstream_cle_secours", None)
+                settings.pop("windy_cle_secours", None)
                 self._json({
                     "settings": settings,
                     "mail_services": {k: v[0] for k, v in brief_module.MAIL_SERVICES.items()},
@@ -210,6 +240,7 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                     "elevenlabs_ok": bool(config.get_secret("elevenlabs_cle")),
                     "pronote_ok": pronote.configured(),
                     "sporteasy_ok": sporteasy.configured(),
+                    "oeil_cles": oeil.cles_ok(),
                     "pronote_ents": pronote.ent_choices(),
                     "autostart_supported": brief_module.autostart_supported(),
                     "autostart": brief_module.autostart_enabled(),
@@ -271,6 +302,8 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                 changes.pop("pronote_jeton_secours", None)
                 changes.pop("sentinelle_code_secours", None)
                 changes.pop("sporteasy_ics_secours", None)
+                changes.pop("aisstream_cle_secours", None)
+                changes.pop("windy_cle_secours", None)
                 before = config.load()
                 if "equipe" in changes and changes["equipe"].strip() != before["equipe"]:
                     # Nouvelle équipe : on la cherchera de nouveau sur ESPN
@@ -417,6 +450,14 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                     self._json({"ok": True, "message": message})
                 except Exception as e:
                     self._json({"ok": False, "message": f"Impossible de lire l'agenda SportEasy : {e}"})
+                return
+
+            if self.path == "/api/oeil/cles":
+                data = json.loads(raw or b"{}")
+                for nom in ("aisstream", "windy"):
+                    if nom in data:
+                        config.set_secret(f"{nom}_cle", str(data[nom]).strip())
+                self._json({"ok": True, **oeil.cles_ok()})
                 return
 
             if self.path == "/api/godseye":

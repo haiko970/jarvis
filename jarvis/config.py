@@ -42,7 +42,9 @@ DEFAULTS = {
     "sporteasy_ics_secours": "",  # lien d'agenda SportEasy (seulement si le coffre-fort ne marche pas)  # seulement si le coffre-fort de Windows ne marche pas  # verrouiller le PC si le code n'est pas tapé à temps
     "ruview_actif": True,  # lancer RuView (présence par le WiFi) avec Jarvis, s'il est installé
     "ruview_source": "wifi",  # wifi (le PC seul), esp32 (capteur) ou simulate (démonstration)
-    "godseye_url": "",  # adresse de God's Eye View (retrouvée toute seule quand il tourne)
+    "godseye_url": "",
+    "aisstream_cle_secours": "",  # clé AISstream (bateaux du monde entier), si le coffre-fort ne marche pas
+    "windy_cle_secours": "",  # clé Windy (caméras du monde entier), si le coffre-fort ne marche pas  # adresse de God's Eye View (retrouvée toute seule quand il tourne)
     "rentree": "",  # date de la rentrée (vide = 1er septembre)
     "vacances_ete": "",  # début des vacances d'été (vide = premier samedi de juillet)
     "demarrage_auto_regle": False,  # devient True après la première activation automatique

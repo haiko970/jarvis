@@ -46,6 +46,10 @@ Il peut agir sur ton PC :
 - 📡 savoir s'il y a quelqu'un dans la pièce et si ça bouge, rien qu'avec le WiFi, sans caméra, grâce à
   [RuView](https://github.com/ruvnet/RuView), déjà prêt pour Windows dans le dossier `ruview` (rien à installer,
   ~12 Mo). Cadre « Présence » du tableau de bord et « Jarvis, il y a quelqu'un dans la pièce ? ». Avec le WiFi du PC seul, c'est approximatif ; avec un capteur ESP32-S3 (~9 €), c'est plus précis
+- 👁️ voir la planète en direct sur la Terre de Jarvis (« Jarvis, montre-moi les avions ») : avions et avions
+  militaires (adsb.lol), bateaux (Digitraffic, et le monde entier avec une clé gratuite AISstream), satellites
+  (CelesTrak), séismes (USGS) et caméras publiques (Londres, Finlande, et le monde entier avec une clé gratuite Windy).
+  Clique sur un objet pour voir sa fiche ou l'image de la caméra. « Quels avions passent au-dessus de chez moi ? »
 - 🌍 ouvrir [God's Eye View](https://github.com/bilawalsidhu/gods-eye-view), la Terre en 3D en direct (avions, bateaux,
   satellites, séismes, caméras) : « Jarvis, ouvre God's Eye ». À installer en un clic avec
   [Pinokio](https://desktop.pinokio.co/) (⚙️ Réglages → « God's Eye View »)
