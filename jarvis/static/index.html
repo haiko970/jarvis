@@ -787,6 +787,7 @@
       <div class="orb-actions">
         <button type="button" id="voiceToggle">🔊 Voix : activée</button>
         <button type="button" id="wakeToggle">👂 Réveil « Jarvis » : non</button>
+        <button type="button" id="clapToggle" title="Tape deux fois dans tes mains pour réveiller Jarvis">👏 Clap : non</button>
         <button type="button" id="orbEarth" title="Ouvrir la Terre">🌍 Terre</button>
         <button type="button" id="orbSwitch">◉ Orbe seule</button>
         <button type="button" data-orb-settings>⚙️</button>
@@ -1208,6 +1209,17 @@
       <span class="hint">ex. « Jarvis, quelle heure est-il ? »</span></span>
       <input type="checkbox" id="wakeSetting">
     </label>
+    <label class="toggle">
+      <span>👏👏 Réveil en tapant deux fois dans les mains<br>
+      <span class="hint">Jarvis fait « ding » et écoute ta question. Marche aussi quand Jarvis attend en arrière-plan
+        (il ouvre alors sa fenêtre). Le son est analysé sur ton PC puis oublié : rien n'est enregistré.</span></span>
+      <input type="checkbox" id="clapSetting">
+    </label>
+    <div class="field">
+      <label for="clapSens">Sensibilité : <span id="clapSensVal"></span></label>
+      <input type="range" id="clapSens" min="0" max="1" step="0.1">
+      <p class="hint" id="clapHint">Si Jarvis se réveille tout seul, baisse la sensibilité ; s'il ne t'entend pas, monte-la.</p>
+    </div>
   </section>
 </aside>
 
@@ -1378,6 +1390,9 @@ async function loadSettings() {
   showSliderValues();
   fillVoices();
   applyWake(!!settings.ecoute_permanente, false);
+  $("clapSens").value = settings.clap_sensibilite ?? 0.5;
+  $("clapSensVal").textContent = Math.round((settings.clap_sensibilite ?? 0.5) * 100) + " %";
+  if (!!settings.reveil_clap !== clap.on) applyClap(!!settings.reveil_clap, false);
   if (window.briefData) fillBriefSettings(window.briefData);
   $("equipe").value = settings.equipe || "";
   $("annonceMatchs").checked = settings.annonce_matchs !== false;
@@ -2084,6 +2099,103 @@ function applyWake(on, persist) {
   else { stopWake(); if (!busy) setStatus("En ligne"); }
 }
 $("wakeToggle").onclick = () => applyWake(!wakeMode, true);
+
+// ---------- Réveil en tapant deux fois dans les mains 👏👏 ----------
+// Même méthode que jarvis/clap.py : un clap monte d'un coup et retombe presque aussitôt ;
+// la voix et la musique durent plus longtemps. Il faut deux claps entre 0,12 et 0,9 seconde.
+function creerDetecteurClap(sensibilite) {
+  const d = { seuil: 0.32 - 0.24 * Math.max(0, Math.min(1, sensibilite)), bruit: 0.01, avant: 0, candidat: null,
+    trames: 0, dernier: -10, repos: 0, t: 0 };
+  d.trame = (rms, pic) => {
+    d.t += 0.01;
+    let reveil = false;
+    if (d.candidat) {
+      d.trames++;
+      if (rms < d.candidat.niveau * 0.3) {
+        const quand = d.candidat.t; d.candidat = null;
+        const ecart = quand - d.dernier;
+        if (ecart >= 0.12 && ecart <= 0.9) { d.dernier = -10; d.repos = d.t + 1.5; reveil = true; } else d.dernier = quand;
+      } else if (d.trames > 15) d.candidat = null;
+    } else if (d.t > d.repos && pic > d.seuil && rms > d.bruit * 8 && rms > d.avant * 3 && rms > 0.02) {
+      d.candidat = { t: d.t, niveau: rms }; d.trames = 0;
+    }
+    if (!d.candidat) { d.bruit += (rms - d.bruit) * (rms < d.bruit ? 0.2 : 0.01); d.bruit = Math.max(d.bruit, 0.002); }
+    d.avant = rms;
+    return reveil;
+  };
+  return d;
+}
+const clap = { on: false, ctx: null, stream: null, node: null, det: null, reste: new Float32Array(0), calmeJusqua: 0 };
+async function startClap() {
+  if (clap.ctx) return true;
+  try {
+    clap.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+  } catch (e) {
+    addMessage("Je n'ai pas accès au micro pour le réveil en tapant dans les mains. Autorise-le quand Edge te le demande.", "jarvis", "error");
+    return false;
+  }
+  clap.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const src = clap.ctx.createMediaStreamSource(clap.stream);
+  const parTrame = Math.round(clap.ctx.sampleRate / 100);  // 10 ms
+  clap.det = creerDetecteurClap(settings.clap_sensibilite ?? 0.5);
+  clap.node = clap.ctx.createScriptProcessor(2048, 1, 1);
+  clap.node.onaudioprocess = (e) => {
+    const neuf = e.inputBuffer.getChannelData(0);
+    const son = new Float32Array(clap.reste.length + neuf.length);
+    son.set(clap.reste); son.set(neuf, clap.reste.length);
+    let i = 0;
+    for (; i + parTrame <= son.length; i += parTrame) {
+      let somme = 0, pic = 0;
+      for (let j = i; j < i + parTrame; j++) { const x = son[j]; somme += x * x; if (Math.abs(x) > pic) pic = Math.abs(x); }
+      const reveil = clap.det.trame(Math.sqrt(somme / parTrame), pic);
+      // Pendant que Jarvis parle ou écoute déjà, on ignore (sa propre voix dans les haut-parleurs…)
+      if (speaking || busy || manualListening) clap.calmeJusqua = performance.now() + 700;
+      else if (reveil && performance.now() > clap.calmeJusqua) setTimeout(onClap, 0);
+    }
+    clap.reste = son.slice(i);
+  };
+  src.connect(clap.node);
+  clap.node.connect(clap.ctx.destination);  // nécessaire pour que le traitement tourne (le son reste muet)
+  return true;
+}
+function stopClap() {
+  if (!clap.ctx) return;
+  try { clap.node.disconnect(); clap.stream.getTracks().forEach((t) => t.stop()); clap.ctx.close(); } catch (e) {}
+  clap.ctx = null; clap.stream = null; clap.node = null;
+}
+function ding() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.frequency.setValueAtTime(660, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.12);
+    o.connect(g); g.connect(audioCtx.destination);
+    g.gain.setValueAtTime(0.2, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+    o.start(); o.stop(audioCtx.currentTime + 0.35);
+  } catch (e) {}
+}
+function onClap() {
+  if (busy || speaking || manualListening) return;
+  window.dispatchEvent(new Event("jarvis-clap"));
+  ding();
+  setTimeout(toggleMic, 250);  // Jarvis écoute ta question
+}
+async function applyClap(on, persist) {
+  if (on && !(await startClap())) on = false;
+  if (!on) stopClap();
+  clap.on = on;
+  $("clapSetting").checked = on;
+  $("clapToggle").textContent = on ? "👏 Clap : oui" : "👏 Clap : non";
+  $("clapToggle").classList.toggle("on", on);
+  if (persist) saveSettings({ reveil_clap: on });
+}
+$("clapToggle").onclick = () => applyClap(!clap.on, true);
+$("clapSetting").onchange = () => applyClap($("clapSetting").checked, true);
+$("clapSens").oninput = () => {
+  const v = +$("clapSens").value;
+  $("clapSensVal").textContent = Math.round(v * 100) + " %";
+  if (clap.det) clap.det.seuil = 0.32 - 0.24 * v;
+};
+$("clapSens").onchange = () => saveSettings({ clap_sensibilite: +$("clapSens").value });
 $("wakeSetting").onchange = () => applyWake($("wakeSetting").checked, true);
 
 // =====================================================================
@@ -3049,6 +3161,8 @@ loadSettings();
 
 // Lancé au démarrage du PC : le brief se fait tout seul.
 if (new URLSearchParams(location.search).get("brief")) setTimeout(runBrief, 300);
+// Fenêtre ouverte par un clap (Jarvis attendait en arrière-plan) : il écoute tout de suite ta question
+if (new URLSearchParams(location.search).get("ecoute")) setTimeout(() => { ding(); toggleMic(); }, 1200);
 
 // Fermer la fenêtre arrête aussi Jarvis.
 window.addEventListener("pagehide", () => navigator.sendBeacon("/api/bye"));

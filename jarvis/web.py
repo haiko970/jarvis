@@ -20,6 +20,7 @@ import ollama
 
 from . import brief as brief_module
 from . import config, dashboard, elevenlabs, maj, musique, powers, pronote, sentinelle, systeme, theme
+from . import clap
 from . import discret as discret_module
 from . import ciel, connaissances, foot, godseye, modules, oeil, ruview, sporteasy
 from .brain import MODEL, Brain
@@ -112,14 +113,31 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
     def page_open() -> bool:
         return time.time() - state["last_page"] < 8
 
-    def show_window(brief: bool | None = None) -> None:
-        """Ouvre la fenêtre de Jarvis (ou la remet devant). Le brief n'est fait qu'une fois par jour."""
+    def show_window(brief: bool | None = None, ecoute: bool = False) -> None:
+        """Ouvre la fenêtre de Jarvis (ou la remet devant). Le brief n'est fait qu'une fois par jour.
+        ecoute=True (réveillé par un clap) : la fenêtre s'ouvre et écoute tout de suite ta question."""
         wake_brain()
         if page_open() and _jarvis_window_front():
+            return
+        if ecoute:
+            open_window(url_base + "?ecoute=1")
             return
         if brief is None:
             brief = config.load()["dernier_brief"] != datetime.date.today().isoformat()
         open_window(url_base + ("?brief=1" if brief else ""))
+
+    reglage_clap = {"t": 0.0, "on": False, "sens": 0.5}
+
+    def clap_actif() -> bool:
+        """Écouter les claps en arrière-plan : seulement si c'est activé et que la fenêtre est fermée."""
+        if time.time() - reglage_clap["t"] > 2:  # on relit les réglages toutes les 2 secondes
+            c = config.load()
+            reglage_clap.update(t=time.time(), on=bool(c["reveil_clap"]), sens=float(c["clap_sensibilite"]))
+        return reglage_clap["on"] and not page_open()
+
+    def au_clap() -> None:
+        if not page_open():  # la fenêtre ouverte écoute elle-même les claps
+            show_window(ecoute=True)
 
     def quit_jarvis() -> None:
         systeme.STATE["quit"] = True
@@ -628,6 +646,7 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
         print(f"\n✅ Jarvis attend en arrière-plan ({url_base}). Ouvre-le avec {discret_module.RACCOURCI}.\n")
         discret_module.start_tray(show_window, lambda: show_window(brief=True), quit_jarvis)
         discret_module.start_hotkey(show_window)
+        clap.demarrer(au_clap, clap_actif, lambda: reglage_clap["sens"])  # 👏👏 réveille Jarvis
         threading.Thread(target=notify_loop, daemon=True).start()
         threading.Timer(4, discret_module.notify, args=(
             f"Je suis prêt. Clique sur mon icône près de l'horloge, ou appuie sur {discret_module.RACCOURCI}.",

@@ -15,6 +15,8 @@ DEFAULTS = {
     "vitesse": 1.0,
     "hauteur": 1.0,
     "ecoute_permanente": False,
+    "reveil_clap": False,  # taper deux fois dans les mains réveille Jarvis
+    "clap_sensibilite": 0.5,  # de 0 (taper fort) à 1 (un clap léger suffit)
     "cerveau": "qwen3:8b",  # modèle Ollama utilisé (appliqué au prochain démarrage)
     "processeur_seulement": False,  # mis à True si la carte graphique a planté
     "mail_service": "gmail_script",
