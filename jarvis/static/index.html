@@ -627,6 +627,24 @@
     padding: 9px 14px; font: inherit; cursor: pointer; white-space: nowrap;
   }
   .btn:hover { border-color: var(--cyan); }
+  /* Bouton du volume de la voix, avec son curseur */
+  .vol-wrap { position: relative; display: inline-block; }
+  .vol-pop {
+    position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-radius: 12px; border: 1px solid var(--cyan); background: rgba(2, 10, 18, 0.95); box-shadow: var(--glow);
+  }
+  .vol-pop input { width: 180px; accent-color: var(--cyan); }
+  .vol-pop b { font-weight: 400; min-width: 42px; text-align: right; font-family: var(--font-mono); font-size: 13px; }
+  /* Bandeau « nouvelle version » : toujours visible, quel que soit l'affichage */
+  #updateBanner {
+    position: fixed; left: 50%; top: 18px; transform: translateX(-50%); z-index: 40; display: flex; align-items: center; gap: 12px;
+    width: min(760px, calc(100vw - 32px)); padding: 12px 16px; border-radius: 14px; border: 1px solid var(--cyan);
+    background: rgba(2, 10, 18, 0.94); box-shadow: var(--glow); backdrop-filter: blur(6px);
+  }
+  #updateBanner .ub-text { flex: 1; font-size: 14px; line-height: 1.4; }
+  #updateBanner .ub-text span { display: block; color: var(--muted); font-size: 12.5px; }
+  #updateBanner .ub-yes { font-size: 15px; padding: 9px 18px; border-color: var(--cyan); color: var(--cyan); white-space: nowrap; }
+  @media (max-width: 600px) { #updateBanner { flex-wrap: wrap; } #updateBanner .ub-text { flex-basis: 100%; } }
   .hint { font-size: 12px; color: var(--muted); margin: 0; }
   .toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
   .toggle input { width: 42px; height: 24px; accent-color: var(--cyan); flex-shrink: 0; }
@@ -786,6 +804,13 @@
       <div class="orb-clock"><b id="orbTime">--:--</b><span id="orbDate"></span></div>
       <div class="orb-actions">
         <button type="button" id="voiceToggle">🔊 Voix : activée</button>
+        <span class="vol-wrap">
+          <button type="button" id="volButton" title="Volume de la voix de Jarvis">🔈 Volume : 100 %</button>
+          <div class="vol-pop" id="volPop" hidden>
+            <span>🔈</span><input type="range" id="volQuick" min="0.05" max="1" step="0.05" aria-label="Volume de la voix de Jarvis"><span>🔊</span>
+            <b id="volQuickVal">100 %</b>
+          </div>
+        </span>
         <button type="button" id="wakeToggle">👂 Réveil « Jarvis » : non</button>
         <button type="button" id="clapToggle" title="Tape deux fois dans tes mains pour réveiller Jarvis">👏 Clap : non</button>
         <button type="button" id="orbEarth" title="Ouvrir la Terre">🌍 Terre</button>
@@ -1512,8 +1537,12 @@ $("rate").onchange = () => saveSettings({ vitesse: Number($("rate").value) });
 // ---------- Volume de la voix de Jarvis ----------
 const voiceVolume = () => Math.max(0, Math.min(1, Number(settings.volume_voix ?? 1)));
 function showVoiceVolume() {
+  const pct = Math.round(voiceVolume() * 100) + " %";
   $("voiceVolume").value = voiceVolume();
-  $("voiceVolumeVal").textContent = Math.round(voiceVolume() * 100) + " %";
+  $("voiceVolumeVal").textContent = pct;
+  $("volQuick").value = voiceVolume();
+  $("volQuickVal").textContent = pct;
+  $("volButton").textContent = (voiceVolume() < 0.4 ? "🔈" : voiceVolume() < 0.75 ? "🔉" : "🔊") + " Volume : " + pct;
 }
 function setVoiceVolume(v) {
   settings.volume_voix = Math.max(0.05, Math.min(1, Number(v)));
@@ -1523,6 +1552,11 @@ function setVoiceVolume(v) {
 $("voiceVolume").oninput = () => setVoiceVolume($("voiceVolume").value);
 $("voiceVolume").onchange = () => saveSettings({ volume_voix: voiceVolume() });
 $("testVolume").onclick = () => speak("Voici le volume de ma voix.", true);
+// Le bouton « Volume » en haut : un curseur rapide, et Jarvis dit une phrase pour qu'on entende le résultat
+$("volButton").onclick = (e) => { e.stopPropagation(); $("volPop").hidden = !$("volPop").hidden; };
+$("volQuick").oninput = () => setVoiceVolume($("volQuick").value);
+$("volQuick").onchange = () => { saveSettings({ volume_voix: voiceVolume() }); speak("Voici le volume de ma voix.", true); };
+document.addEventListener("click", (e) => { if (!e.target.closest(".vol-wrap")) $("volPop").hidden = true; });
 $("pitch").onchange = () => saveSettings({ hauteur: Number($("pitch").value) });
 
 // ---------- Voix de Jarvis (synthèse vocale du navigateur) ----------
@@ -1690,6 +1724,7 @@ async function send(text) {
   $("suggestions")?.remove();
   addMessage(text, "user");
   input.value = "";
+  if (answerUpdate(text)) return;  // « oui » à la mise à jour proposée
   await streamReply("/api/chat", { text });
 }
 
@@ -1983,7 +2018,7 @@ $("vacancesEte").onchange = () => saveSettings({ vacances_ete: $("vacancesEte").
 $("checkUpdate").onclick = async () => {
   $("updateStatus").textContent = "⏳ Vérification…";
   const u = await checkUpdate(true);
-  $("updateStatus").textContent = !u ? "❌ Impossible de vérifier." : u.erreur ? "❌ Pas de connexion à GitHub." : u.maj ? "Nouvelle version proposée dans la discussion." : "✅ Jarvis est à jour.";
+  $("updateStatus").textContent = !u ? "❌ Impossible de vérifier." : u.erreur ? "❌ Pas de connexion à GitHub." : u.maj ? "Nouvelle version proposée en haut de l’écran." : "✅ Jarvis est à jour.";
 };
 $("mareeLieu").onchange = () => saveSettings({ maree_lieu: $("mareeLieu").value.trim() });
 $("agendaIcs").onchange = () => saveSettings({ agenda_ics: $("agendaIcs").value.trim() });
@@ -2861,37 +2896,69 @@ function renderJeux(block) {
 }
 
 // ---------- Mise à jour automatique ----------
+// Une nouvelle version : un bandeau avec un bouton « Oui », et Jarvis le demande à voix haute.
+// On peut répondre en cliquant, en disant « oui » / « vas-y », ou « non » / « plus tard ».
+let updateOffer = null;
 async function checkUpdate(force) {
   try {
     const u = await (await fetch("/api/update" + (force ? "?force=1" : ""))).json();
     $("versionTxt") && ($("versionTxt").textContent = `Version installée : ${u.installee}` + (u.disponible ? ` · dernière : ${u.disponible}` : ""));
-    if (!u.maj) return u;
-    const box = addMessage("", "jarvis");
-    box.innerHTML = `🔄 <b>Une nouvelle version de Jarvis est disponible</b> (${esc(u.disponible)}).<br>${esc(u.nouveautes)}<br>
-      <button class="btn" type="button" data-update="go">Installer maintenant</button> <button class="btn" type="button" data-update="later">Plus tard</button>`;
-    scrollDown();
+    if (!u.maj || updateOffer?.version === u.disponible) return u;
+    updateOffer = { version: u.disponible };
+    $("updateBanner")?.remove();
+    const bar = document.createElement("div");
+    bar.id = "updateBanner";
+    bar.innerHTML = `<div class="ub-text">🔄 <b>Nouvelle version de Jarvis</b> (${esc(u.disponible)})<span>${esc(u.nouveautes)}</span></div>
+      <button class="btn ub-yes" type="button" data-update="go">✅ Oui, installer</button>
+      <button class="btn" type="button" data-update="later">Plus tard</button>`;
+    document.body.appendChild(bar);
+    addMessage("Une nouvelle version de Jarvis est disponible. Je l'installe ? Dites « oui » ou cliquez sur « Oui, installer ».", "jarvis");
+    if (!busy) speak("Une nouvelle version de Jarvis est disponible. Je l'installe ? Dites oui, ou cliquez sur le bouton.");
     return u;
   } catch (e) { return null; }
 }
-document.addEventListener("click", async (e) => {
-  const btn = e.target.closest("[data-update]");
-  if (!btn) return;
-  const box = btn.closest(".msg") || addMessage("", "jarvis");
-  if (btn.dataset.update === "later") { box.textContent = "D'accord, je vous le reproposerai au prochain démarrage."; return; }
-  box.textContent = "⏳ Téléchargement et installation de la mise à jour…";
+function answerUpdate(text) {
+  if (!updateOffer) return false;
+  const t = text.toLowerCase().replace(/[.!?,]/g, " ").replace(/^\s*(?:jarvis\s+)?/, "").trim();
+  if (/^(oui|ouais|ok|okay|d'accord|vas-y|vas y|go|installe|installe-la|installe la|fais-la|fais la|mets à jour|mets-toi à jour)\b/.test(t)) {
+    installUpdate(); return true;
+  }
+  if (/^(non|plus tard|pas maintenant|attends|laisse tomber)\b/.test(t)) {
+    laterUpdate(); return true;
+  }
+  return false;
+}
+function laterUpdate() {
+  updateOffer = null;
+  $("updateBanner")?.remove();
+  addMessage("D'accord, je vous le reproposerai plus tard.", "jarvis");
+  speak("D'accord, je vous le reproposerai plus tard.");
+}
+async function installUpdate() {
+  updateOffer = null;
+  const bar = $("updateBanner");
+  if (bar) bar.innerHTML = '<div class="ub-text">⏳ <b>Téléchargement et installation de la mise à jour…</b></div>';
+  const box = addMessage("⏳ Je télécharge et j'installe la mise à jour…", "jarvis");
+  speak("Très bien, j'installe la mise à jour.");
   try {
     const res = await (await fetch("/api/update", { method: "POST" })).json();
-    if (!res.ok) { box.textContent = "❌ " + res.message; return; }
+    if (!res.ok) { box.textContent = "❌ " + res.message; bar?.remove(); return; }
     box.textContent = "✅ " + res.message + " Redémarrage…";
     const screen = document.createElement("div");
     screen.style.cssText = "position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;" +
       "color:var(--cyan);font:300 20px Bahnschrift,Segoe UI,sans-serif;letter-spacing:.35em;text-shadow:0 0 12px var(--cyan)";
     screen.textContent = "MISE À JOUR INSTALLÉE — REDÉMARRAGE…";
     document.body.appendChild(screen);
-    setTimeout(() => window.close(), 2000);
-  } catch (err) { box.textContent = "❌ Jarvis ne répond plus."; }
+    setTimeout(() => window.close(), 2500);
+  } catch (err) { box.textContent = "❌ Jarvis ne répond plus."; bar?.remove(); }
+}
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-update]");
+  if (!btn) return;
+  if (btn.dataset.update === "later") laterUpdate(); else installUpdate();
 });
 setTimeout(() => checkUpdate(false), 4000);
+setInterval(() => checkUpdate(false), 30 * 60 * 1000);  // et de nouveau toutes les 30 minutes
 
 // ---------- Musique (Spotify) ----------
 function renderMusic(m) {

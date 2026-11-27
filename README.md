@@ -54,10 +54,11 @@ Il peut agir sur ton PC :
   satellites, séismes, caméras) : « Jarvis, ouvre God's Eye ». À installer en un clic avec
   [Pinokio](https://desktop.pinokio.co/) (⚙️ Réglages → « God's Eye View »)
 - 🌙 décrire le ciel : phase de la lune, lever et coucher du soleil, et quand voir passer la Station spatiale
-- 🔄 se mettre à jour tout seul (proposé au démarrage, ou ⚙️ → « Mises à jour »)
+- 🔄 se mettre à jour tout seul : un bandeau propose la nouvelle version, clique sur « Oui, installer » ou
+  dis « oui » (ou ⚙️ → « Mises à jour »)
 - ⏰ programmer des minuteurs et des rappels (« rappelle-moi dans 10 minutes de sortir les pâtes »)
 - 👂 se réveiller quand tu dis « Jarvis » (à activer en bas de la fenêtre)
-- 🔈 régler le volume de sa voix (⚙️ → « Sa voix »), ou lui dire « parle plus fort », « parle moins fort »,
+- 🔈 régler le volume de sa voix (bouton « 🔊 Volume » en haut, ou ⚙️ → « Sa voix »), ou lui dire « parle plus fort », « parle moins fort »,
   « mets ta voix à 40 % » : seule sa voix change, pas le son du PC
 - 👏👏 se réveiller quand tu tapes deux fois dans tes mains (bouton « 👏 Clap » ou ⚙️ → Réveil) : Jarvis fait
   « ding » et écoute ta question. Marche aussi quand il attend en arrière-plan (il ouvre sa fenêtre)
