@@ -1233,6 +1233,7 @@
   <section>
     <h3>🔄 Mises à jour</h3>
     <p class="hint" id="versionTxt">Version installée : …</p>
+    <p><button class="btn ub-yes" id="installUpdate" type="button" hidden>⬇️ Installer la nouvelle version</button></p>
     <p><button class="btn" id="checkUpdate" type="button">Vérifier maintenant</button> <span class="hint" id="updateStatus"></span></p>
   </section>
 
@@ -2902,7 +2903,11 @@ let updateOffer = null;
 async function checkUpdate(force) {
   try {
     const u = await (await fetch("/api/update" + (force ? "?force=1" : ""))).json();
-    $("versionTxt") && ($("versionTxt").textContent = `Version installée : ${u.installee}` + (u.disponible ? ` · dernière : ${u.disponible}` : ""));
+    $("versionTxt") && ($("versionTxt").textContent = `Version installée : ${u.installee}` + (u.disponible ? ` · dernière : ${u.disponible}` : "")
+      + (u.erreur ? " · ⚠ impossible de joindre GitHub" : ""));
+    // Le bouton des Réglages reste là tant qu'une nouvelle version attend
+    $("installUpdate").hidden = !u.maj;
+    if (u.maj) $("installUpdate").textContent = `⬇️ Installer la version ${u.disponible}`;
     if (!u.maj || updateOffer?.version === u.disponible) return u;
     updateOffer = { version: u.disponible };
     $("updateBanner")?.remove();
@@ -2952,13 +2957,14 @@ async function installUpdate() {
     setTimeout(() => window.close(), 2500);
   } catch (err) { box.textContent = "❌ Jarvis ne répond plus."; bar?.remove(); }
 }
+$("installUpdate").onclick = () => installUpdate();
 document.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-update]");
   if (!btn) return;
   if (btn.dataset.update === "later") laterUpdate(); else installUpdate();
 });
-setTimeout(() => checkUpdate(false), 4000);
-setInterval(() => checkUpdate(false), 30 * 60 * 1000);  // et de nouveau toutes les 30 minutes
+setTimeout(() => checkUpdate(true), 4000);  // à chaque ouverture : on demande à GitHub, pas à la mémoire
+setInterval(() => checkUpdate(false), 10 * 60 * 1000);  // et de nouveau toutes les 10 minutes
 
 // ---------- Musique (Spotify) ----------
 function renderMusic(m) {
