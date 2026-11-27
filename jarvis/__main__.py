@@ -130,7 +130,7 @@ def main() -> None:
         if systeme.STATE.get("restart"):  # une mise à jour vient d'être installée
             from . import maj
 
-            maj.restart()
+            maj.restart(discret=bool(systeme.STATE.get("restart_discret")))
         return
 
     def print_events() -> None:  # les rappels qui sonnent pendant qu'on discute

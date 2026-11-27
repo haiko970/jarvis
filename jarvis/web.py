@@ -184,6 +184,27 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
         except Exception:
             pass
 
+    def maj_en_veille() -> None:
+        """Toutes les 30 minutes, pendant la veille : s'il y a une nouvelle version, Jarvis l'installe
+        tout seul et revient en veille (aucune fenêtre ne s'ouvre)."""
+        while True:
+            time.sleep(1800)
+            if not state.get("veille") or page_open() or systeme.STATE["quit"] or not config.load()["maj_auto"]:
+                continue
+            try:
+                if not maj.check(force=True).get("maj"):
+                    continue
+                ok, message = maj.install()
+            except Exception:
+                continue
+            if ok and state.get("veille") and not page_open():
+                discret_module.notify(f"🔄 {message} Je redémarre en veille.")
+                systeme.STATE.update(quit=True, restart=True, restart_discret=True)
+                schedule_stop(3)
+                return
+
+    threading.Thread(target=maj_en_veille, daemon=True).start()
+
     def sortir_de_veille() -> None:
         if not state.get("veille"):
             return

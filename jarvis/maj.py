@@ -60,32 +60,70 @@ def install() -> tuple[bool, str]:
             archive = zipfile.ZipFile(io.BytesIO(r.read()))
     except Exception as e:
         return False, f"Téléchargement impossible : {e}"
-    from . import ruview
+    try:
+        from . import ruview
 
-    ruview.arreter()  # sous Windows, un programme en marche ne peut pas être remplacé
-    with tempfile.TemporaryDirectory() as tmp:
-        archive.extractall(tmp)
-        roots = [p for p in Path(tmp).iterdir() if (p / "jarvis" / "__main__.py").exists()]
-        if not roots:
-            return False, "L'archive téléchargée ne ressemble pas à Jarvis : mise à jour annulée."
-        root = roots[0]
-        for item in root.iterdir():
-            if item.name in KEEP:
-                continue
-            target = PROJECT_DIR / item.name
-            if item.is_dir():
-                shutil.copytree(item, target, dirs_exist_ok=True)
-            else:
-                shutil.copy2(item, target)
+        ruview.arreter()  # sous Windows, un programme en marche ne peut pas être remplacé
+    except Exception:
+        pass
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive.extractall(tmp)
+            roots = [p for p in Path(tmp).iterdir() if (p / "jarvis" / "__main__.py").exists()]
+            if not roots:
+                return False, "L'archive téléchargée ne ressemble pas à Jarvis : mise à jour annulée."
+            root = roots[0]
+            nouveaux = [f for f in sorted(root.rglob("*")) if f.is_file() and f.relative_to(root).parts[0] not in KEEP]
+            echecs = []
+            # version.json en dernier : si quelque chose rate, Jarvis reproposera la mise à jour
+            nouveaux.sort(key=lambda f: f.name == "version.json")
+            for f in nouveaux:
+                cible = PROJECT_DIR / f.relative_to(root)
+                try:
+                    _remplacer(f, cible)
+                except Exception as e:
+                    echecs.append(f"{f.relative_to(root)} ({e.__class__.__name__})")
+    except Exception as e:
+        return False, f"Installation impossible : {e}"
     _cache["data"] = None
+    if echecs:
+        return False, ("Mise à jour incomplète, ces fichiers étaient bloqués : " + ", ".join(echecs[:4])
+                       + ". Ferme complètement Jarvis (icône près de l'horloge → Quitter) et réessaie.")
     return True, f"Jarvis est passé à la version {local_version()['version']}."
 
 
-def restart() -> None:
-    """Relance Jarvis dans une nouvelle fenêtre puis ferme l'ancienne fenêtre noire."""
+def _remplacer(source: Path, cible: Path) -> None:
+    """Copie un fichier, sauf s'il n'a pas changé. Sous Windows, un fichier occupé (un programme
+    en marche…) ne peut pas être écrasé mais peut être renommé : on le met de côté puis on copie."""
+    if cible.exists() and cible.stat().st_size == source.stat().st_size and cible.read_bytes() == source.read_bytes():
+        return  # identique : rien à faire (et rien à bloquer)
+    cible.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        shutil.copy2(source, cible)
+    except PermissionError:
+        ancien = cible.with_name(cible.name + f".ancien{int(time.time())}")
+        os.replace(cible, ancien)  # le fichier occupé change juste de nom
+        shutil.copy2(source, cible)
+        try:
+            ancien.unlink()
+        except OSError:
+            pass  # encore utilisé : il sera supprimé à la prochaine mise à jour
+    for vieux in cible.parent.glob(cible.name + ".ancien*"):  # ménage des fois précédentes
+        try:
+            vieux.unlink()
+        except OSError:
+            pass
+
+
+def restart(discret: bool = False) -> None:
+    """Relance Jarvis dans une nouvelle fenêtre puis ferme l'ancienne fenêtre noire.
+    discret=True (mise à jour faite pendant la veille) : il revient en veille, sans fenêtre."""
     if platform.system() == "Windows":
         launcher = PROJECT_DIR / "lancer_jarvis.bat"
-        subprocess.Popen(["cmd", "/c", "start", "Jarvis", str(launcher)], cwd=PROJECT_DIR)
+        if discret and (PROJECT_DIR / "lancer_discret.vbs").exists():
+            subprocess.Popen(["wscript", str(PROJECT_DIR / "lancer_discret.vbs")], cwd=PROJECT_DIR)
+        else:
+            subprocess.Popen(["cmd", "/c", "start", "Jarvis", str(launcher)], cwd=PROJECT_DIR)
         try:  # l'ancienne fenêtre noire ne doit pas relire un lanceur qui vient d'être remplacé
             import psutil
 

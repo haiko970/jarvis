@@ -33,6 +33,13 @@ def already_running(port: int) -> bool:
 
 
 # ---------- L'icône près de l'horloge ----------
+def _icone(Image):
+    """L'image de l'icône, chargée en mémoire : le fichier reste libre (pour les mises à jour)."""
+    with Image.open(ICON) as im:
+        im.load()
+        return im.copy()
+
+
 def start_tray(open_window, run_brief, quit_jarvis) -> None:
     """Affiche l'icône de Jarvis près de l'horloge (Windows, avec pystray)."""
     if platform.system() != "Windows":
@@ -55,7 +62,7 @@ def start_tray(open_window, run_brief, quit_jarvis) -> None:
 
     icon = pystray.Icon(
         "jarvis",
-        Image.open(ICON),
+        _icone(Image),
         f"Jarvis — clic pour ouvrir ({RACCOURCI})",
         menu=pystray.Menu(
             pystray.MenuItem("Ouvrir Jarvis", menu_open, default=True),
