@@ -46,6 +46,9 @@ Il peut agir sur ton PC :
 - 📡 savoir s'il y a quelqu'un dans la pièce et si ça bouge, rien qu'avec le WiFi, sans caméra, grâce à
   [RuView](https://github.com/ruvnet/RuView), déjà prêt pour Windows dans le dossier `ruview` (rien à installer,
   ~12 Mo). Cadre « Présence » du tableau de bord et « Jarvis, il y a quelqu'un dans la pièce ? ». Avec le WiFi du PC seul, c'est approximatif ; avec un capteur ESP32-S3 (~9 €), c'est plus précis
+- 🌍 ouvrir [God's Eye View](https://github.com/bilawalsidhu/gods-eye-view), la Terre en 3D en direct (avions, bateaux,
+  satellites, séismes, caméras) : « Jarvis, ouvre God's Eye ». À installer en un clic avec
+  [Pinokio](https://desktop.pinokio.co/) (⚙️ Réglages → « God's Eye View »)
 - 🌙 décrire le ciel : phase de la lune, lever et coucher du soleil, et quand voir passer la Station spatiale
 - 🔄 se mettre à jour tout seul (proposé au démarrage, ou ⚙️ → « Mises à jour »)
 - ⏰ programmer des minuteurs et des rappels (« rappelle-moi dans 10 minutes de sortir les pâtes »)

@@ -20,7 +20,7 @@ import ollama
 from . import brief as brief_module
 from . import config, dashboard, elevenlabs, maj, musique, powers, pronote, sentinelle, systeme, theme
 from . import discret as discret_module
-from . import ciel, connaissances, foot, modules, ruview, sporteasy
+from . import ciel, connaissances, foot, godseye, modules, ruview, sporteasy
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -419,6 +419,11 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                     self._json({"ok": False, "message": f"Impossible de lire l'agenda SportEasy : {e}"})
                 return
 
+            if self.path == "/api/godseye":
+                ok, message = godseye.ouvrir()
+                self._json({"ok": ok, "message": message})
+                return
+
             if self.path == "/api/ruview":
                 action = json.loads(raw or b"{}").get("action")
                 if action == "ecran":  # l'écran 3D de RuView, dans le navigateur
@@ -475,6 +480,9 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
 
             text = json.loads(raw or b"{}").get("text", "").strip()
             command = systeme.quick_command(text)
+            if not command and godseye.quick(text):  # « ouvre God's Eye », « le monde en direct »
+                self._stream_answer("", quick="godseye")
+                return
             module = None if command else modules.quick_module(text)
             if module:
                 self._stream_answer("", quick="module:" + json.dumps(module, ensure_ascii=False))
@@ -519,6 +527,10 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                 if quick == "sentinelle":
                     emit({"type": "tool", "name": "activer_sentinelle", "args": {}})
                     emit({"type": "text", "text": sentinelle.activer_sentinelle()})
+                    quick, text = None, ""
+                if quick == "godseye":
+                    emit({"type": "tool", "name": "ouvrir_gods_eye", "args": {}})
+                    emit({"type": "text", "text": godseye.ouvrir()[1]})
                     quick, text = None, ""
                 if quick and quick.startswith("module:"):
                     # « Ouvre la carte » : la page envoie le bras chercher le module

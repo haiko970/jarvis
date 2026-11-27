@@ -1121,6 +1121,16 @@
   </section>
 
   <section>
+    <h3>🌍 God's Eye View (la Terre en direct)</h3>
+    <p class="hint"><a href="https://github.com/bilawalsidhu/gods-eye-view" target="_blank">God's Eye View</a> montre
+      sur une Terre en 3D les avions, bateaux, satellites, séismes et caméras publiques, en direct. Pour l'installer :
+      télécharge <a href="https://desktop.pinokio.co/" target="_blank">Pinokio</a>, puis clique sur le bouton
+      ci-dessous et choisis « Install », puis « Start ». Ensuite, dis simplement à Jarvis « ouvre God's Eye ».</p>
+    <p><button class="btn" id="godseyeOpen" type="button">🌍 Ouvrir God's Eye View</button>
+      <span class="hint" id="godseyeHint"></span></p>
+  </section>
+
+  <section>
     <h3>🏖️ Compte à rebours</h3>
     <div class="field">
       <label for="rentree">Date de la rentrée</label>
@@ -2614,6 +2624,15 @@ $("ruviewSource").onchange = async () => {
   if ($("ruviewActif").checked) ruviewAction("relancer");
 };
 $("ruviewScreen").onclick = () => ruviewAction("ecran");
+
+// ---------- God's Eye View ----------
+$("godseyeOpen").onclick = async () => {
+  $("godseyeHint").textContent = "⏳ Je le cherche…";
+  try {
+    const res = await (await fetch("/api/godseye", { method: "POST" })).json();
+    $("godseyeHint").textContent = (res.ok ? "✅ " : "ℹ️ ") + res.message;
+  } catch (e) { $("godseyeHint").textContent = "❌ Jarvis ne répond pas."; }
+};
 
 // ---------- Statistiques de jeu ----------
 const fmtMin = (m) => (m >= 60 ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")}` : `${m} min`);
