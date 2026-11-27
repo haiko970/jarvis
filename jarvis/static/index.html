@@ -221,6 +221,7 @@
   .presence-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px;
     background: var(--muted); vertical-align: middle; }
   .presence-dot.on { background: var(--cyan); box-shadow: var(--glow); animation: pulse 1.6s ease-in-out infinite; }
+  .presence-dot.calme { background: rgba(var(--c-rgb), 0.45); }
   @keyframes pulse { 50% { opacity: 0.35; } }
   .dots { display: flex; flex-wrap: wrap; gap: 3px; }
   .dots i { width: 6px; height: 6px; border-radius: 50%; border: 1px solid rgba(var(--c-rgb), 0.35); }
@@ -1182,6 +1183,16 @@
         <option value="simulate">Démonstration (fausses données, pour essayer)</option>
       </select>
     </div>
+    <div class="field">
+      <label for="presenceDelai">Dire « personne » après combien de temps sans aucun signe de vie ?</label>
+      <select id="presenceDelai">
+        <option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option>
+        <option value="30">30 minutes</option><option value="60">1 heure</option>
+      </select>
+      <p class="hint">Jarvis croise trois indices : le clavier et la souris du PC (le plus sûr), le mouvement vu par
+        RuView, et les bruits de la pièce (seulement si le clap est activé ; rien n'est enregistré). Quelqu'un qui lit ou
+        dort ne bouge presque pas : un délai plus long évite les « personne » à tort.</p>
+    </div>
     <p><button class="btn" id="ruviewScreen" type="button">🛰️ Ouvrir l'écran de RuView</button></p>
   </section>
 
@@ -1437,6 +1448,7 @@ async function loadSettings() {
   $("snLock").checked = settings.sentinelle_verrou !== false;
   $("ruviewActif").checked = settings.ruview_actif !== false;
   $("ruviewSource").value = settings.ruview_source || "wifi";
+  $("presenceDelai").value = String(settings.presence_delai_min || 15);
   fetch("/api/sentinelle").then((r) => r.json()).then((st) => {
     $("snCodeHint").textContent = st.code_ok ? "✅ Un code est enregistré (tu peux le changer)." : "Aucun code pour l'instant : choisis-en un.";
   }).catch(() => {});
@@ -2808,23 +2820,32 @@ const RV_SOURCES = { wifi: "WIFI DU PC", esp32: "ESP32", simulate: "DÉMO", simu
 let ruviewMsgUntil = 0;  // le message d'un bouton reste affiché quelques secondes
 function renderRuview(e) {
   const body = $("ruviewBody");
-  body.className = "empty";
+  body.className = "";
   if (Date.now() > ruviewMsgUntil) $("ruviewHint").textContent = !e.installe ? "Programme RuView introuvable : mets Jarvis à jour."
     : e.marche ? "✅ RuView tourne." : "RuView est installé mais arrêté.";
-  if (!e.installe) { body.innerHTML = "Programme RuView introuvable : mets Jarvis à jour (⚙️ → Mises à jour)."; return; }
-  if (!e.marche) {
-    body.innerHTML = `RuView est arrêté. <button type="button" data-ruview="demarrer">Le lancer</button>`;
-    $("ruviewTag").textContent = "RV-08"; return;
+  $("ruviewTag").textContent = e.marche ? RV_SOURCES[e.source] || "RV-08" : "RV-08";
+  // L'avis croisé de Jarvis (clavier/souris, mouvement WiFi, bruits) passe en premier
+  const p = e.piece || {};
+  const dot = p.etat === "present" ? "on" : p.etat === "calme" ? "calme" : "";
+  let html = `<div class="countdown-head"><span class="mono"><i class="presence-dot ${dot}"></i>${esc(p.texte || "…")}</span>
+    <span class="sub mono">${p.certitude ? `SÛR À ${p.certitude}%` : ""}</span></div>`;
+  if (p.dernier) html += `<div class="sub mono muted">Dernier signe : ${esc(p.dernier)}, ${esc(p.depuis)}</div>`;
+  const ind = p.indices || {}, bits = [];
+  if (ind.clavier) bits.push(`⌨️ ${ind.clavier}`);
+  if (ind.mouvement) bits.push(`📶 ${ind.mouvement}`);
+  if (ind.son) bits.push(`🎤 ${ind.son}`);
+  if (bits.length) html += `<div class="sub mono muted">${esc(bits.join(" · "))}</div>`;
+  // L'état du capteur RuView
+  if (!e.installe) html += `<div class="sub muted">📶 RuView introuvable : mets Jarvis à jour.</div>`;
+  else if (!e.marche) html += `<div class="sub muted">📶 RuView est arrêté. <button type="button" data-ruview="demarrer">Le lancer</button></div>`;
+  else if (e.attente) html += `<div class="sub muted">📶 RuView démarre…</div>`;
+  else {
+    const extra = [];
+    if (e.presence && e.personnes > 1) extra.push(`~${e.personnes} personnes`);
+    if (e.respiration) extra.push(`respiration ${e.respiration}/min`);
+    if (extra.length) html += `<div class="sub mono muted">📶 ${esc(extra.join(" · "))}</div>`;
   }
-  $("ruviewTag").textContent = RV_SOURCES[e.source] || "RV-08";
-  if (e.attente) { body.textContent = "RuView démarre…"; return; }
-  body.className = "";
-  const extra = [];
-  if (e.presence && e.personnes > 1) extra.push(`~${e.personnes} personnes`);
-  if (e.respiration) extra.push(`respiration ${e.respiration}/min`);
-  body.innerHTML = `<div class="countdown-head"><span class="mono"><i class="presence-dot ${e.presence ? "on" : ""}"></i>${esc(RV_ETATS[e.mouvement] || (e.presence ? "Quelqu'un" : "Personne"))}</span>
-    <span class="sub mono">SÛR À ${e.confiance}%</span></div>
-    ${extra.length ? `<div class="sub mono muted">${esc(extra.join(" · "))}</div>` : ""}`;
+  body.innerHTML = html;
 }
 async function loadRuview() {
   try { renderRuview(await (await fetch("/api/ruview")).json()); } catch (e) {}
@@ -2853,6 +2874,7 @@ $("ruviewSource").onchange = async () => {
   if ($("ruviewActif").checked) ruviewAction("relancer");
 };
 $("ruviewScreen").onclick = () => ruviewAction("ecran");
+$("presenceDelai").onchange = () => saveSettings({ presence_delai_min: Number($("presenceDelai").value) });
 
 // ---------- L'œil de Jarvis : clés des bateaux et des caméras ----------
 function showOeilKeys(ok) {

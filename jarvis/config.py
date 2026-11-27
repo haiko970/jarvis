@@ -45,7 +45,8 @@ DEFAULTS = {
     "sentinelle_code_secours": "",
     "sporteasy_ics_secours": "",  # lien d'agenda SportEasy (seulement si le coffre-fort ne marche pas)  # seulement si le coffre-fort de Windows ne marche pas  # verrouiller le PC si le code n'est pas tapé à temps
     "ruview_actif": True,  # lancer RuView (présence par le WiFi) avec Jarvis, s'il est installé
-    "ruview_source": "wifi",  # wifi (le PC seul), esp32 (capteur) ou simulate (démonstration)
+    "ruview_source": "wifi",
+    "presence_delai_min": 15,  # minutes sans aucun signe de vie avant de dire « personne »  # wifi (le PC seul), esp32 (capteur) ou simulate (démonstration)
     "godseye_url": "",
     "aisstream_cle_secours": "",  # clé AISstream (bateaux du monde entier), si le coffre-fort ne marche pas
     "windy_cle_secours": "",  # clé Windy (caméras du monde entier), si le coffre-fort ne marche pas  # adresse de God's Eye View (retrouvée toute seule quand il tourne)

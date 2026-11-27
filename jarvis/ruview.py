@@ -28,8 +28,8 @@ TOOLS = [
     {
         "name": "presence_piece",
         "description": (
-            "Dit s'il y a quelqu'un dans la pièce et si ça bouge, grâce au capteur WiFi RuView "
-            "(et la respiration si un capteur ESP32 est branché)."
+            "Dit s'il y a quelqu'un dans la pièce, en croisant le clavier et la souris du PC, le mouvement "
+            "WiFi (RuView) et les bruits de la pièce (et la respiration si un capteur ESP32 est branché)."
         ),
         "input_schema": {"type": "object", "properties": {}, "required": [], "additionalProperties": False},
     }
@@ -166,7 +166,9 @@ def phrase(e: dict) -> str:
 
 
 def _presence_piece() -> str:
-    return phrase(etat())
+    from . import presence
+
+    return presence.phrase()
 
 
 HANDLERS = {"presence_piece": _presence_piece}

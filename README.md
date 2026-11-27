@@ -43,6 +43,8 @@ Il peut agir sur ton PC :
 - ⚽ te dire les grands matchs de foot du soir (Ligue des champions, équipe de France, Ligue 1…), annoncés à 18 h
 - ⚽ suivre ton club sur SportEasy : matchs, entraînements, convocations et heure de rendez-vous
   (⚙️ Réglages → « Mon équipe de foot » → colle le lien « Synchronisation Calendrier » de SportEasy)
+- 🧠 présence intelligente : Jarvis croise le clavier et la souris du PC, le mouvement vu par RuView et les
+  bruits de la pièce (si le clap est activé), et attend 15 min sans aucun signe avant de dire « personne »
 - 📡 savoir s'il y a quelqu'un dans la pièce et si ça bouge, rien qu'avec le WiFi, sans caméra, grâce à
   [RuView](https://github.com/ruvnet/RuView), déjà prêt pour Windows dans le dossier `ruview` (rien à installer,
   ~12 Mo). Cadre « Présence » du tableau de bord et « Jarvis, il y a quelqu'un dans la pièce ? ». Avec le WiFi du PC seul, c'est approximatif ; avec un capteur ESP32-S3 (~9 €), c'est plus précis

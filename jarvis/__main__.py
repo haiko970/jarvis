@@ -114,6 +114,9 @@ def main() -> None:
 
     from . import ruview
 
+    from . import presence
+
+    presence.demarrer()  # présence intelligente : clavier/souris, mouvement WiFi, bruits
     if not args.discret:  # en mode discret (veille), RuView ne démarre qu'à l'ouverture de la fenêtre
         threading.Thread(target=ruview.demarrage_auto, daemon=True).start()
     atexit.register(ruview.arreter)

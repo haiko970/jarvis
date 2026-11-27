@@ -15,6 +15,7 @@ import time
 from array import array
 
 TRAME_MS = 10  # on analyse le son par petits morceaux de 10 millisecondes
+ACTIVITE = {"t": 0.0}  # dernière fois qu'un bruit a duré (voix, pas…) : un indice de présence
 
 
 class DetecteurClap:
@@ -30,6 +31,7 @@ class DetecteurClap:
         self.dernier_clap = -10.0
         self.repos_jusqua = 0.0
         self.t = 0.0
+        self.bruyant = 0.0  # part récente du temps nettement au-dessus du bruit de fond (0 à 1)
 
     def trame(self, rms: float, pic: float) -> bool:
         """Une trame de 10 ms (niveau moyen et pic, entre 0 et 1). Renvoie True au deuxième clap."""
@@ -47,6 +49,12 @@ class DetecteurClap:
         elif (self.t > self.repos_jusqua and pic > self.seuil and rms > self.bruit * 8
               and rms > self.avant * 3 and rms > 0.02):
             self.candidat, self.trames_depuis = (self.t, rms), 0  # montée brutale : peut-être un clap
+        # Du bruit pendant plus de la moitié de la dernière demi-seconde (voix, pas…) : quelqu'un est là.
+        # Un clap est trop court pour compter.
+        fort = 1.0 if rms > max(self.bruit * 4, 0.01) else 0.0
+        self.bruyant += (fort - self.bruyant) * 0.04
+        if self.bruyant > 0.5:
+            ACTIVITE["t"] = time.time()
         if not self.candidat:  # le bruit de fond s'adapte (vite s'il baisse, lentement s'il monte)
             k = 0.2 if rms < self.bruit else 0.01
             self.bruit += (rms - self.bruit) * k

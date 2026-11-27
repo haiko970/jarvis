@@ -22,7 +22,7 @@ from . import brief as brief_module
 from . import config, dashboard, elevenlabs, maj, musique, powers, pronote, sentinelle, systeme, theme
 from . import clap
 from . import discret as discret_module
-from . import ciel, connaissances, foot, godseye, modules, oeil, ruview, sporteasy
+from . import ciel, connaissances, foot, godseye, modules, oeil, presence, ruview, sporteasy
 from .brain import MODEL, Brain
 from .powers import EVENTS
 
@@ -365,7 +365,7 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                 except Exception as e:
                     self._json({"ok": False, "erreur": str(e)})
             elif self.path == "/api/ruview":
-                self._json(ruview.etat())
+                self._json({**ruview.etat(), "piece": presence.etat()})
             elif self.path == "/api/events":
                 events = []
                 while not EVENTS.empty():
@@ -579,7 +579,7 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                     if action == "relancer":
                         ruview.arreter()
                     ok, message = ruview.demarrer()
-                self._json({"ok": ok, "message": message, **ruview.etat()})
+                self._json({"ok": ok, "message": message, **ruview.etat(), "piece": presence.etat()})
                 return
 
             if self.path == "/api/sentinelle":
