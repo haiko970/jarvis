@@ -16,7 +16,8 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 REPO = "haiko970/jarvis"
 BRANCH = "claude/adoring-mayer-u2tfmy"
-REMOTE_VERSION = f"https://raw.githubusercontent.com/{REPO}/{BRANCH}/jarvis/version.json"
+# « refs/heads/… » : l'adresse complète de la branche, que GitHub garde moins longtemps en cache
+REMOTE_VERSION = f"https://raw.githubusercontent.com/{REPO}/refs/heads/{BRANCH}/jarvis/version.json"
 ZIP_URL = f"https://github.com/{REPO}/archive/refs/heads/{BRANCH}.zip"
 KEEP = {".venv", ".env", ".git"}  # jamais remplacés (installation Python, réglages locaux)
 
@@ -35,8 +36,8 @@ def _as_tuple(version: str) -> tuple:
 
 
 def check(force: bool = False) -> dict:
-    """{installee, disponible, nouveautes, a_jour} — vérifié au plus une fois par heure."""
-    if not force and _cache["data"] and time.time() - _cache["time"] < 3600:
+    """{installee, disponible, nouveautes, a_jour} — vérifié au plus toutes les 10 minutes."""
+    if not force and _cache["data"] and time.time() - _cache["time"] < 600:
         return _cache["data"]
     current = local_version()["version"]
     result = {"installee": current, "disponible": None, "nouveautes": "", "maj": False}
