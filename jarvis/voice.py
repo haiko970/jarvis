@@ -34,6 +34,12 @@ class Voice:
         self.recognizer.pause_threshold = 0.8
         self.engine = pyttsx3.init()
         self.engine.setProperty("rate", 185)
+        try:
+            from . import config
+
+            self.engine.setProperty("volume", float(config.load()["volume_voix"]))
+        except Exception:
+            pass
         self._choose_french_voice()
 
         with sr.Microphone() as source:
@@ -63,5 +69,11 @@ class Voice:
             return None
 
     def say(self, text: str) -> None:
+        try:  # le volume a pu changer (« parle plus fort »)
+            from . import config
+
+            self.engine.setProperty("volume", float(config.load()["volume_voix"]))
+        except Exception:
+            pass
         self.engine.say(clean_for_speech(text))
         self.engine.runAndWait()

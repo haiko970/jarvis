@@ -542,6 +542,10 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
             if not command and godseye.quick(text):  # « ouvre God's Eye », « le monde en direct »
                 self._stream_answer("", quick="godseye")
                 return
+            vol = None if command else powers.quick_volume_voix(text)
+            if vol:  # « parle plus fort », « baisse ta voix »…
+                self._stream_answer("", quick="voixvol:" + json.dumps(vol))
+                return
             module = None if command else modules.quick_module(text)
             if module:
                 self._stream_answer("", quick="module:" + json.dumps(module, ensure_ascii=False))
@@ -573,6 +577,9 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                 self.wfile.flush()
 
             def finish() -> None:
+                if systeme.STATE.get("volume_voix") is not None:  # « parle plus fort » : la page change le volume
+                    emit({"type": "action", "action": "volume_voix", "volume": systeme.STATE["volume_voix"]})
+                    systeme.STATE["volume_voix"] = None
                 if systeme.STATE.get("theme"):  # « mets le thème Iron Man » : la page change de couleur
                     emit({"type": "action", "action": "theme", "theme": systeme.STATE["theme"]})
                     systeme.STATE["theme"] = None
@@ -586,6 +593,15 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                 if quick == "sentinelle":
                     emit({"type": "tool", "name": "activer_sentinelle", "args": {}})
                     emit({"type": "text", "text": sentinelle.activer_sentinelle()})
+                    quick, text = None, ""
+                if quick and quick.startswith("voixvol:"):
+                    action, niveau = json.loads(quick[8:])
+                    emit({"type": "tool", "name": "volume_voix", "args": {}})
+                    reponse = powers.volume_voix(action, niveau)
+                    if systeme.STATE.get("volume_voix") is not None:  # appliqué avant qu'il ne réponde
+                        emit({"type": "action", "action": "volume_voix", "volume": systeme.STATE["volume_voix"]})
+                        systeme.STATE["volume_voix"] = None
+                    emit({"type": "text", "text": reponse})
                     quick, text = None, ""
                 if quick == "godseye":
                     emit({"type": "tool", "name": "ouvrir_gods_eye", "args": {}})

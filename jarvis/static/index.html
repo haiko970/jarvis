@@ -872,6 +872,15 @@
         <option value="elevenlabs">ElevenLabs — ultra-réaliste (clé gratuite, quota mensuel)</option>
       </select>
     </div>
+    <div class="field">
+      <label for="voiceVolume">🔈 Volume de sa voix : <span id="voiceVolumeVal"></span></label>
+      <div class="row">
+        <input type="range" id="voiceVolume" min="0.05" max="1" step="0.05">
+        <button class="btn" id="testVolume" type="button">▶ Écouter</button>
+      </div>
+      <p class="hint">Seulement la voix de Jarvis : la musique et le reste du PC ne changent pas.
+        Tu peux aussi lui dire « parle plus fort », « parle moins fort » ou « mets ta voix à 40 % ».</p>
+    </div>
     <div id="elevenBox" hidden>
       <div class="field">
         <label for="elevenVoice">Identifiant de la voix ElevenLabs</label>
@@ -1387,6 +1396,7 @@ async function loadSettings() {
   $("aPropos").value = settings.a_propos || "";
   renderMemories();
   $("rate").value = settings.vitesse; $("pitch").value = settings.hauteur;
+  showVoiceVolume();
   showSliderValues();
   fillVoices();
   applyWake(!!settings.ecoute_permanente, false);
@@ -1499,6 +1509,20 @@ function showSliderValues() {
 }
 $("rate").oninput = $("pitch").oninput = showSliderValues;
 $("rate").onchange = () => saveSettings({ vitesse: Number($("rate").value) });
+// ---------- Volume de la voix de Jarvis ----------
+const voiceVolume = () => Math.max(0, Math.min(1, Number(settings.volume_voix ?? 1)));
+function showVoiceVolume() {
+  $("voiceVolume").value = voiceVolume();
+  $("voiceVolumeVal").textContent = Math.round(voiceVolume() * 100) + " %";
+}
+function setVoiceVolume(v) {
+  settings.volume_voix = Math.max(0.05, Math.min(1, Number(v)));
+  if (audioEl) audioEl.volume = settings.volume_voix;  // la phrase en cours change aussi
+  showVoiceVolume();
+}
+$("voiceVolume").oninput = () => setVoiceVolume($("voiceVolume").value);
+$("voiceVolume").onchange = () => saveSettings({ volume_voix: voiceVolume() });
+$("testVolume").onclick = () => speak("Voici le volume de ma voix.", true);
 $("pitch").onchange = () => saveSettings({ hauteur: Number($("pitch").value) });
 
 // ---------- Voix de Jarvis (synthèse vocale du navigateur) ----------
@@ -1574,6 +1598,7 @@ function browserUtterance(text) {
   if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "fr-FR"; }
   u.rate = Number($("rate").value) || 1;
   u.pitch = Number($("pitch").value) || 1;
+  u.volume = voiceVolume();
   return u;
 }
 // Voix du navigateur, en attendant la fin (utilisé en secours d'ElevenLabs).
@@ -1609,6 +1634,7 @@ async function pumpAudio() {
     if (job.url) {
       await new Promise((done) => {
         audioEl = new Audio(job.url);
+        audioEl.volume = voiceVolume();
         if (orb.on) orbListenTo(audioEl);
         audioEl.onended = audioEl.onerror = done;
         audioEl.play().catch((e) => { if (e.name === "NotAllowedError") showListenButton(); done(); });
@@ -1751,6 +1777,8 @@ async function streamReply(url, payload) {
         } else if (ev.type === "action" && ev.action === "vue") {
           applyView(ev.vue);
           settings.vue = ev.vue;
+        } else if (ev.type === "action" && ev.action === "volume_voix") {
+          setVoiceVolume(ev.volume);
         } else if (ev.type === "action" && ev.action === "theme") {
           applyTheme(ev.theme);
           settings.theme = ev.theme;
@@ -2126,12 +2154,12 @@ function creerDetecteurClap(sensibilite) {
   return d;
 }
 const clap = { on: false, ctx: null, stream: null, node: null, det: null, reste: new Float32Array(0), calmeJusqua: 0 };
-async function startClap() {
+async function startClap(signaler) {
   if (clap.ctx) return true;
   try {
     clap.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
   } catch (e) {
-    addMessage("Je n'ai pas accès au micro pour le réveil en tapant dans les mains. Autorise-le quand Edge te le demande.", "jarvis", "error");
+    if (signaler) addMessage("Je n'ai pas accès au micro pour le réveil en tapant dans les mains. Autorise-le quand Edge te le demande.", "jarvis", "error");
     return false;
   }
   clap.ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2180,7 +2208,7 @@ function onClap() {
   setTimeout(toggleMic, 250);  // Jarvis écoute ta question
 }
 async function applyClap(on, persist) {
-  if (on && !(await startClap())) on = false;
+  if (on && !(await startClap(persist))) on = false;
   if (!on) stopClap();
   clap.on = on;
   $("clapSetting").checked = on;

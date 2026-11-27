@@ -4,6 +4,7 @@ import datetime
 import os
 import platform
 import queue
+import re
 import shutil
 import subprocess
 import threading
@@ -25,9 +26,24 @@ def _schema(properties: dict, required: list[str]) -> dict:
 
 TOOLS = [
     {
+        "name": "volume_voix",
+        "description": (
+            "Change le volume de la VOIX de Jarvis seulement (pas celui de l'ordinateur) : "
+            "« parle plus fort », « parle moins fort », « mets ta voix à 50 % ». "
+            "action : 'monter', 'baisser' ou 'regler' (avec niveau entre 0 et 100)."
+        ),
+        "input_schema": _schema(
+            {
+                "action": {"type": "string", "enum": ["monter", "baisser", "regler"]},
+                "niveau": {"type": "integer", "description": "Volume voulu de 0 à 100, seulement pour 'regler'"},
+            },
+            ["action"],
+        ),
+    },
+    {
         "name": "volume",
         "description": (
-            "Change le volume du son de l'ordinateur. action : 'monter', 'baisser', 'muet' "
+            "Change le volume du son de l'ordinateur (tout le PC, pas seulement la voix de Jarvis). action : 'monter', 'baisser', 'muet' "
             "(couper ou remettre le son) ou 'regler' (avec niveau entre 0 et 100)."
         ),
         "input_schema": _schema(
@@ -224,7 +240,49 @@ def annuler_minuteurs() -> str:
     return f"{count} minuteur(s) annulé(s)."
 
 
+def volume_voix(action: str, niveau: int | None = None) -> str:
+    """Règle le volume de la voix de Jarvis (la page l'applique tout de suite)."""
+    from . import config, systeme
+
+    avant = round(float(config.load()["volume_voix"]) * 100)
+    if action == "regler" and niveau is not None:
+        apres = niveau
+    elif action == "monter":
+        apres = avant + 20
+    elif action == "baisser":
+        apres = avant - 20
+    else:
+        return "Dis-moi un volume entre 0 et 100."
+    apres = max(5, min(100, round(apres)))  # jamais complètement muet : sinon on ne l'entend plus du tout
+    config.save({"volume_voix": apres / 100})
+    systeme.STATE["volume_voix"] = apres / 100
+    if apres == avant:
+        return f"Ma voix est déjà à {apres} %, {'le maximum' if apres == 100 else 'le minimum'}."
+    return f"Voilà, ma voix est maintenant à {apres} %."
+
+
+_FORT = re.compile(r"\b(?:parle|parles|cause)\s+(?:un peu\s+|beaucoup\s+)?plus\s+fort\b|\b(?:monte|augmente)[- ]?\s*(?:ta|la)\s+voix\b"
+                   r"|\bje (?:ne )?t'?entends? (?:pas|rien|mal)\b")
+_DOUX = re.compile(r"\b(?:parle|parles|cause)\s+(?:un peu\s+|beaucoup\s+)?(?:moins\s+fort|plus\s+(?:bas|doucement))\b"
+                   r"|\b(?:baisse|diminue)[- ]?\s*(?:ta|la)\s+voix\b|\btu parles? trop fort\b")
+_NIVEAU = re.compile(r"\b(?:volume de )?(?:ta|la) voix (?:a|à) (\d{1,3})\s*(?:%|pour ?cent)?")
+
+
+def quick_volume_voix(text: str) -> tuple[str, int | None] | None:
+    """Reconnaît « parle plus fort », « baisse ta voix », « mets ta voix à 40 % »…"""
+    t = text.lower().replace("’", "'")
+    m = _NIVEAU.search(t)
+    if m:
+        return "regler", int(m.group(1))
+    if _DOUX.search(t):
+        return "baisser", None
+    if _FORT.search(t):
+        return "monter", None
+    return None
+
+
 HANDLERS = {
+    "volume_voix": volume_voix,
     "volume": volume,
     "controle_musique": controle_musique,
     "spotify_rechercher": spotify_rechercher,

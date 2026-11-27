@@ -14,6 +14,7 @@ DEFAULTS = {
     "voix": "",  # nom de la voix choisie dans l'interface ("" = choix automatique)
     "vitesse": 1.0,
     "hauteur": 1.0,
+    "volume_voix": 1.0,  # volume de la voix de Jarvis, de 0 (muet) à 1 (le plus fort)
     "ecoute_permanente": False,
     "reveil_clap": False,  # taper deux fois dans les mains réveille Jarvis
     "clap_sensibilite": 0.5,  # de 0 (taper fort) à 1 (un clap léger suffit)
