@@ -86,6 +86,20 @@ def open_window(url: str) -> None:
         webbrowser.open(url)
 
 
+def _cacher_fenetre_noire() -> None:
+    """La fenêtre noire de lancer_jarvis.bat disparaît de la barre des tâches (Jarvis continue de tourner)."""
+    if platform.system() != "Windows":
+        return
+    try:
+        import ctypes
+
+        console = ctypes.windll.kernel32.GetConsoleWindow()
+        if console:
+            ctypes.windll.user32.ShowWindow(console, 0)  # 0 = cacher
+    except Exception:
+        pass
+
+
 def _jarvis_window_front() -> bool:
     """Remet la fenêtre de Jarvis devant si elle est déjà ouverte. Renvoie False s'il n'y en a pas."""
     if platform.system() != "Windows":
@@ -102,7 +116,7 @@ def _jarvis_window_front() -> bool:
 def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None:
     lock = threading.Lock()  # une seule question à la fois pour le cerveau
     # last_page : dernière fois que la fenêtre a donné signe de vie (pour savoir si elle est ouverte)
-    state = {"shutdown_timer": None, "last_page": 0.0, "warm": not discret}
+    state = {"shutdown_timer": None, "last_page": 0.0, "warm": not discret, "veille": discret}
 
     def wake_brain() -> None:
         """En mode discret, le cerveau ne se charge qu'à la première ouverture (le PC démarre plus vite)."""
@@ -116,6 +130,7 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
     def show_window(brief: bool | None = None, ecoute: bool = False) -> None:
         """Ouvre la fenêtre de Jarvis (ou la remet devant). Le brief n'est fait qu'une fois par jour.
         ecoute=True (réveillé par un clap) : la fenêtre s'ouvre et écoute tout de suite ta question."""
+        sortir_de_veille()
         wake_brain()
         if page_open() and _jarvis_window_front():
             return
@@ -134,6 +149,51 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
             c = config.load()
             reglage_clap.update(t=time.time(), on=bool(c["reveil_clap"]), sens=float(c["clap_sensibilite"]))
         return reglage_clap["on"] and not page_open()
+
+    def mettre_en_veille() -> None:
+        """Fenêtre fermée : Jarvis disparaît de la barre des tâches et ne garde que l'écoute (clap).
+        On attend 3 secondes avant : un simple rechargement de la page n'est pas une fermeture."""
+        if page_open() or systeme.STATE["quit"]:
+            return
+        state["veille"] = True
+        _cacher_fenetre_noire()
+        if not state.get("en_fond"):
+            state["en_fond"] = True
+            discret_module.start_tray(show_window, lambda: show_window(brief=True), quit_jarvis)
+            discret_module.start_hotkey(show_window)
+            threading.Thread(target=notify_loop, daemon=True).start()
+            threading.Timer(2, discret_module.notify, args=(  # l'icône met un instant à apparaître
+                "Je suis en veille près de l'horloge. Tape deux fois dans tes mains (si le clap est activé), "
+                "appuie sur Ctrl + Alt + J ou clique sur mon icône pour me rappeler.",
+            )).start()
+        try:
+            from . import ruview
+
+            ruview.arreter()  # RuView mesure sans arrêt : en pause pendant la veille
+        except Exception:
+            pass
+        threading.Timer(120, vider_cerveau).start()
+
+    def vider_cerveau() -> None:
+        """Toujours en veille après 2 minutes : le cerveau (Ollama) libère la mémoire et la carte graphique."""
+        if page_open() or not state.get("veille"):
+            return
+        try:
+            ollama.generate(model=MODEL, prompt="", keep_alive=0)
+            state["warm"] = False  # il se rechargera à la prochaine ouverture
+        except Exception:
+            pass
+
+    def sortir_de_veille() -> None:
+        if not state.get("veille"):
+            return
+        state["veille"] = False
+        try:
+            from . import ruview
+
+            threading.Thread(target=ruview.demarrage_auto, daemon=True).start()
+        except Exception:
+            pass
 
     def au_clap() -> None:
         if not page_open():  # la fenêtre ouverte écoute elle-même les claps
@@ -301,9 +361,11 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
                 # La fenêtre a été fermée : on s'arrête, sauf si elle revient (simple rechargement).
                 sentinelle.page_closed()  # fermée pendant la surveillance : le PC se verrouille
                 state["last_page"] = 0.0
-                if discret and not systeme.STATE["quit"]:
-                    # Mode discret : Jarvis reste en arrière-plan, prêt à revenir (Ctrl + Alt + J)
+                if not systeme.STATE["quit"]:
+                    # La croix ne quitte pas Jarvis : il se met en veille près de l'horloge, prêt à revenir
+                    # (clap, Ctrl + Alt + J, clic sur son icône). Pour le quitter : « Quitter Jarvis » ou « ferme-toi ».
                     self._send(204, b"", "text/plain")
+                    threading.Timer(3, mettre_en_veille).start()
                     return
                 cancel_shutdown()
                 state["shutdown_timer"] = threading.Timer(3, server.shutdown)
@@ -657,12 +719,15 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
     url_base = f"http://127.0.0.1:{port}/"
     url = url_base + ("?brief=1" if with_brief else "")
 
+    # 👏👏 Le clap est écouté dès que la fenêtre est fermée (et seulement si c'est activé dans les réglages)
+    clap.demarrer(au_clap, clap_actif, lambda: reglage_clap["sens"])
+
     if discret:
         # Au démarrage du PC : pas de fenêtre, Jarvis attend près de l'horloge
         print(f"\n✅ Jarvis attend en arrière-plan ({url_base}). Ouvre-le avec {discret_module.RACCOURCI}.\n")
         discret_module.start_tray(show_window, lambda: show_window(brief=True), quit_jarvis)
         discret_module.start_hotkey(show_window)
-        clap.demarrer(au_clap, clap_actif, lambda: reglage_clap["sens"])  # 👏👏 réveille Jarvis
+        state["en_fond"] = True
         threading.Thread(target=notify_loop, daemon=True).start()
         threading.Timer(4, discret_module.notify, args=(
             f"Je suis prêt. Clique sur mon icône près de l'horloge, ou appuie sur {discret_module.RACCOURCI}.",
@@ -670,7 +735,8 @@ def serve(brain: Brain, with_brief: bool = False, discret: bool = False) -> None
     else:
         print(f"\n✅ Jarvis est prêt : sa fenêtre va s'ouvrir ({url})")
         print("   Tu peux réduire cette fenêtre noire, mais ne la ferme pas.")
-        print("   Pour quitter, ferme simplement la fenêtre de Jarvis.\n")
+        print("   La croix de Jarvis le met en veille près de l'horloge (elle disparaît alors aussi).")
+        print("   Pour le quitter vraiment : clic droit sur son icône → « Quitter Jarvis », ou « Jarvis, ferme-toi ».\n")
         open_window(url)
     try:
         server.serve_forever()

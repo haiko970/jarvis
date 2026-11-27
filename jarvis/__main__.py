@@ -114,7 +114,8 @@ def main() -> None:
 
     from . import ruview
 
-    threading.Thread(target=ruview.demarrage_auto, daemon=True).start()
+    if not args.discret:  # en mode discret (veille), RuView ne démarre qu'à l'ouverture de la fenêtre
+        threading.Thread(target=ruview.demarrage_auto, daemon=True).start()
     atexit.register(ruview.arreter)
 
     # Pendant que la fenêtre s'ouvre, le cerveau se réveille et lit ses instructions.

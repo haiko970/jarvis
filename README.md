@@ -60,6 +60,8 @@ Il peut agir sur ton PC :
 - 👂 se réveiller quand tu dis « Jarvis » (à activer en bas de la fenêtre)
 - 🔈 régler le volume de sa voix (bouton « 🔊 Volume » en haut, ou ⚙️ → « Sa voix »), ou lui dire « parle plus fort », « parle moins fort »,
   « mets ta voix à 40 % » : seule sa voix change, pas le son du PC
+- 💤 se mettre en veille quand tu cliques sur la croix : il disparaît de la barre des tâches, libère la mémoire
+  et met RuView en pause, mais reste à l'écoute du clap. Pour le quitter : son icône → « Quitter Jarvis »
 - 👏👏 se réveiller quand tu tapes deux fois dans tes mains (bouton « 👏 Clap » ou ⚙️ → Réveil) : Jarvis fait
   « ding » et écoute ta question. Marche aussi quand il attend en arrière-plan (il ouvre sa fenêtre)
 - ⏻ se fermer (« Jarvis, ferme-toi »), éteindre ou redémarrer le PC (« ferme mon ordi » : extinction

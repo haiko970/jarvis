@@ -104,7 +104,7 @@ def run_quick(name: str) -> str:
     """Exécute une commande rapide et renvoie la phrase que Jarvis doit dire."""
     if name == "fermer_jarvis":
         fermer_jarvis()
-        return "À bientôt ! Je me mets en veille."
+        return "À bientôt ! Je m'arrête complètement. La prochaine fois, la croix suffit pour me mettre en veille."
     if name == "annuler":
         return "C'est annulé, l'ordinateur reste allumé." if "annulée" in annuler_extinction() else "Il n'y avait rien à annuler."
     result = eteindre_ordinateur(name)
